@@ -90,9 +90,4 @@ export default function Navbar() {
             </div>
         </nav>
     );
-
-    return (
-        <div>
-
-        </div>)
 }
