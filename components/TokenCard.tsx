@@ -1,11 +1,13 @@
 'use client'
-import {Card, CardContent} from "@/components/ui/card";
+import {Card} from "@/components/ui/card";
 import Image from "next/image";
 import {Progress} from "@/components/ui/progress";
 import {Token} from "@/lib/types";
 import {FC} from "react";
 
-export const TokenCard: FC<{token: Token}> = ({token}) => {
+
+export const TokenCard: FC<{ token: Token }> = ({token}) => {
+
     return (
         <Card className="p-4">
             <div className="flex space-x-4 max-w-md items-center">
@@ -29,7 +31,7 @@ export const TokenCard: FC<{token: Token}> = ({token}) => {
                             <p className="text-md text-green-400">$1,000,000,000</p>
                         </div>
                     </div>
-                    <Progress value={66} />
+                    <Progress value={66}/>
                     <div className="h-18 overflow-hidden">
                         <p className="text-muted-foreground text-xs line-clamp-3">
                             {token.description}

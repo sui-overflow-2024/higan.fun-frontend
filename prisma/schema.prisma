@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// TODO Switch to postgres before launch
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Coin {
+  objectId      String   @id
+  treasuryCapId String
+  creator       String
+  decimals      Int
+  name          String
+  symbol        String
+  description   String
+  iconUrl       String
+  website       String
+  twitterUrl    String
+  discordUrl    String
+  telegramUrl   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

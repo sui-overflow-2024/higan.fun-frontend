@@ -39,7 +39,7 @@ export default function RootLayout({
         <StrictMode>
             {isClient ?
             <QueryClientProvider client={queryClient}>
-                <SuiClientProvider networks={networks} defaultNetwork="devnet">
+                <SuiClientProvider networks={networks} defaultNetwork="mainnet">
                     <WalletProvider>
                         <Navbar/>
                         {children}

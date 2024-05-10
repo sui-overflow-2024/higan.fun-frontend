@@ -5,3 +5,11 @@ export type Token = {
     iconUrl: string,
     description: string,
 }
+export type TokenWithAdditionalMetadata = Token & {
+    creator: string,
+    decimals: number,
+    website: string,
+    twitterUrl: string,
+    discordUrl: string,
+    telegramUrl: string,
+}
