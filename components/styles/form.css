@@ -1,0 +1,43 @@
+.btn {
+  position: relative;
+  border: 1px solid #6ea3ff;
+  background: #407baa42;
+}
+.btn::before {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: -10;
+  margin-left: auto;
+  margin-right: auto;
+  height: 100%;
+  width: 100%;
+  background-image: radial-gradient(
+    8em circle at 50% 90%,
+    #1881b2,
+    transparent 30%
+  );
+  opacity: 0.3;
+  --tw-content: "";
+  content: var(--tw-content);
+}
+
+.btn::after {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  height: 2px;
+  width: 60%;
+  background-image: linear-gradient(to right, var(--tw-gradient-stops));
+  --tw-gradient-from: rgba(65, 126, 56, 0) var(--tw-gradient-from-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+  --tw-gradient-stops: var(--tw-gradient-from),
+    #1b93ca var(--tw-gradient-via-position), var(--tw-gradient-to);
+  --tw-gradient-to: rgba(65, 126, 56, 0) var(--tw-gradient-to-position);
+  --tw-content: "";
+  content: var(--tw-content);
+}
