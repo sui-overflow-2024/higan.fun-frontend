@@ -7,6 +7,9 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {StrictMode, useEffect, useState} from "react";
 import {SuiClientProvider, WalletProvider} from '@mysten/dapp-kit';
 import {getFullnodeUrl} from '@mysten/sui.js/client';
+import {PrismaClient} from "@/lib/prisma/client";
+import {AppConfigContext, defaultAppConfig, PrismaClientContext} from "@/components/Contexts";
+import {Toaster} from "@/components/ui/toaster";
 
 const inter = Inter({subsets: ["latin"]});
 
@@ -29,23 +32,32 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     const [isClient, setIsClient] = useState(false)
-
     useEffect(() => {
         setIsClient(true)
     }, [])
+
+    const prismaClient = new PrismaClient({
+        datasourceUrl: "../we-hate-the-ui-backend/prisma/dev.db"
+    })
+
     return (
         <html lang="en">
         <body className={inter.className}>
         <StrictMode>
             {isClient ?
-            <QueryClientProvider client={queryClient}>
-                <SuiClientProvider networks={networks} defaultNetwork="mainnet">
-                    <WalletProvider>
-                        <Navbar/>
-                        {children}
-                    </WalletProvider>
-                </SuiClientProvider>
-            </QueryClientProvider> : "How dis happen?"}
+                <AppConfigContext.Provider value={defaultAppConfig}>
+                    <PrismaClientContext.Provider value={prismaClient}>
+                        <QueryClientProvider client={queryClient}>
+                            <SuiClientProvider networks={networks} defaultNetwork="devnet">
+                                <WalletProvider>
+                                    <Navbar/>
+                                    {children}
+                                </WalletProvider>
+                            </SuiClientProvider>
+                        </QueryClientProvider>
+                    </PrismaClientContext.Provider>
+                    <Toaster />
+                </AppConfigContext.Provider> : "How dis happen?"}
         </StrictMode>
         </body>
         </html>
