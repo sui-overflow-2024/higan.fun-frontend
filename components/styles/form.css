@@ -41,3 +41,10 @@
   --tw-content: "";
   content: var(--tw-content);
 }
+
+.new-coin-input-field {
+  @apply w-full p-2 border border-gray-300 rounded bg-[#050e1a9e] text-white;
+}
+.new-coin-error-span {
+  @apply text-red-500 text-xs mt-1;
+}

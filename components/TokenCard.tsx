@@ -2,11 +2,13 @@
 import {Card} from "@/components/ui/card";
 import Image from "next/image";
 import {Progress} from "@/components/ui/progress";
-import {Token} from "@/lib/types";
+import {TokenFromRestAPI} from "@/lib/types";
 import {FC} from "react";
 
 
-export const TokenCard: FC<{ token: Token }> = ({token}) => {
+export const TokenCard: FC<{ token?: TokenFromRestAPI }> = ({token}) => {
+
+    if (!token) return <></>
 
     return (
         <Card className="p-4">

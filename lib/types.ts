@@ -1,28 +1,31 @@
-export type Token = {
-    objectId: string,
-    name: string,
-    symbol: string,
-    iconUrl: string,
-    description: string,
-}
-export type NewTokenRequest = {
-    name: string,
-    symbol: string,
-    iconUrl: string,
-    description: string,
+export type TokenFromRestAPI = {
+    packageId: string,
+    module: string,
+    storeId: string,
     creator: string,
-    signature: string, //later
     decimals: number,
+    name: string,
+    symbol: string,
+    description: string,
+    iconUrl: string,
+    // signature: string, //later
     website: string,
     twitterUrl: string,
     discordUrl: string,
     telegramUrl: string,
+    whitepaperUrl: string,
+    createdAt: Date,
+    updatedAt: Date
 }
-export type TokenWithAdditionalMetadata = Token & {
-    creator: string,
-    decimals: number,
-    website: string,
-    twitterUrl: string,
-    discordUrl: string,
-    telegramUrl: string,
-}
+
+export type TokenFromChain = TokenFromRestAPI
+
+//
+// export type TokenWithAdditionalMetadata = Token & {
+//     creator: string,
+//     decimals: number,
+//     website: string,
+//     twitterUrl: string,
+//     discordUrl: string,
+//     telegramUrl: string,
+// }
