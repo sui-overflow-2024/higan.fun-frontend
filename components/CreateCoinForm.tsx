@@ -12,8 +12,9 @@ import {Prisma} from "@/lib/prisma/client";
 import {useForm} from 'react-hook-form';
 import {useToast} from "@/components/ui/use-toast";
 import Link from "next/link";
-import axios from "axios";
 import {useAccounts, useSuiClient, useWallets} from "@mysten/dapp-kit";
+import {ToastAction} from "@/components/ui/toast";
+import {coinRestApi} from "@/lib/rest";
 
 
 type MyFile = File & { preview: string };
@@ -22,7 +23,7 @@ const CreateCoinForm = () => {
     const prismaClient = useContext(PrismaClientContext);
     const appConfig = useContext(AppConfigContext);
     const suiClient = useSuiClient();
- const [wallet] = useWallets()
+    const [wallet] = useWallets()
     const [account] = useAccounts()
     const {toast} = useToast()
     const [fatalError, setFatalError] = useState<string | null>(null);
@@ -101,15 +102,16 @@ const CreateCoinForm = () => {
     const submit = async (data: Prisma.CoinCreateInput) => {
         try {
             // const result = await appConfig.axios.post("/coins", data)
-            const result = await axios.post("http://localhost:3004/coins", data)
+
+            const result = await coinRestApi.post(appConfig, data) //TODO Fix this
             // TODO, take packageId from the result, link to sui explorer, link must be aware of the network the user currently has selected
             // Couldn't do this first pass because the dapp docs were broken
             toast({
                 title: "Successfully launched your coin!",
-                description: <Link href={"https://duckduckgo.com"}>View in SuiScan</Link>,
-                // action: (
-                //     <ToastAction altText="View change on explorer">Undo</ToastAction>
-                // ),
+                action: (
+                    <ToastAction altText="View your token"><Link href={"/drilldown"}>Go to landing
+                        page</Link></ToastAction>
+                ),
             })
         } catch (e: any) {
             toast({

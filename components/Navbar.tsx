@@ -5,7 +5,7 @@ import {ConnectButton, useCurrentAccount} from '@mysten/dapp-kit';
 export default function Navbar() {
     const account = useCurrentAccount();
     const shortAddress = account && `${account.address.slice(0, 6)}...${account.address.slice(-6)}`;
-    console.log(account)
+
     return (
         <nav className="bg-gray-900 border-b-2 border-gray-800">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
