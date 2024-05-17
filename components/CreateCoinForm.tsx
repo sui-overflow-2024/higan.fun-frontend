@@ -15,11 +15,14 @@ import Link from "next/link";
 import {useAccounts, useSuiClient, useWallets} from "@mysten/dapp-kit";
 import {ToastAction} from "@/components/ui/toast";
 import {coinRestApi} from "@/lib/rest";
+import {faker} from "@faker-js/faker";
 
 
 type MyFile = File & { preview: string };
 
+
 const CreateCoinForm = () => {
+    const isDevMode = process.env.NODE_ENV === "development";
     const prismaClient = useContext(PrismaClientContext);
     const appConfig = useContext(AppConfigContext);
     const suiClient = useSuiClient();
@@ -27,26 +30,29 @@ const CreateCoinForm = () => {
     const [account] = useAccounts()
     const {toast} = useToast()
     const [fatalError, setFatalError] = useState<string | null>(null);
+
+    const dev_name = `${faker.word.words({count: {min: 1, max: 3}}).replace(" ", "_")}`
     const {
         register,
         handleSubmit,
         watch,
         formState: {errors, isSubmitted, touchedFields}
     } = useForm<Prisma.CoinCreateInput>({
+        // TODO Below has a bunch of default values for testing, remove this
         defaultValues: {
             creator: "",
-            module: "",
+            module: isDevMode ? `${dev_name.toLowerCase()}` : "",
             packageId: "",
             storeId: "",
             //There items do need to be set in the form
             name: "",
-            symbol: "",
-            description: "",
-            decimals: 9, //TODO For now, leave hardcoded at 9. Don't let the user specify this in the form
-            iconUrl: "",
-            website: "",
-            twitterUrl: "",
-            discordUrl: "",
+            symbol: isDevMode ? `${dev_name.toUpperCase().replace("_","").slice(0,3)}` : "",
+            description: isDevMode ? `${faker.lorem.sentence({min: 30, max: 120})}` :"",
+            decimals: 3, //TODO For now, leave hardcoded at 9. Don't let the user specify this in the form
+            iconUrl: isDevMode ? "https://static-production.npmjs.com/255a118f56f5346b97e56325a1217a16.svg" : "",
+            website: isDevMode ? "https://www.npmjs.com/package/@mysten/sui.js/v/0.0.0-experimental-20230127130009?activeTab=readme" :"",
+            twitterUrl: isDevMode ? "https://twitter.com/dog_rates" : "",
+            discordUrl: isDevMode ? "https://discord.gg/eHz9E7qP" : "",
             telegramUrl: "",
             whitepaperUrl: "",
             // image: [], //TODO This is a good idea, we can cache the image in the DB, but Prisma is SQLite and we don't have a sustainable way to store images (right now). Let's stick with the image url for now

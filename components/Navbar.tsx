@@ -1,6 +1,20 @@
 'use client';
 import Link from 'next/link';
-import {ConnectButton, useCurrentAccount} from '@mysten/dapp-kit';
+import {ConnectButton, useCurrentAccount, useSuiClientContext} from '@mysten/dapp-kit';
+
+function NetworkSelector() {
+    const ctx = useSuiClientContext();
+
+    return (
+        <div>
+            {Object.keys(ctx.networks).map((network) => (
+                <button key={network} onClick={() => ctx.selectNetwork(network)}>
+                    {`select ${network}`}
+                </button>
+            ))}
+        </div>
+    );
+}
 
 export default function Navbar() {
     const account = useCurrentAccount();

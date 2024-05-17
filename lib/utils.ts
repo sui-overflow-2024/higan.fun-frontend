@@ -1,6 +1,5 @@
 import {type ClassValue, clsx} from "clsx"
 import {twMerge} from "tailwind-merge"
-import {faker} from "@faker-js/faker";
 import {TokenFromRestAPI} from "@/lib/types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -44,10 +43,18 @@ export function getRandomNumber(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export const getCoinPath = (token: TokenFromRestAPI, func?: string): string => {
+export const getCoinPath = (token: TokenFromRestAPI): string => {
     return `${token.packageId}::${token.module}::${token.module.toUpperCase()}`
 }
 
 export const getCoinPathFunc = (token: TokenFromRestAPI, func: string): `${string}::${string}::${string}` => {
     return `${token.packageId}::${token.module}::${func}`
+}
+
+export const getValueWithDecimals = (value: number, decimals: number, fixed ?: number): string => {
+    const divisor = Math.pow(10, decimals);
+
+    // Divide the number by the divisor to get the floating point result
+    const result = value / divisor;
+    return fixed ? result.toFixed(fixed) : result.toString()
 }
