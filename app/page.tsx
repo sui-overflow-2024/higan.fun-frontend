@@ -2,12 +2,7 @@
 // Why are we still here?
 import {TokenCard} from "@/components/TokenCard";
 import {BuySellDialog} from "@/components/BuySellDialog";
-import {TokenFromRestAPI} from "@/lib/types";
-import {useContext, useEffect, useState} from "react";
-import {coinRestApi} from "@/lib/rest";
-import {AppConfigContext} from "@/components/Contexts";
-// import {generateFakeToken} from "@/lib/utils";
-
+import {generateFakeToken} from "@/lib/utils";
 
 export default function Home() {
     const appConfig = useContext(AppConfigContext)
@@ -22,7 +17,7 @@ export default function Home() {
     // })
     return (
         <main className="bg-background flex min-h-screen flex-col items-center justify-between p-24">
-            {/*<TokenCard token={token}/>*/}
+            <TokenCard token={generateFakeToken()}/>
             <BuySellDialog/>
         </main>
     );
