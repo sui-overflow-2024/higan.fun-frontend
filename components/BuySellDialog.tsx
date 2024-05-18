@@ -357,12 +357,6 @@ export const BuySellDialog: React.FC<{}> = () => {
         fetchBalance()
     }, [baseToken, currentAccount?.address, suiClient])
 
-    // const baseTokenControl = <TokenAmountInput variant={"base"} token={baseToken} setToken={setBaseToken}
-    //                                            amount={baseAmount} setAmount={setBaseAmount}/>
-    // const quoteTokenControl = <TokenAmountInput variant={"quote"} token={quoteToken} setToken={setQuoteToken}
-    //                                             amount={quoteAmount} setAmount={setQuoteAmount}/>
-
-    // const controls = controlOrder === "base-quote" ? [baseTokenControl, quoteTokenControl] : [quoteTokenControl, baseTokenControl]
     return (<Card>
             <CardHeader>
                 <div className={"flex justify-between min-w-[400px]"}>
@@ -438,23 +432,6 @@ export const BuySellDialog: React.FC<{}> = () => {
                             </div>
                         </div>
                     </div>
-                    {/*{baseTokenControl}*/}
-                    {/*Button below is the swap button, TODO using the wrong colors*/}
-
-                    {/*<button*/}
-                    {/*    className="absolute left-1/2 transform -translate-x-1/2 -translate-y-1/2 top-1/2 z-10 p-2 rounded-full bg-blue-500 hover:bg-blue-700 text-white"*/}
-                    {/*    style={{marginTop: '-0.5rem'}}  // Adjust this value to position the button correctly*/}
-                    {/*    onClick={() => setControlOrder(controlOrder === "base-quote" ? "quote-base" : "base-quote")}*/}
-                    {/*>*/}
-                    {/*    <div>*/}
-                    {/*        <Image*/}
-                    {/*            src={"./material-swap.svg"}*/}
-                    {/*            alt={"swap"}*/}
-                    {/*            width={20}*/}
-                    {/*            height={20}*/}
-                    {/*        />*/}
-                    {/*    </div>*/}
-                    {/*</button>*/}
                     <div className={"text-center"}>
                         {targetPrice > 0 && <div>
                             <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>

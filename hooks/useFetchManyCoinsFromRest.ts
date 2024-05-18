@@ -1,31 +1,38 @@
-import {useQuery, UseQueryOptions, UseQueryResult} from "@tanstack/react-query";
+'use client';
+import { useQuery, UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
+import { useContext } from "react";
+import { AppConfigContext } from "@/components/Contexts";
 import {TokenFromRestAPI} from "@/lib/types";
-import {useContext} from "react";
-import {AppConfigContext} from "@/components/Contexts";
 
-
+// Define the arguments for the useFetchManyCoinsFromRest hook
 type UseFetchCoinFromRestArgs = {
     packageIds?: string[],
-    options?: UseQueryOptions<TokenFromRestAPI>
+    options?: UseQueryOptions<TokenFromRestAPI[], Error>
 }
-export function useFetchCoinFromRest({
-                                         packageIds,
-                                         options
-                                     }: UseFetchCoinFromRestArgs): UseQueryResult<TokenFromRestAPI, Error> {
-    // const [method, params, { queryKey = [], ...options } = {}] = args as [
-    //     method: T,
-    //     params?: SuiRpcMethods[T]['params'],
-    //     options?: UseSuiClientQueryOptions<T, TData>,
-    // ];
-    //
-    // const suiContext = useSuiClientContext();
+
+export function useFetchManyCoinsFromRest({
+                                              packageIds,
+                                              options
+                                          }: UseFetchCoinFromRestArgs): UseQueryResult<TokenFromRestAPI[], Error> {
     const appConfig = useContext(AppConfigContext);
-    return useQuery({
+
+    // Fetch coins from the API
+    const fetchCoins = async (): Promise<TokenFromRestAPI[]> => {
+        try {
+            const response = await appConfig.axios.get(`/coins`, {
+                params: { packageIds: packageIds?.join(",") }
+            });
+            return response.data;
+        } catch (error: any) {
+            // Proper error handling
+            throw new Error(error.response?.data?.message || 'Failed to fetch coins');
+        }
+    };
+
+    // Use the useQuery hook to fetch data
+    return useQuery<TokenFromRestAPI[], Error>({
         ...options,
-        queryKey: [packageIds],
-        queryFn: async () => {
-            const response = await appConfig.axios.get(`/coins?packageIds=${(packageIds || []).join(",")}`)
-            return response.data
-        },
+        queryKey: ['coins', packageIds],
+        queryFn: fetchCoins,
     });
 }

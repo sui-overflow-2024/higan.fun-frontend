@@ -1,15 +1,18 @@
-import useSWR from "swr";
-import JSONPretty from 'react-json-pretty'
+'use client';
+import {useFetchManyCoinsFromRest} from "@/hooks/useFetchManyCoinsFromRest";
+import 'react-json-pretty/themes/monikai.css';
 
-// @ts-ignore-next-line
-const fetcher = (...args) => fetch(...args).then(res => res.json());
+import JSONPretty from "react-json-pretty";
 
-export default function App() {
-    const {data, error} = useSWR('/api/coin', fetcher)
 
+export default function DebugPage() {
+    const {data, isLoading, isError, error} = useFetchManyCoinsFromRest({})
+    console.log("rest coins data:", data)
+    if (isLoading) return <div>Loading...</div>
+    if (isError) return <div>Error: {(error as Error).message}</div>
     return (<div>
-            <h1>Coins</h1>
-            <JSONPretty data={data}/>
-        </div>)
+        <p className={"text-xl bg-white"}>All Coins</p>
+        <JSONPretty data={data || {}}/>
+    </div>)
 
 }
