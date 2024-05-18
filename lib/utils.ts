@@ -1,6 +1,8 @@
 import {type ClassValue, clsx} from "clsx"
 import {twMerge} from "tailwind-merge"
 import {TokenFromRestAPI} from "@/lib/types";
+import type {DevInspectResults} from "@mysten/sui.js/client";
+import {bcs} from "@mysten/sui.js/bcs";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -57,4 +59,20 @@ export const getValueWithDecimals = (value: number, decimals: number, fixed ?: n
     // Divide the number by the divisor to get the floating point result
     const result = value / divisor;
     return fixed ? result.toFixed(fixed) : result.toString()
+}
+export const extractPriceFromDevInspect = (res?: DevInspectResults ) => {
+    if(!res) return 0
+    const price = res.results?.[0]?.returnValues?.[0][0]
+    return bcs.de("u64", new Uint8Array(price || [])) as number
+}
+
+export const stripCoinNameFromPath = (path: string): string => {
+    // Path will be a::b::c, need to return a::b
+    const parts = path.split('::');
+    return parts.slice(0, parts.length - 1).join('::');
+}
+export const getFunctionPathFromCoinType = (coinType: string, func: string): string => {
+    const funcPath = `${stripCoinNameFromPath(coinType)}::${func}`
+    console.log("funcPath", funcPath)
+    return funcPath
 }

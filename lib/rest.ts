@@ -14,6 +14,8 @@ export const coinRestApi = {
         return res.data
     },
     post: async (appConfig: AppConfig, token: Prisma.CoinCreateInput): Promise<TokenFromRestAPI> => {
+        console.log("Posting the following coin to the REST API", token)
+        console.log("appConfig.axios", appConfig.axios.defaults)
         const res = await appConfig.axios.post<TokenFromRestAPI>(`/coins`, token)
         console.log("Posted the following coin to the REST API", res.data)
         return res.data

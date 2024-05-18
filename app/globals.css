@@ -7,6 +7,11 @@ body {
   background: #030F1C
 }
 
+.navbar-link{
+  @apply text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium
+
+}
+
 @layer base {
   :root {
     --background: 213 69% 6%;

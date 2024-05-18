@@ -45,7 +45,7 @@ const CreateCoinForm = () => {
             packageId: "",
             storeId: "",
             //There items do need to be set in the form
-            name: "",
+            name: isDevMode ? `${faker.lorem.words({min: 1, max: 3})}` :"",
             symbol: isDevMode ? `${dev_name.toUpperCase().replace("_","").slice(0,3)}` : "",
             description: isDevMode ? `${faker.lorem.sentence({min: 30, max: 120})}` :"",
             decimals: 3, //TODO For now, leave hardcoded at 9. Don't let the user specify this in the form
@@ -114,14 +114,20 @@ const CreateCoinForm = () => {
             // Couldn't do this first pass because the dapp docs were broken
             toast({
                 title: "Successfully launched your coin!",
+                duration: 3000,
                 action: (
-                    <ToastAction altText="View your token"><Link href={"/drilldown"}>Go to landing
-                        page</Link></ToastAction>
+                    <ToastAction altText="View your token">
+                        <Link href={"/drilldown"}>
+                            Go to landing page
+                        </Link>
+                    </ToastAction>
                 ),
             })
         } catch (e: any) {
             toast({
                 title: "Failed to create coin",
+                duration: 3000,
+                variant: "destructive",
                 description: e.message,
             })
             console.error(e);

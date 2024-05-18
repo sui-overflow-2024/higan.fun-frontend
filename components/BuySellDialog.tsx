@@ -3,7 +3,7 @@ import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
 import {Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
-import {cn, getCoinPath, getCoinPathFunc, getValueWithDecimals} from "@/lib/utils";
+import {cn, getCoinPath, getCoinPathFunc, getFunctionPathFromCoinType, getValueWithDecimals} from "@/lib/utils";
 import Image from "next/image";
 import {TokenFromRestAPI} from "@/lib/types";
 import {
@@ -221,35 +221,36 @@ const generateSellPtb = (coin: TokenFromRestAPI, userCoins: CoinStruct[], amount
     return txb;
 }
 
-export const getBuyCoinPriceTxb = (coin: TokenFromRestAPI, amount: number): TransactionBlock => {
+export const getBuyCoinPriceTxb = (coinType: string, storeId: string, amount: number): TransactionBlock => {
     const txb = new TransactionBlock()
     txb.moveCall({
-        target: getCoinPathFunc(coin, "get_coin_buy_price"),
+        target: getFunctionPathFromCoinType(coinType, "get_coin_buy_price") as `${string}::${string}::${string}`,
         arguments: [
-            txb.object(coin.storeId),
+            txb.object(storeId),
             txb.pure(amount),
         ],
     })
     return txb
 }
-export const getSellCoinPriceTxb = (coin: TokenFromRestAPI, amount: number): TransactionBlock => {
+export const getSellCoinPriceTxb = (coinType: string, storeId: string, amount: number): TransactionBlock => {
     const txb = new TransactionBlock()
     txb.moveCall({
-        target: getCoinPathFunc(coin, "get_coin_sell_price"),
+        target: getFunctionPathFromCoinType(coinType, "get_coin_sell_price") as `${string}::${string}::${string}`,
         arguments: [
-            txb.object(coin.storeId),
+            txb.object(storeId),
             txb.pure(amount),
         ],
     })
     return txb
 }
 
-export const getPrice = async (client: SuiClient, sender: string, coin: TokenFromRestAPI, amount: number, mode: "buy" | "sell"): Promise<number> => {
+export const getPrice = async (client: SuiClient, sender: string, coinType: string, storeId: string, amount: number, mode: "buy" | "sell"): Promise<number> => {
     console.log(`get coin ${mode} price`, sender)
-    const txb = mode === "buy" ? getBuyCoinPriceTxb(coin, amount) : getSellCoinPriceTxb(coin, amount)
+    const txb = mode === "buy" ? getBuyCoinPriceTxb(coinType, storeId, amount) : getSellCoinPriceTxb(coinType, storeId, amount)
 
 
     txb.setSenderIfNotSet(sender)
+
     const res = await client.devInspectTransactionBlock({
         transactionBlock: txb,
         sender: sender,
@@ -265,6 +266,9 @@ export const BuySellDialog: React.FC<{}> = () => {
     const currentAccount = useCurrentAccount()
     const currentWallet = useCurrentWallet()
     const appConfig = useContext(AppConfigContext)
+    const {data, refetch, error, isError} = useSuiClientQuery("getObject", {
+      id: "coinTesfhjfhf"
+    })
     const [token, setToken] = useState<TokenFromRestAPI>()
     useEffect(() => {
         const fetchToken = async () => {
@@ -277,9 +281,9 @@ export const BuySellDialog: React.FC<{}> = () => {
 
 
     const exampleToken = {
-        "packageId": "0xd22ca9c37f98e8594a832c7355e6070cfb3c21982e9e12d863be067df8a953e8",
+        "packageId": "0xa512bbe7d3f75b0b91310057bbbac67aa4f3e1eda49c345fd00c3cfa7fd47c5b",
         "module": "coin_example",
-        "storeId": "0x4b2a03005315e882bd052fec6d4251d889dd972b802cd344b22d300d2b8bab50",
+        "storeId": "0x8cb5bc618d9943730a9404ad11143b9588dcd2033033cb6ded0c1bf87c4ceab3",
         "creator": "somecreator",
         "decimals": 3,
         "name": "Test Coin",
@@ -291,6 +295,7 @@ export const BuySellDialog: React.FC<{}> = () => {
         "discordUrl": "",
         "telegramUrl": "",
         "whitepaperUrl": "",
+        "coinType": `0xa512bbe7d3f75b0b91310057bbbac67aa4f3e1eda49c345fd00c3cfa7fd47c5b::coin_example::COIN_EXAMPLE`,
         "createdAt": new Date(),
         "updatedAt": new Date(),
     }
@@ -325,7 +330,7 @@ export const BuySellDialog: React.FC<{}> = () => {
         const fetchPrice = async () => {
             // await refetchStore()
             console.log("Fetching price for ", mode)
-            const price = await getPrice(suiClient, currentAccount?.address || "", baseToken, amount, mode)
+            const price = await getPrice(suiClient, currentAccount?.address || "", baseToken.coinType, baseToken.storeId, amount, mode)
             console.log("Target price is", price)
             setTargetPrice(price)
             // TODO Below works because Sui token is always the target

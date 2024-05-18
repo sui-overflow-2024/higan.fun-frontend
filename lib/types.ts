@@ -14,6 +14,7 @@ export type TokenFromRestAPI = {
     discordUrl: string,
     telegramUrl: string,
     whitepaperUrl: string,
+    coinType: string,
     createdAt: Date,
     updatedAt: Date
 }

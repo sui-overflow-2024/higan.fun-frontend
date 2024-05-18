@@ -13,9 +13,9 @@ export const PrismaClientContext = createContext<PrismaClient>(new PrismaClient(
 ));
 
 export const defaultAppConfig = {
-    restApiUrl: process.env.REST_API_URL || "http://localhost:3004",
+    restApiUrl: process.env.REST_API_URL || "http://localhost:3007",
     axios: axios.create({
-        baseURL: process.env.REST_API_URL || "http://localhost:3004",
+        baseURL: process.env.REST_API_URL || "http://localhost:3007",
     }),
 }
 // console.log(defaultAppConfig)
