@@ -3,6 +3,8 @@ import {twMerge} from "tailwind-merge"
 import {TokenFromRestAPI} from "@/lib/types";
 import type {DevInspectResults} from "@mysten/sui.js/client";
 import {bcs} from "@mysten/sui.js/bcs";
+import {faker} from "@faker-js/faker";
+import {Trade} from "@/components/TradesTable";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -76,3 +78,23 @@ export const getFunctionPathFromCoinType = (coinType: string, func: string): str
     console.log("funcPath", funcPath)
     return funcPath
 }
+
+export const addressToBackgroundColor = (address: string) => {
+    // Example function to compute background color from address
+    const hash = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const color = `hsl(${hash % 360}, 50%, 50%)`;
+    return color;
+};
+
+export const generateTrades = (count: number): Trade[] => {
+    const activities = ['buy', 'sell'];
+    const activity = activities[Math.floor(Math.random() * activities.length)];
+    return Array.from({ length: count }, () => ({
+        account: faker.finance.ethereumAddress(),
+        activity: activity as "buy" | "sell",
+        suiAmount: faker.number.float({min: 1, max: 80, fractionDigits: 2}),
+        coinAmount: faker.number.float({min: 1, max: 80, fractionDigits: 2}),
+        date: faker.date.recent().toLocaleDateString(),
+        transactionId: faker.datatype.uuid(),
+    }));
+};
