@@ -1,46 +1,52 @@
-'use client'
-import {Card} from "@/components/ui/card";
-import Image from "next/image";
-import {Progress} from "@/components/ui/progress";
+import Image from 'next/image';
 import {TokenFromRestAPI} from "@/lib/types";
-import {FC} from "react";
+import {Progress} from "@/components/ui/progress";
+import {Card} from "@/components/ui/card";
+import Link from "next/link";
+import {addressToBackgroundColor, getRandomNumber, largeNumberToFixedWithSymbol} from "@/lib/utils";
+import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 
-
-export const TokenCard: FC<{ token?: TokenFromRestAPI }> = ({token}) => {
-
-    if (!token) return <></>
-
+export const TokenCard = ({ token }: {token: TokenFromRestAPI}) => {
+    const fakeMarketCap = getRandomNumber(4_000, 100_000)
     return (
-        <Card className="p-4">
-            <div className="flex space-x-4 max-w-md items-center">
+        <Link href={`/token/${token.coinType}`}>
+        <Card className="p-4  flex flex-col">
+            <div className="flex space-x-4 items-center">
                 <Image
-                    src={token.iconUrl} //TODO dynamic image from on-chain config
-                    alt="Coin Logo" //TODO dynamic alt text
-                    className="w-32 h-32 flex"
-                    width={100}
-                    height={100}
+                    src={token.iconUrl}
+                    alt="Coin Logo"
+                    className="w-24 h-24"
+                    width={60}
+                    height={60}
                 />
-                <div className="flex-col space-y-2">
-                    <div className="flex space-x-4 justify-between">
-                        <div className="flex-col">
-                            <p className="text-lg">{token.name}</p>
-                            <p className="text-muted-foreground  text-sm">
-                                ${token.symbol}
+                <div className="flex h-36 flex-col flex-1">
+                    <p className="line-clamp-1 ">{token.name}</p>
+                    <p className="muted-sm">
+                        Ticker: ${token.symbol}
+                    </p>
+                    <p className="text-green-400 text-sm">
+                        Market Cap: {largeNumberToFixedWithSymbol(fakeMarketCap)}
+                    </p>
+
+                    <p className="text-sm flex items-center space-x-1.5">
+                        <span className="muted-sm">Created by:</span>
+                        <CreatorAddressChip address={token.creator} variant={"small"} showAvatar/>
+                    </p>
+                        <p className="muted-sm">
+
+                    </p>
+                        {/*<div className="text-center ml-auto">*/}
+                        {/*    <p className="text-sm text-green-400">Market Cap</p>*/}
+                        {/*    <p className="text-md text-green-400">$1,000,000,000</p>*/}
+                        {/*</div>*/}
+                        <div className="h-18">
+                            <p className="muted-xs line-clamp-3">
+                                {token.description}
                             </p>
                         </div>
-                        <div className="flex-col text-center ml-auto">
-                            <p className="text-sm text-green-400">Market Cap</p>
-                            <p className="text-md text-green-400">$1,000,000,000</p>
-                        </div>
-                    </div>
-                    <Progress value={66}/>
-                    <div className="h-18 overflow-hidden">
-                        <p className="text-muted-foreground text-xs line-clamp-3">
-                            {token.description}
-                        </p>
-                    </div>
                 </div>
             </div>
         </Card>
-    )
-}
+        </Link>
+);
+};

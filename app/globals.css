@@ -9,8 +9,18 @@ body {
 
 .navbar-link{
   @apply text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium
-
 }
+
+.muted{
+  @apply text-muted-foreground
+}
+.muted-sm{
+  @apply text-muted-foreground text-sm
+}
+.muted-xs{
+  @apply text-muted-foreground text-xs
+}
+
 
 @layer base {
   :root {

@@ -1,7 +1,6 @@
 import React from 'react';
-import Jazzicon, {jsNumberForAddress} from 'react-jazzicon';
-import Link from "next/link";
 import {formatDistanceToNow} from "date-fns";
+import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 
 export type Trade = {
     account: string;
@@ -18,11 +17,6 @@ type TradesListProps = {
     network: string;
 };
 
-// Function to generate deterministic background color based on address
-const backgroundColor = (address: string) => {
-    const hash = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return `hsl(${hash % 360}, 50%, 50%)`;
-};
 
 // Component for the trades list
 const TradesList: React.FC<TradesListProps> = ({trades, coinSymbol, network}) => {
@@ -39,15 +33,7 @@ const TradesList: React.FC<TradesListProps> = ({trades, coinSymbol, network}) =>
             {trades.map((trade, index) => (
                 <div key={index} className="flex items-center bg-gray-700 hover:bg-gray-600 p-2 my-1 rounded-lg">
                     <div className="flex-1 flex items-center justify-center space-x-2 px-4">
-                        <Link href={`/profile/${trade.account}`} className="flex items-center space-x-2">
-                            <Jazzicon diameter={24} seed={jsNumberForAddress(trade.account)}/>
-                            <span
-                                className="px-2 py-1 rounded font-mono"
-                                style={{backgroundColor: backgroundColor(trade.account)}}
-                            >
-                                {trade.account.slice(2, 8)}
-                            </span>
-                        </Link>
+                        <CreatorAddressChip address={trade.account} showAvatar={true} variant={"small"}/>
                     </div>
                     <div className="w-1/6 text-sm text-center px-4">
                         <span className={trade.activity === 'buy' ? 'text-green-500' : 'text-red-500'}>
