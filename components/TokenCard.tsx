@@ -9,8 +9,8 @@ import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 export const TokenCard = ({ token }: {token: TokenFromRestAPI}) => {
     const fakeMarketCap = getRandomNumber(4_000, 100_000)
     return (
-        <Link href={`/token/${token.coinType}`}>
-        <Card className="p-4  flex flex-col">
+        <Link href={`/coin/${token.packageId}`}>
+        <Card className="p-4  flex flex-col hover:bg-card-hover hover:border-card-hover-border">
             <div className="flex space-x-4 items-center">
                 <Image
                     src={token.iconUrl}

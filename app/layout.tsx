@@ -1,7 +1,6 @@
 'use client';
 import {Inter} from "next/font/google";
 import '@mysten/dapp-kit/dist/index.css';
-import "./globals.css";
 import Navbar from "@/components/Navbar";
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {StrictMode, useEffect, useState} from "react";
@@ -10,6 +9,9 @@ import {getFullnodeUrl} from '@mysten/sui.js/client';
 import {PrismaClient} from "@/lib/prisma/client";
 import {AppConfigContext, defaultAppConfig, PrismaClientContext} from "@/components/Contexts";
 import {Toaster} from "@/components/ui/toaster";
+import {ThemeProvider} from "@/components/ThemeProvider";
+import "./globals.css";
+
 
 const inter = Inter({subsets: ["latin"]});
 
@@ -43,22 +45,31 @@ export default function RootLayout({
     return (
         <html lang="en">
         <body className={inter.className}>
+
         <StrictMode>
-            {isClient ?
-                <AppConfigContext.Provider value={defaultAppConfig}>
-                    <PrismaClientContext.Provider value={prismaClient}>
-                        <QueryClientProvider client={queryClient}>
-                            <SuiClientProvider networks={networks} defaultNetwork="devnet">
-                                <WalletProvider>
-                                    <Navbar/>
-                                    {children}
-                                </WalletProvider>
-                            </SuiClientProvider>
-                        </QueryClientProvider>
-                    </PrismaClientContext.Provider>
-                    <Toaster />
-                </AppConfigContext.Provider> : "How dis happen?"}
+            <ThemeProvider
+                attribute="class"
+                defaultTheme="dark"
+                enableSystem
+                disableTransitionOnChange
+            >
+                {isClient ?
+                    <AppConfigContext.Provider value={defaultAppConfig}>
+                        <PrismaClientContext.Provider value={prismaClient}>
+                            <QueryClientProvider client={queryClient}>
+                                <SuiClientProvider networks={networks} defaultNetwork="devnet">
+                                    <WalletProvider>
+                                        <Navbar/>
+                                        {children}
+                                    </WalletProvider>
+                                </SuiClientProvider>
+                            </QueryClientProvider>
+                        </PrismaClientContext.Provider>
+                        <Toaster/>
+                    </AppConfigContext.Provider> : "How dis happen?"}
+            </ThemeProvider>
         </StrictMode>
+
         </body>
         </html>
     );

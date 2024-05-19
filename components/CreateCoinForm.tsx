@@ -117,7 +117,7 @@ const CreateCoinForm = () => {
                 duration: 3000,
                 action: (
                     <ToastAction altText="View your token">
-                        <Link href={"/drilldown"}>
+                        <Link href={"/coin"}>
                             Go to landing page
                         </Link>
                     </ToastAction>
