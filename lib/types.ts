@@ -19,6 +19,12 @@ export type TokenFromRestAPI = {
     updatedAt: Date
 }
 
+export type TopTokenFromRestAPI = {
+    newest: TokenFromRestAPI,
+    hottest: TokenFromRestAPI,
+    imminent: TokenFromRestAPI
+}
+
 export type TokenFromChain = TokenFromRestAPI
 
 //
