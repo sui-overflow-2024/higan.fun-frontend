@@ -24,6 +24,15 @@ export type TopTokenFromRestAPI = {
     hottest: TokenFromRestAPI,
     imminent: TokenFromRestAPI
 }
+export type TradeFromRestAPI = {
+    id: int,
+    isBuy: boolean,
+    suiAmount: int,
+    coinAmount: int,
+    account: string,
+    createdAt: Date,
+    transactionId: string
+}
 
 export type TokenFromChain = TokenFromRestAPI
 

@@ -1,5 +1,5 @@
 import {AppConfig} from "@/components/Contexts";
-import {TokenFromRestAPI, TopTokenFromRestAPI} from "@/lib/types";
+import {TokenFromRestAPI, TopTokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {Prisma} from "@/lib/prisma/client";
 import {Fetcher} from "swr";
 
@@ -35,6 +35,11 @@ export const coinRestApi: CoinRestApi = {
     getById: async ({appConfig, packageId}) => {
         const res = await appConfig.axios.get<TokenFromRestAPI>(`/coins/${packageId}`)
         console.log("Retrieved the following coin from the REST API", res.data)
+        return res.data
+    },
+    getTrades: async ({appConfig, packageId}): Promise<TradeFromRestAPI> => {
+        const res = await appConfig.axios.get<TradeFromRestAPI>(`/coins/${packageId}/trades`)
+        console.log("Retrieved the following trades from the REST API", res.data)
         return res.data
     },
     post: async ({appConfig, token}) => {

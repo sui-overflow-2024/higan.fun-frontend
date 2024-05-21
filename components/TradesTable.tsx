@@ -1,6 +1,7 @@
 import React from 'react';
 import {formatDistanceToNow} from "date-fns";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
+import { getValueWithDecimals } from "@/lib/utils";
 
 export type Trade = {
     account: string;
@@ -36,14 +37,14 @@ const TradesList: React.FC<TradesListProps> = ({trades, coinSymbol, network}) =>
                         <CreatorAddressChip address={trade.account} showAvatar={true} variant={"small"}/>
                     </div>
                     <div className="w-1/6 text-sm text-center px-4">
-                        <span className={trade.activity === 'buy' ? 'text-green-500' : 'text-red-500'}>
-                            {trade.activity}
+                        <span className={trade.isBuy ? 'text-green-500' : 'text-red-500'}>
+                            {trade.isBuy ? 'Buy' : 'Sell'}
                         </span>
                     </div>
-                    <div className="w-1/6 text-sm text-center px-4">{trade.suiAmount}</div>
-                    <div className="w-1/6 text-sm text-center px-4">{trade.coinAmount}</div>
+                    <div className="w-1/6 text-sm text-center px-4">{getValueWithDecimals(trade.suiAmount, 9, 4)}</div>
+                    <div className="w-1/6 text-sm text-center px-4">{getValueWithDecimals(trade.coinAmount, 3)}</div>
                     <div className="w-1/6 text-sm text-center px-4">
-                        {formatDistanceToNow(new Date(trade.date), {addSuffix: true})}
+                        {formatDistanceToNow(new Date(trade.createdAt), {addSuffix: true})}
                     </div>
                     <div className="w-1/6 text-sm text-center px-4">
                         <a

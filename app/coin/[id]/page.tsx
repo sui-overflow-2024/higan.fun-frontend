@@ -1,8 +1,8 @@
 'use client';
-import {TokenFromRestAPI} from "@/lib/types";
+import {TokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {addressToBackgroundColor, generateTrades} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
-import {Dispatch, SetStateAction, useContext, useState} from "react";
+import {Dispatch, SetStateAction, useState, useContext, useEffect} from "react";
 import twitterLogo from '@/public/twitter.png';
 import telegramLogo from '@/public/telegram.png';
 import webLogo from '@/public/world-wide-web.png';
@@ -197,14 +197,30 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({ token, holders, totalSupply
 
 
 export default function Drilldown() {
-    const [activePanel, setActivePanel] = useState<"thread" | "trades">('trades');
-    const packageId = usePathname().split('/').pop() || '';
     const appConfig = useContext(AppConfigContext)
+    const [activePanel, setActivePanel] = useState<"thread" | "trades">('trades');
+    const [trades, setTrades] = useState<TradeFromRestAPI[]>([]);
+    const packageId = usePathname().split('/').pop() || '';
     const account = useCurrentAccount()
     const suiContext = useSuiClientContext()
-    const trades = generateTrades(15);
+    // const trades = generateTrades(15);
 
     const {data: token, error: tokenError} = useSWR({appConfig, packageId}, coinRestApi.getById)
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            const fetchTrades = async () => {
+                const t = await coinRestApi.getTrades({appConfig, packageId})
+                console.log("Fetched trades", t)
+                setTrades(t);
+            }
+
+            fetchTrades()
+        }, 2000);
+
+          // Clear the interval when the component is unmounted
+        return () => clearInterval(intervalId);
+    }, [token]);
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
     if (!token) return (<div>Loading...</div>)
