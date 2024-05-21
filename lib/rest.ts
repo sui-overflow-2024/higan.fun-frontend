@@ -14,6 +14,7 @@ type CoinRestApi = {
     search: Fetcher<TokenFromRestAPI[], { appConfig: AppConfig, term: string, sort: string, order: string }>,
     getTop: Fetcher<TopTokenFromRestAPI, { appConfig: AppConfig }>,
     getById: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, packageId: string }>,
+    getTrades: Fetcher<TradeFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
     post: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: Prisma.CoinCreateInput }>
 }
 export const coinRestApi: CoinRestApi = {
@@ -37,8 +38,8 @@ export const coinRestApi: CoinRestApi = {
         console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
-    getTrades: async ({appConfig, packageId}): Promise<TradeFromRestAPI> => {
-        const res = await appConfig.axios.get<TradeFromRestAPI>(`/coins/${packageId}/trades`)
+    getTrades: async ({appConfig, packageId}): Promise<TradeFromRestAPI[]> => {
+        const res = await appConfig.axios.get<TradeFromRestAPI[]>(`/coins/${packageId}/trades`)
         console.log("Retrieved the following trades from the REST API", res.data)
         return res.data
     },
