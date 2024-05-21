@@ -2,7 +2,7 @@
 import {TokenFromRestAPI} from "@/lib/types";
 import {addressToBackgroundColor, generateTrades} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
-import {Dispatch, SetStateAction, useState} from "react";
+import {Dispatch, SetStateAction, useContext, useState} from "react";
 import twitterLogo from '@/public/twitter.png';
 import telegramLogo from '@/public/telegram.png';
 import webLogo from '@/public/world-wide-web.png';
@@ -11,6 +11,12 @@ import {BuySellDialog} from "@/components/BuySellDialog";
 import TradesTable from "@/components/TradesTable";
 import {useQuery} from "@tanstack/react-query";
 import {faker} from "@faker-js/faker";
+import useSWR from "swr";
+import {coinRestApi} from "@/lib/rest";
+import * as React from "react";
+import {usePathname, useSearchParams} from "next/navigation";
+import {AppConfigContext} from "@/components/Contexts";
+import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
 
 
 type CoinMetadataProps = {
@@ -79,14 +85,14 @@ const ActivePanelButtons: React.FC<{
                 <Button
                     size={'sm'}
                     onClick={() => setActivePanel('thread')}
-                    className={activePanel === 'thread' ? 'bg-blue-500' : ''}
+                    variant={activePanel === 'thread' ? 'default' : 'outline'}
                 >
                     Thread
                 </Button>
                 <Button
                     size={'sm'}
                     onClick={() => setActivePanel('trades')}
-                    className={activePanel === 'trades' ? 'bg-blue-500' : ''}
+                    className={activePanel === 'trades' ? 'default' : 'outline'}
                 >
                     Trades
                 </Button>
@@ -192,38 +198,22 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({ token, holders, totalSupply
 
 export default function Drilldown() {
     const [activePanel, setActivePanel] = useState<"thread" | "trades">('trades');
-
-// Generate initial data with faker
-
+    const packageId = usePathname().split('/').pop() || '';
+    const appConfig = useContext(AppConfigContext)
+    const account = useCurrentAccount()
+    const suiContext = useSuiClientContext()
     const trades = generateTrades(15);
-    const coinSymbol = 'TST';
-    const network = 'devnet';
 
-    const exampleToken = {
-        "packageId": "0xa512bbe7d3f75b0b91310057bbbac67aa4f3e1eda49c345fd00c3cfa7fd47c5b",
-        "module": "coin_example",
-        "storeId": "0x8cb5bc618d9943730a9404ad11143b9588dcd2033033cb6ded0c1bf87c4ceab3",
-        "creator": "0x7176223a57d720111be2c805139be7192fc5522597e6210ae35d4b2199949501",
-        "decimals": 3,
-        "name": "Test Coin",
-        "symbol": "TST",
-        "description": "This is a test coin",
-        "iconUrl": "https://example.com/icon.png",
-        "website": "http://example.com",
-        "twitterUrl": "",
-        "discordUrl": "",
-        "telegramUrl": "",
-        "whitepaperUrl": "",
-        "coinType": `0xa512bbe7d3f75b0b91310057bbbac67aa4f3e1eda49c345fd00c3cfa7fd47c5b::coin_example::COIN_EXAMPLE`,
-        "createdAt": new Date(),
-        "updatedAt": new Date(),
-    }
+    const {data: token, error: tokenError} = useSWR({appConfig, packageId}, coinRestApi.getById)
+
+    if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
+    if (!token) return (<div>Loading...</div>)
 
     const exampleHolders: Holder[] = [
         { address: 'abcdef', balance: 700000 }, // Example holder with bonding curve
         { address: faker.finance.ethereumAddress(), balance: 100000 }, // Example creator
         { address: faker.finance.ethereumAddress(), balance: 100000 },
-        { address: exampleToken.creator, balance: 50000 },
+        { address: account?.address || faker.finance.ethereumAddress(), balance: 50000 },
         { address: faker.finance.ethereumAddress(), balance: 50000 },
         { address: faker.finance.ethereumAddress(), balance: 50000 },
         { address: faker.finance.ethereumAddress(), balance: 50000 },
@@ -245,7 +235,7 @@ export default function Drilldown() {
 
                 <main className="grid grid-cols-3 gap-8 mt-4">
                     <section className="col-span-2 space-y-4">
-                        <CoinMetadata token={exampleToken}/>
+                        <CoinMetadata token={token}/>
                         <div className="bg-gray-700 p-4 min-h-[300px] flex items-center justify-center">
                             <h2 className="text-lg">TradingView Placeholder</h2>
                         </div>
@@ -255,19 +245,19 @@ export default function Drilldown() {
                                 <ActivePanelButtons activePanel={activePanel} setActivePanel={setActivePanel}/>
                             </div>
                             <div className="flex space-x-4">
-                                <SocialLinks token={exampleToken}/>
+                                <SocialLinks token={token}/>
                             </div>
                         </div>
                         <div className="p-2">
-                            <TradesTable trades={trades} coinSymbol={exampleToken.symbol} network={network}/>
+                            <TradesTable trades={trades} coinSymbol={token.symbol} network={suiContext.network || "mainnet"}/>
                         </div>
                     </section>
 
 
                     <aside className="space-y-4">
-                        <BuySellDialog/>
-                            <CoinDetails token={exampleToken}/>
-                        <TokenHolders token={exampleToken} holders={exampleHolders} totalSupply={totalSupply}/>
+                            <BuySellDialog token={token}/>
+                            <CoinDetails token={token}/>
+                            <TokenHolders token={token} holders={exampleHolders} totalSupply={totalSupply}/>
                     </aside>
                 </main>
             </div>

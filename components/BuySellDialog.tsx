@@ -9,7 +9,6 @@ import {TokenFromRestAPI} from "@/lib/types";
 import {
     ConnectButton,
     useCurrentAccount,
-    useCurrentWallet,
     useSignAndExecuteTransactionBlock,
     useSuiClient,
     useSuiClientQuery
@@ -20,6 +19,7 @@ import {TransactionBlock,} from "@mysten/sui.js/transactions";
 import {bcs} from "@mysten/sui.js/bcs";
 import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 import {useForm} from "react-hook-form";
+import useSWR, {Fetcher} from "swr";
 
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
@@ -244,11 +244,16 @@ export const getSellCoinPriceTxb = (coinType: string, storeId: string, amount: n
     return txb
 }
 
-export const getPrice = async (client: SuiClient, sender: string, coinType: string, storeId: string, amount: number, mode: "buy" | "sell"): Promise<number> => {
+export const getPrice: Fetcher<number, {
+    client: SuiClient,
+    sender: string,
+    coinType: string,
+    storeId: string,
+    amount: number,
+    mode: "buy" | "sell"
+}> = async ({client, sender, coinType, storeId, amount, mode}): Promise<number> => {
     console.log(`get coin ${mode} price`, sender)
     const txb = mode === "buy" ? getBuyCoinPriceTxb(coinType, storeId, amount) : getSellCoinPriceTxb(coinType, storeId, amount)
-
-
     txb.setSenderIfNotSet(sender)
 
     const res = await client.devInspectTransactionBlock({
@@ -261,50 +266,16 @@ export const getPrice = async (client: SuiClient, sender: string, coinType: stri
 }
 
 
-export const BuySellDialog: React.FC<{}> = () => {
+export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
+
+
     const suiClient = useSuiClient()
     const currentAccount = useCurrentAccount()
-    const currentWallet = useCurrentWallet()
     const appConfig = useContext(AppConfigContext)
-    const {data, refetch, error, isError} = useSuiClientQuery("getObject", {
-      id: "coinTesfhjfhf"
-    })
-    const [token, setToken] = useState<TokenFromRestAPI>()
-    useEffect(() => {
-        const fetchToken = async () => {
-            const t = await coinRestApi.getById(appConfig, "0x443b012ada487098577eb07008fb95caa5eb152e8af4bd85c0cef41ac67bb101")
-            console.log("Fetched token", t)
-            setToken(t)
-        }
-        fetchToken()
-    }, [])
 
-
-    const exampleToken = {
-        "packageId": "0xa512bbe7d3f75b0b91310057bbbac67aa4f3e1eda49c345fd00c3cfa7fd47c5b",
-        "module": "coin_example",
-        "storeId": "0x8cb5bc618d9943730a9404ad11143b9588dcd2033033cb6ded0c1bf87c4ceab3",
-        "creator": "somecreator",
-        "decimals": 3,
-        "name": "Test Coin",
-        "symbol": "TST",
-        "description": "This is a test coin",
-        "iconUrl": "https://example.com/icon.png",
-        "website": "http://example.com",
-        "twitterUrl": "",
-        "discordUrl": "",
-        "telegramUrl": "",
-        "whitepaperUrl": "",
-        "coinType": `0xa512bbe7d3f75b0b91310057bbbac67aa4f3e1eda49c345fd00c3cfa7fd47c5b::coin_example::COIN_EXAMPLE`,
-        "createdAt": new Date(),
-        "updatedAt": new Date(),
-    }
 
     const {mutate: signAndExecuteTransactionBlock} = useSignAndExecuteTransactionBlock();
     const [mode, setMode] = useState<"buy" | "sell">("buy")
-    const [baseToken, setBaseToken] = useState<TokenFromRestAPI>(exampleToken)
-    const [targetPrice, setTargetPrice] = useState(0)
-    const [targetPriceDisplay, setTargetPriceDisplay] = useState("")
     const [userBalance, setUserBalance] = useState(0)
     const [baseTokenCoins, setBaseTokenCoins] = useState<CoinStruct[]>([])
     const {register, handleSubmit, watch, formState: {errors,}} = useForm<{
@@ -314,55 +285,54 @@ export const BuySellDialog: React.FC<{}> = () => {
             amount: 0
         }
     });
-    const multiplier = baseToken.decimals > 0 ? Math.pow(10, baseToken.decimals) : 1
+    const multiplier = (token?.decimals || 0) > 0 ? Math.pow(10, token?.decimals || 0) : 1
     const amount = watch("amount") * multiplier
 
     const {data: storeRaw, refetch: refetchStore} = useSuiClientQuery("getObject", {
-        id: baseToken.storeId,
+        id: token?.storeId || "",
         options: {
             showDisplay: true,
             showContent: true,
         }
     })
+    const {data: price, error: priceError} = useSWR({
+        client: suiClient,
+        sender: currentAccount?.address || "",
+        coinType: token?.coinType || "",
+        storeId: token?.storeId || "",
+        amount: amount,
+        mode: mode
+    }, getPrice)
 
-    useEffect(() => {
-        if (!watch("amount")) return
-        const fetchPrice = async () => {
-            // await refetchStore()
-            console.log("Fetching price for ", mode)
-            const price = await getPrice(suiClient, currentAccount?.address || "", baseToken.coinType, baseToken.storeId, amount, mode)
-            console.log("Target price is", price)
-            setTargetPrice(price)
-            // TODO Below works because Sui token is always the target
-            setTargetPriceDisplay(getValueWithDecimals(price, 9, 4))
-        }
-        fetchPrice()
-    }, [amount, baseToken, currentAccount?.address, mode, suiClient, watch])
 
     useEffect(() => {
         const fetchBalance = async () => {
+            if (!token) return
             const balance = await suiClient.getBalance({
                 owner: currentAccount?.address || "",
-                coinType: getCoinPath(baseToken),
+                coinType: getCoinPath(token),
             })
             setUserBalance(parseInt(balance.totalBalance || "0"))
 
             const coins = await getAllUserCoins({
                 suiClient: suiClient,
-                type: getCoinPath(baseToken),
+                type: getCoinPath(token),
                 address: currentAccount?.address || "",
             });
             setBaseTokenCoins(coins)
         }
         fetchBalance()
-    }, [baseToken, currentAccount?.address, suiClient])
+    }, [token, currentAccount?.address, suiClient])
+
+    if (priceError) return (<div>Error fetching price {priceError.message}</div>)
+    if (!price) return (<div>Loading...</div>)
 
     return (<Card>
             <CardHeader>
-                <div className={"flex justify-between min-w-[400px]"}>
+                <div className={"flex justify-between"}>
                     <Button
-                        className={"min-w-36 bg-accent"}
-                        variant={mode !== "buy" ? "default" : "secondary"}
+                        className={"min-w-36"}
+                        variant={mode === "buy" ? "default" : "outline"}
                         onClick={() => setMode("buy")}>
                         Buy
                     </Button>
@@ -433,11 +403,11 @@ export const BuySellDialog: React.FC<{}> = () => {
                         </div>
                     </div>
                     <div className={"text-center"}>
-                        {targetPrice > 0 && <div>
+                        {price > 0 && <div>
                             <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>
                             <div className={"flex space-x-2 justify-center"}>
                                 <Image src={"./sui-sea.svg"} alt={"Sui Logo"} width={20} height={20}/>
-                                <div className={"text-xl"}>~{targetPriceDisplay} SUI</div>
+                                <div className={"text-xl"}>~{getValueWithDecimals(price, 9, 4)} SUI</div>
                             </div>
                         </div>}
                         {process.env.NODE_ENV === "development" && <div className={"text-muted-foreground text-xs"}>
@@ -445,16 +415,18 @@ export const BuySellDialog: React.FC<{}> = () => {
                         </div>}
                     </div>
                     {/*{controls[1]}*/}
-                    {currentAccount ?
-                        <Button className={"min-w-72"} onClick={() => signAndExecuteTransactionBlock({
-                            transactionBlock: mode === "buy"
-                                ? generateBuyPtb(exampleToken, [], amount)
-                                : generateSellPtb(exampleToken, baseTokenCoins, amount),
-                            chain: 'sui:devnet',
-                        })}>
-                            {mode === "buy" ? "Buy" : "Sell"}
-                        </Button> : <ConnectButton/>
-                    }
+                    <div className={"flex justify-center"}>
+                        {currentAccount ?
+                            <Button className={"min-w-56"} onClick={() => signAndExecuteTransactionBlock({
+                                transactionBlock: mode === "buy"
+                                    ? generateBuyPtb(token, [], amount)
+                                    : generateSellPtb(token, baseTokenCoins, amount),
+                                chain: 'sui:devnet',
+                            })}>
+                                {mode === "buy" ? "Buy" : "Sell"}
+                            </Button> : <ConnectButton/>
+                        }
+                    </div>
                 </div>
             </CardContent>
         </Card>

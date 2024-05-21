@@ -109,7 +109,7 @@ const CreateCoinForm = () => {
         try {
             // const result = await appConfig.axios.post("/coins", data)
 
-            const result = await coinRestApi.post(appConfig, data) //TODO Fix this
+            const result = await coinRestApi.post({appConfig, token: data}) //TODO Fix this
             // TODO, take packageId from the result, link to sui explorer, link must be aware of the network the user currently has selected
             // Couldn't do this first pass because the dapp docs were broken
             toast({
