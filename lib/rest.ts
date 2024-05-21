@@ -1,5 +1,5 @@
 import {AppConfig} from "@/components/Contexts";
-import {TokenFromRestAPI} from "@/lib/types";
+import {TokenFromRestAPI, TopTokenFromRestAPI} from "@/lib/types";
 import {Prisma} from "@/lib/prisma/client";
 import {Fetcher} from "swr";
 
@@ -8,14 +8,27 @@ type CoinRestApi = {
         appConfig: AppConfig,
         packageIds: string[],
         limit: number,
-        sortOrder: "asc" | "desc"
+        order: string,
+        sort: string
     }>,
+    search: Fetcher<TokenFromRestAPI[], { appConfig: AppConfig, term: string, sort: string, order: string }>,
+    getTop: Fetcher<TopTokenFromRestAPI, { appConfig: AppConfig }>,
     getById: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, packageId: string }>,
     post: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: Prisma.CoinCreateInput }>
 }
 export const coinRestApi: CoinRestApi = {
-    getAll: async ({appConfig, packageIds, limit, sortOrder}) => {
+    getAll: async ({appConfig, packageIds, limit, sort, order,}) => {
         const res = await appConfig.axios.get<TokenFromRestAPI[]>(`/coins`)
+        console.log("Retrieved the following coin from the REST API", res.data)
+        return res.data
+    },
+    search: async ({appConfig, term, sort, order}): Promise<TokenFromRestAPI[]> => {
+        const res = await appConfig.axios.get<TokenFromRestAPI[]>(`/coins/search?term=${term}&order=${order}&sort=${sort}`)
+        console.log("Retrieved the following coin from the REST API", res.data)
+        return res.data
+    },
+    getTop: async ({appConfig}): Promise<TopTokenFromRestAPI> => {
+        const res = await appConfig.axios.get<TopTokenFromRestAPI>(`/top_coins`)
         console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
