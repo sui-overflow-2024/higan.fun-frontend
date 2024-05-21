@@ -12,7 +12,7 @@ export const TokenCard = ({ token }: {token: TokenFromRestAPI}) => {
         <Link href={`/coin/${token.packageId}`}>
         <Card className="p-4  flex flex-col hover:bg-card-hover hover:border-card-hover-border">
             <div className="flex space-x-4 items-center">
-                <Image
+                <img
                     src={token.iconUrl}
                     alt="Coin Logo"
                     className="w-24 h-24"
