@@ -17,6 +17,7 @@ import * as React from "react";
 import {usePathname, useSearchParams} from "next/navigation";
 import {AppConfigContext} from "@/components/Contexts";
 import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
+import {CoinThread} from "@/components/CoinThread";
 
 
 type CoinMetadataProps = {
@@ -198,7 +199,7 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({ token, holders, totalSupply
 
 export default function Drilldown() {
     const appConfig = useContext(AppConfigContext)
-    const [activePanel, setActivePanel] = useState<"thread" | "trades">('trades');
+    const [activePanel, setActivePanel] = useState<"thread" | "trades">('thread');
     const [trades, setTrades] = useState<TradeFromRestAPI[]>([]);
     const packageId = usePathname().split('/').pop() || '';
     const account = useCurrentAccount()
@@ -224,6 +225,7 @@ export default function Drilldown() {
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
     if (!token) return (<div>Loading...</div>)
+    console.log("token creator", token.creator)
 
     const exampleHolders: Holder[] = [
         { address: 'abcdef', balance: 700000 }, // Example holder with bonding curve
@@ -242,6 +244,89 @@ export default function Drilldown() {
         { address: faker.finance.ethereumAddress(), balance: 50000 },
         // Add more holders as needed
     ];
+
+    const posts = [
+        {
+            id: 1,
+            coinId: '1',
+            suiAddress: account?.address || '',
+            text: 'To live in the light, you must kill the darkness. Release this summer ⚔️⚡🔥',
+            likes: 100,
+            createdAt: new Date()
+        },
+        {
+            id: 2,
+            coinId: '1',
+            suiAddress: faker.finance.ethereumAddress(),
+            text: '**The light is coming**. [Are you ready](www.google.com)? ⚔️⚡🔥',
+            likes: 200,
+            createdAt: new Date()
+        },
+        {
+            id: 3,
+            coinId: '1',
+            suiAddress: faker.finance.ethereumAddress(),
+            text: 'The light is coming. <img src="https://pump.fun/_next/image?url=%2Flogo.png&w=64&q=75"/> Are you ready? ⚔️⚡🔥',
+            likes: 300,
+            createdAt: new Date()
+        },
+        {
+            id: 4,
+            coinId: '1',
+            suiAddress: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min:10 , max: 20}}),
+            likes: 400,
+            createdAt: new Date()
+        },
+        {
+            id: 5,
+            coinId: '1',
+            suiAddress: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min:10 , max: 20}}),
+            likes: 400,
+            createdAt: new Date()
+        },
+        {
+            id: 6,
+            coinId: '1',
+            suiAddress: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min:10 , max: 20}}),
+            likes: 400,
+            createdAt: new Date()
+        },
+        {
+            id: 7,
+            coinId: '1',
+            suiAddress: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min:10 , max: 20}}),
+            likes: 400,
+            createdAt: new Date()
+        },
+        {
+            id: 8,
+            coinId: '1',
+            suiAddress: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min:10 , max: 20}}),
+            likes: 400,
+            createdAt: new Date()
+        },
+        {
+            id: 9,
+            coinId: '1',
+            suiAddress: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min:10 , max: 20}}),
+            likes: 400,
+            createdAt: new Date()
+        },
+        {
+            id: 10,
+            coinId: '1',
+            suiAddress: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min:10 , max: 20}}),
+            likes: 400,
+            createdAt: new Date()
+        },
+        ]
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
 
     return (
@@ -265,7 +350,10 @@ export default function Drilldown() {
                             </div>
                         </div>
                         <div className="p-2">
-                            <TradesTable trades={trades} coinSymbol={token.symbol} network={suiContext.network || "mainnet"}/>
+                            {activePanel === 'thread'
+                            ? <CoinThread creator={token.creator || ""} posts={posts} />
+                                :  <TradesTable trades={trades} coinSymbol={token.symbol} network={suiContext.network || "mainnet"}/>}
+
                         </div>
                     </section>
 

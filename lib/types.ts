@@ -24,14 +24,24 @@ export type TopTokenFromRestAPI = {
     hottest: TokenFromRestAPI,
     imminent: TokenFromRestAPI
 }
+
 export type TradeFromRestAPI = {
-    id: int,
+    id: number,
     isBuy: boolean,
-    suiAmount: int,
-    coinAmount: int,
+    suiAmount: number,
+    coinAmount: number,
     account: string,
     createdAt: Date,
     transactionId: string
+}
+
+export type CoinPost = {
+    id: bigint,
+    coinId: string,
+    suiAddress: string,
+    text: string,
+    likes: number,
+    createdAt: Date,
 }
 
 export type TokenFromChain = TokenFromRestAPI
@@ -45,3 +55,5 @@ export type TokenFromChain = TokenFromRestAPI
 //     discordUrl: string,
 //     telegramUrl: string,
 // }
+
+

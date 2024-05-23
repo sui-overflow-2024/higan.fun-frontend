@@ -9,6 +9,7 @@ type CreatorAddressChipProps = {
     showAvatar?: boolean;
     avatarImageUrl?: string;
     variant?: "small" | "default" | "large";
+    isCreator?: boolean;
 }
 
 const avatarVariants = {
@@ -43,7 +44,8 @@ export const CreatorAddressChip: FC<CreatorAddressChipProps> = ({
                                                                     address,
                                                                     showAvatar,
                                                                     avatarImageUrl,
-                                                                    variant = "default"
+                                                                    variant = "default",
+                                                                    isCreator = false,
                                                                 }) => {
     const config = avatarVariants[variant]
     let avatar = <Jazzicon diameter={config.jazziconDiam} seed={jsNumberForAddress(address)}/>
@@ -56,7 +58,7 @@ export const CreatorAddressChip: FC<CreatorAddressChipProps> = ({
         {showAvatar && avatar}
         <span className={config.textClass}
               style={{backgroundColor: addressToBackgroundColor(address)}}>
-                {config.text(address)}
+                {config.text(address)} {isCreator && "(dev)"}
             </span>
     </Link>
 }
