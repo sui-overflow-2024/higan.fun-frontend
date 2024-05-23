@@ -2,18 +2,19 @@ import React from 'react';
 import {formatDistanceToNow} from "date-fns";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import { getValueWithDecimals } from "@/lib/utils";
+import { TradeFromRestAPI } from "@/rest/types";
 
-export type Trade = {
-    account: string;
-    activity: 'buy' | 'sell';
-    suiAmount: number;
-    coinAmount: number;
-    date: string;
-    transactionId: string;
-};
+// export type TradeFromRestAPI = {
+//     account: string;
+//     isBuy: boolean,
+//     suiAmount: number;
+//     coinAmount: number;
+//     createdAt: string;
+//     transactionId: string;
+// };
 
 type TradesListProps = {
-    trades: Trade[];
+    trades: TradeFromRestAPI[];
     coinSymbol: string;
     network: string;
 };

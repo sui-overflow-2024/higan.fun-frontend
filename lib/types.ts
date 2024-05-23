@@ -35,6 +35,14 @@ export type TradeFromRestAPI = {
     transactionId: string
 }
 
+export type PostFromRestAPI = {
+    id: number,
+    coinId: string,
+    authorId: string,
+    text: string,
+    createdAt: Date,
+}
+
 export type CoinPost = {
     id: bigint,
     coinId: string,

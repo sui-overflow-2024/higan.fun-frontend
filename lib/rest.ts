@@ -1,6 +1,6 @@
 import {AppConfig} from "@/components/Contexts";
-import {TokenFromRestAPI, TopTokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {Post, Prisma} from "@/lib/prisma/client";
+import {TokenFromRestAPI, TopTokenFromRestAPI, TradeFromRestAPI, PostFromRestAPI} from "@/lib/types";
 import {Fetcher} from "swr";
 
 export type ThreadPostRequest = {
@@ -24,6 +24,7 @@ type CoinRestApi = {
     getTrades: Fetcher<TradeFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
     postCoin: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: Prisma.CoinCreateInput }>
     postThread: Fetcher<Post, { appConfig: AppConfig, post: ThreadPostRequest }>
+    getThreads: Fetcher<PostFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
 }
 
 // model Post {
@@ -64,6 +65,11 @@ export const coinRestApi: CoinRestApi = {
     getTrades: async ({appConfig, packageId}): Promise<TradeFromRestAPI[]> => {
         const res = await appConfig.axios.get<TradeFromRestAPI[]>(`/coins/${packageId}/trades`)
         console.log("Retrieved the following trades from the REST API", res.data)
+        return res.data
+    },
+    getThreads: async ({appConfig, packageId}): Promise<PostFromRestAPI[]> => {
+        const res = await appConfig.axios.get<PostFromRestAPI[]>(`/coin/${packageId}/posts`)
+        console.log("Retrieved the following posts from the REST API", res.data)
         return res.data
     },
     postCoin: async ({appConfig, token}) => {

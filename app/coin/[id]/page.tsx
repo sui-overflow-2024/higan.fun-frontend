@@ -1,5 +1,5 @@
 'use client';
-import {TokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
+import {TokenFromRestAPI, TradeFromRestAPI, PostFromRestAPI} from "@/lib/types";
 import {addressToBackgroundColor} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
@@ -10,6 +10,8 @@ import webLogo from '@/public/world-wide-web.png';
 import Image from "next/image";
 import {BuySellDialog} from "@/components/BuySellDialog";
 import TradesTable from "@/components/TradesTable";
+import TradesChart from "@/components/TradesChart";
+import {useQuery} from "@tanstack/react-query";
 import {faker} from "@faker-js/faker";
 import useSWR from "swr";
 import {coinRestApi} from "@/lib/rest";
@@ -17,7 +19,6 @@ import {usePathname} from "next/navigation";
 import {AppConfigContext} from "@/components/Contexts";
 import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
-
 
 type CoinMetadataProps = {
     token: TokenFromRestAPI;
@@ -202,6 +203,7 @@ export default function Drilldown() {
     const appConfig = useContext(AppConfigContext)
     const [activePanel, setActivePanel] = useState<"thread" | "trades">('thread');
     const [trades, setTrades] = useState<TradeFromRestAPI[]>([]);
+    const [posts, setPosts] = useState<PostFromRestAPI[]>([]);
     const packageId = usePathname().split('/').pop() || '';
     const account = useCurrentAccount()
     const suiContext = useSuiClientContext()
@@ -224,6 +226,21 @@ export default function Drilldown() {
         return () => clearInterval(intervalId);
     }, [token]);
 
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            const fetchPosts = async () => {
+                const p = await coinRestApi.getThreads({appConfig, packageId})
+                console.log("Fetched posts", p)
+                setPosts(p);
+            }
+
+            fetchPosts()
+        }, 2000);
+
+          // Clear the interval when the component is unmounted
+        return () => clearInterval(intervalId);
+    }, []);
+
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
     if (!token) return (<div>Loading...</div>)
 
@@ -245,91 +262,11 @@ export default function Drilldown() {
         // Add more holders as needed
     ];
 
-    const posts = [
-        {
-            id: 1,
-            coinId: '1',
-            author: account?.address || '',
-            text: 'To live in the light, you must kill the darkness. Release this summer ⚔️⚡🔥',
-            likes: 100,
-            createdAt: new Date()
-        },
-        {
-            id: 2,
-            coinId: '1',
-            author: faker.finance.ethereumAddress(),
-            text: '**The light is coming**. [Are you ready](www.google.com)? ⚔️⚡🔥',
-            likes: 200,
-            createdAt: new Date()
-        },
-        {
-            id: 3,
-            coinId: '1',
-            author: faker.finance.ethereumAddress(),
-            text: 'The light is coming. <img src="https://pump.fun/_next/image?url=%2Flogo.png&w=64&q=75"/> Are you ready? ⚔️⚡🔥',
-            likes: 300,
-            createdAt: new Date()
-        },
-        {
-            id: 4,
-            coinId: '1',
-            author: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min: 10, max: 20}}),
-            likes: 400,
-            createdAt: new Date()
-        },
-        {
-            id: 5,
-            coinId: '1',
-            author: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min: 10, max: 20}}),
-            likes: 400,
-            createdAt: new Date()
-        },
-        {
-            id: 6,
-            coinId: '1',
-            author: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min: 10, max: 20}}),
-            likes: 400,
-            createdAt: new Date()
-        },
-        {
-            id: 7,
-            coinId: '1',
-            author: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min: 10, max: 20}}),
-            likes: 400,
-            createdAt: new Date()
-        },
-        {
-            id: 8,
-            coinId: '1',
-            author: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min: 10, max: 20}}),
-            likes: 400,
-            createdAt: new Date()
-        },
-        {
-            id: 9,
-            coinId: '1',
-            author: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min: 10, max: 20}}),
-            likes: 400,
-            createdAt: new Date()
-        },
-        {
-            id: 10,
-            coinId: '1',
-            author: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min: 10, max: 20}}),
-            likes: 400,
-            createdAt: new Date()
-        },
-    ]
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
+    const tradesChartData =trades.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
     return (
+        // <div className="bg-gray-700 p-4 min-h-[300px] flex items-center justify-center">
         // <main className="bg-background flex min-h-screen flex-col items-center justify-between p-24">
         <div className="min-h-screen bg-gray-900 p-4 text-white">
             <div className="container mx-auto">
@@ -337,8 +274,8 @@ export default function Drilldown() {
                 <main className="grid grid-cols-3 gap-8 mt-4">
                     <section className="col-span-2 space-y-4">
                         <CoinMetadata token={token}/>
-                        <div className="bg-gray-700 p-4 min-h-[300px] flex items-center justify-center">
-                            <h2 className="text-lg">TradingView Placeholder</h2>
+                        <div className="bg-gray-700 min-h-[300px]">
+                             <TradesChart trades={tradesChartData} />
                         </div>
 
                         <div className="flex justify-between p-2">
