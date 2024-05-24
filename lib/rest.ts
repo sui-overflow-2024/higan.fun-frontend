@@ -1,7 +1,14 @@
 import {AppConfig} from "@/components/Contexts";
 import {TokenFromRestAPI, TopTokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
-import {Prisma} from "@/lib/prisma/client";
+import {Post, Prisma} from "@/lib/prisma/client";
 import {Fetcher} from "swr";
+
+export type ThreadPostRequest = {
+    coinId: string,
+    text: string,
+    signature: string,
+    author: string,
+}
 
 type CoinRestApi = {
     getAll: Fetcher<TokenFromRestAPI[], {
@@ -15,8 +22,24 @@ type CoinRestApi = {
     getTop: Fetcher<TopTokenFromRestAPI, { appConfig: AppConfig }>,
     getById: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, packageId: string }>,
     getTrades: Fetcher<TradeFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
-    post: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: Prisma.CoinCreateInput }>
+    postCoin: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: Prisma.CoinCreateInput }>
+    postThread: Fetcher<Post, { appConfig: AppConfig, post: ThreadPostRequest }>
 }
+
+// model Post {
+//     id       BigInt @id @default(autoincrement())
+//     coinId   String
+//     author String @default("")
+//     text     String
+//     // text     String @db.VarChar(1000)
+//     likes    Int    @default(0)
+//     // author   User   @relation(fields: [authorId], references: [id])
+//     coin     Coin   @relation(fields: [coinId], references: [packageId])
+//     createdAt DateTime @default(now())
+// }
+
+
+
 export const coinRestApi: CoinRestApi = {
     getAll: async ({appConfig, packageIds, limit, sort, order,}) => {
         const res = await appConfig.axios.get<TokenFromRestAPI[]>(`/coins`)
@@ -43,10 +66,17 @@ export const coinRestApi: CoinRestApi = {
         console.log("Retrieved the following trades from the REST API", res.data)
         return res.data
     },
-    post: async ({appConfig, token}) => {
+    postCoin: async ({appConfig, token}) => {
         console.log("Posting the following coin to the REST API", token)
         console.log("appConfig.axios", appConfig.axios.defaults)
         const res = await appConfig.axios.post<TokenFromRestAPI>(`/coins`, token)
+        console.log("Posted the following coin to the REST API", res.data)
+        return res.data
+    },
+    postThread: async ({appConfig, post}) => {
+        console.log("Posting the following post to the REST API", post)
+        console.log("appConfig.axios", appConfig.axios.defaults)
+        const res = await appConfig.axios.post<Post>(`/post`, post)
         console.log("Posted the following coin to the REST API", res.data)
         return res.data
     }

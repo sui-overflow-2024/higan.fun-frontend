@@ -1,20 +1,19 @@
 'use client';
 import {TokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
-import {addressToBackgroundColor, generateTrades} from "@/lib/utils";
+import {addressToBackgroundColor} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
-import {Dispatch, SetStateAction, useState, useContext, useEffect} from "react";
+import * as React from "react";
+import {Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
 import twitterLogo from '@/public/twitter.png';
 import telegramLogo from '@/public/telegram.png';
 import webLogo from '@/public/world-wide-web.png';
 import Image from "next/image";
 import {BuySellDialog} from "@/components/BuySellDialog";
 import TradesTable from "@/components/TradesTable";
-import {useQuery} from "@tanstack/react-query";
 import {faker} from "@faker-js/faker";
 import useSWR from "swr";
 import {coinRestApi} from "@/lib/rest";
-import * as React from "react";
-import {usePathname, useSearchParams} from "next/navigation";
+import {usePathname} from "next/navigation";
 import {AppConfigContext} from "@/components/Contexts";
 import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
@@ -90,10 +89,11 @@ const ActivePanelButtons: React.FC<{
                 >
                     Thread
                 </Button>
+
                 <Button
                     size={'sm'}
                     onClick={() => setActivePanel('trades')}
-                    className={activePanel === 'trades' ? 'default' : 'outline'}
+                    variant={activePanel === 'trades' ? 'default' : 'outline'}
                 >
                     Trades
                 </Button>
@@ -128,7 +128,7 @@ const SocialLinks: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
 //     });
 // };
 
-const CoinDetails: React.FC<CoinDetailsProps> = ({ token }) => {
+const CoinDetails: React.FC<CoinDetailsProps> = ({token}) => {
     const bondingCurveProgress = 2; // Example progress percentage
     const marketCap = 900000; // Example market cap
     const target = 900000; // Example target market cap
@@ -155,7 +155,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({ token }) => {
                 <div className="w-full bg-gray-700 rounded-full h-4">
                     <div
                         className="bg-green-500 h-4 rounded-full"
-                        style={{ width: `${bondingCurveProgress}%` }}
+                        style={{width: `${bondingCurveProgress}%`}}
                     ></div>
                 </div>
             </div>
@@ -173,7 +173,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({ token }) => {
 
 const bondingCurveAddress = 'abcdef';
 
-const TokenHolders: React.FC<TokenHoldersProps> = ({ token, holders, totalSupply }) => {
+const TokenHolders: React.FC<TokenHoldersProps> = ({token, holders, totalSupply}) => {
     // Sort holders by balance in descending order and take the top 20
     const sortedHolders = [...holders].sort((a, b) => b.balance - a.balance).slice(0, 20);
 
@@ -186,7 +186,8 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({ token, holders, totalSupply
                         <div className="flex items-center space-x-2">
                             <span>{index + 1}. {holder.address.slice(2, 8)}</span>
                             {holder.address === token.creator && <span className="text-gray-400 text-sm">(dev)</span>}
-                            {holder.address === bondingCurveAddress && <span className="text-gray-400 text-sm">🏛 (bonding curve)</span>}
+                            {holder.address === bondingCurveAddress &&
+                                <span className="text-gray-400 text-sm">🏛 (bonding curve)</span>}
                         </div>
                         <span>{((holder.balance / totalSupply) * 100).toFixed(1)}%</span>
                     </li>
@@ -219,29 +220,28 @@ export default function Drilldown() {
             fetchTrades()
         }, 2000);
 
-          // Clear the interval when the component is unmounted
+        // Clear the interval when the component is unmounted
         return () => clearInterval(intervalId);
     }, [token]);
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
     if (!token) return (<div>Loading...</div>)
-    console.log("token creator", token.creator)
 
     const exampleHolders: Holder[] = [
-        { address: 'abcdef', balance: 700000 }, // Example holder with bonding curve
-        { address: faker.finance.ethereumAddress(), balance: 100000 }, // Example creator
-        { address: faker.finance.ethereumAddress(), balance: 100000 },
-        { address: account?.address || faker.finance.ethereumAddress(), balance: 50000 },
-        { address: faker.finance.ethereumAddress(), balance: 50000 },
-        { address: faker.finance.ethereumAddress(), balance: 50000 },
-        { address: faker.finance.ethereumAddress(), balance: 50000 },
-        { address: faker.finance.ethereumAddress(), balance: 50000 },
-        { address: faker.finance.ethereumAddress(), balance: 50000 },
-        { address: faker.finance.ethereumAddress(), balance: 50000 },
-        { address: faker.finance.ethereumAddress(), balance: 50000 },
-        { address: faker.finance.ethereumAddress(), balance: 50000 },
-        { address: faker.finance.ethereumAddress(), balance: 50000 },
-        { address: faker.finance.ethereumAddress(), balance: 50000 },
+        {address: 'abcdef', balance: 700000}, // Example holder with bonding curve
+        {address: faker.finance.ethereumAddress(), balance: 100000}, // Example creator
+        {address: faker.finance.ethereumAddress(), balance: 100000},
+        {address: account?.address || faker.finance.ethereumAddress(), balance: 50000},
+        {address: faker.finance.ethereumAddress(), balance: 50000},
+        {address: faker.finance.ethereumAddress(), balance: 50000},
+        {address: faker.finance.ethereumAddress(), balance: 50000},
+        {address: faker.finance.ethereumAddress(), balance: 50000},
+        {address: faker.finance.ethereumAddress(), balance: 50000},
+        {address: faker.finance.ethereumAddress(), balance: 50000},
+        {address: faker.finance.ethereumAddress(), balance: 50000},
+        {address: faker.finance.ethereumAddress(), balance: 50000},
+        {address: faker.finance.ethereumAddress(), balance: 50000},
+        {address: faker.finance.ethereumAddress(), balance: 50000},
         // Add more holders as needed
     ];
 
@@ -249,7 +249,7 @@ export default function Drilldown() {
         {
             id: 1,
             coinId: '1',
-            suiAddress: account?.address || '',
+            author: account?.address || '',
             text: 'To live in the light, you must kill the darkness. Release this summer ⚔️⚡🔥',
             likes: 100,
             createdAt: new Date()
@@ -257,7 +257,7 @@ export default function Drilldown() {
         {
             id: 2,
             coinId: '1',
-            suiAddress: faker.finance.ethereumAddress(),
+            author: faker.finance.ethereumAddress(),
             text: '**The light is coming**. [Are you ready](www.google.com)? ⚔️⚡🔥',
             likes: 200,
             createdAt: new Date()
@@ -265,7 +265,7 @@ export default function Drilldown() {
         {
             id: 3,
             coinId: '1',
-            suiAddress: faker.finance.ethereumAddress(),
+            author: faker.finance.ethereumAddress(),
             text: 'The light is coming. <img src="https://pump.fun/_next/image?url=%2Flogo.png&w=64&q=75"/> Are you ready? ⚔️⚡🔥',
             likes: 300,
             createdAt: new Date()
@@ -273,60 +273,60 @@ export default function Drilldown() {
         {
             id: 4,
             coinId: '1',
-            suiAddress: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min:10 , max: 20}}),
+            author: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min: 10, max: 20}}),
             likes: 400,
             createdAt: new Date()
         },
         {
             id: 5,
             coinId: '1',
-            suiAddress: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min:10 , max: 20}}),
+            author: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min: 10, max: 20}}),
             likes: 400,
             createdAt: new Date()
         },
         {
             id: 6,
             coinId: '1',
-            suiAddress: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min:10 , max: 20}}),
+            author: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min: 10, max: 20}}),
             likes: 400,
             createdAt: new Date()
         },
         {
             id: 7,
             coinId: '1',
-            suiAddress: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min:10 , max: 20}}),
+            author: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min: 10, max: 20}}),
             likes: 400,
             createdAt: new Date()
         },
         {
             id: 8,
             coinId: '1',
-            suiAddress: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min:10 , max: 20}}),
+            author: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min: 10, max: 20}}),
             likes: 400,
             createdAt: new Date()
         },
         {
             id: 9,
             coinId: '1',
-            suiAddress: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min:10 , max: 20}}),
+            author: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min: 10, max: 20}}),
             likes: 400,
             createdAt: new Date()
         },
         {
             id: 10,
             coinId: '1',
-            suiAddress: faker.finance.ethereumAddress(),
-            text: faker.word.words({count: {min:10 , max: 20}}),
+            author: faker.finance.ethereumAddress(),
+            text: faker.word.words({count: {min: 10, max: 20}}),
             likes: 400,
             createdAt: new Date()
         },
-        ]
+    ]
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
 
     return (
@@ -351,17 +351,18 @@ export default function Drilldown() {
                         </div>
                         <div className="p-2">
                             {activePanel === 'thread'
-                            ? <CoinThread creator={token.creator || ""} posts={posts} />
-                                :  <TradesTable trades={trades} coinSymbol={token.symbol} network={suiContext.network || "mainnet"}/>}
+                                ? <CoinThread creator={token.creator || ""} coinId={packageId} posts={posts}/>
+                                : <TradesTable trades={trades} coinSymbol={token.symbol}
+                                               network={suiContext.network || "mainnet"}/>}
 
                         </div>
                     </section>
 
 
                     <aside className="space-y-4">
-                            <BuySellDialog token={token}/>
-                            <CoinDetails token={token}/>
-                            <TokenHolders token={token} holders={exampleHolders} totalSupply={totalSupply}/>
+                        <BuySellDialog token={token}/>
+                        <CoinDetails token={token}/>
+                        <TokenHolders token={token} holders={exampleHolders} totalSupply={totalSupply}/>
                     </aside>
                 </main>
             </div>

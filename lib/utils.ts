@@ -1,6 +1,6 @@
 import {type ClassValue, clsx} from "clsx"
 import {twMerge} from "tailwind-merge"
-import {TokenFromRestAPI} from "@/lib/types";
+import {TokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import type {DevInspectResults} from "@mysten/sui.js/client";
 import {bcs} from "@mysten/sui.js/bcs";
 import {faker} from "@faker-js/faker";
@@ -107,16 +107,18 @@ export const addressToBackgroundColor = (address: string) => {
     return `hsl(${hash % 360}, 50%, 50%)`;
 };
 
-export const generateTrades = (count: number): Trade[] => {
+export const generateTrades = (count: number): TradeFromRestAPI[] => {
     const activities = ['buy', 'sell'];
     const activity = activities[Math.floor(Math.random() * activities.length)];
     return Array.from({length: count}, () => ({
+        id: faker.number.int(),
         account: faker.finance.ethereumAddress(),
         activity: activity as "buy" | "sell",
         suiAmount: faker.number.float({min: 1, max: 80, fractionDigits: 2}),
         coinAmount: faker.number.float({min: 1, max: 80, fractionDigits: 2}),
         date: faker.date.recent().toLocaleDateString(),
-        transactionId: faker.datatype.uuid(),
+        transactionId: faker.finance.ethereumAddress(),
+
     }));
 };
 

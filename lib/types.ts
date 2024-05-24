@@ -38,7 +38,7 @@ export type TradeFromRestAPI = {
 export type CoinPost = {
     id: bigint,
     coinId: string,
-    suiAddress: string,
+    author: string,
     text: string,
     likes: number,
     createdAt: Date,
