@@ -123,36 +123,6 @@ const getExactCoinByAmount = (
     }
 };
 
-
-const CoinSelectDropdown: React.FC<{
-    token: TokenFromRestAPI,
-    setToken: Dispatch<SetStateAction<TokenFromRestAPI>>
-}> = ({token}) => {
-    /*TODO below should open coin selection dialog on click*/
-    return (<div
-        className="rounded-xl min-w-28 dropdown-button bg-gray-800 text-white
-                    flex items-center justify-between px-2 py-2
-                    cursor-pointer transition duration-150 ease-in-out hover:bg-gray-700">
-        <div
-            className="max-w-6 max-h-5 flex space-x-0.5 text-md"
-        >
-
-            <img
-                src={token.iconUrl || "../../public/sui-sea.svg"} //TODO dynamic image from on-chain config
-                width={100}
-                height={100}
-            />
-            <span>{token.symbol}</span>
-        </div>
-
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24"
-             stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-        </svg>
-    </div>)
-}
-
-
 const generateBuyPtb = (coin: TokenFromRestAPI, userCoins: CoinStruct[], amountToBuy: number): TransactionBlock => {
     console.log("Attempting to buy ", amountToBuy, "of", coin.symbol, "packageId", coin.packageId, "storeId", coin.storeId, "module", coin.module, "decimals", coin.decimals)
     if (amountToBuy <= 0) {
@@ -297,7 +267,7 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
     })
     const {data: price, error: priceError} = useSWR({
         client: suiClient,
-        sender: currentAccount?.address || "",
+        sender: currentAccount?.address || "0x7176223a57d720111be2c805139be7192fc5522597e6210ae35d4b2199949501",
         coinType: token?.coinType || "",
         storeId: token?.storeId || "",
         amount: amount,
@@ -323,6 +293,7 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
         }
         fetchBalance()
     }, [token, currentAccount?.address, suiClient])
+
 
     if (priceError) return (<div>Error fetching price {priceError.message}</div>)
     if (!price) return (<div>Loading...</div>)

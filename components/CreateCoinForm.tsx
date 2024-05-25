@@ -12,14 +12,40 @@ import {Prisma} from "@/lib/prisma/client";
 import {useForm} from 'react-hook-form';
 import {useToast} from "@/components/ui/use-toast";
 import Link from "next/link";
-import {useAccounts, useSuiClient, useWallets} from "@mysten/dapp-kit";
+import {ConnectButton, useAccounts, useSignPersonalMessage, useSuiClient, useWallets} from "@mysten/dapp-kit";
 import {ToastAction} from "@/components/ui/toast";
-import {coinRestApi} from "@/lib/rest";
+import {coinRestApi, ThreadPostRequest} from "@/lib/rest";
 import {faker} from "@faker-js/faker";
 
 
 type MyFile = File & { preview: string };
 
+// const postCoinSchema = Joi.object({
+//     decimals: Joi.number().required(),
+//     name: Joi.string().required().regex(/^[A-Za-z0-9 ]+$/),
+//     symbol: Joi.string().required().regex(/^[A-Za-z0-9]+$/),
+//     description: Joi.string().required(),
+//     iconUrl: Joi.string().required(),
+//     website: Joi.string().optional().allow(''),
+//     twitterUrl: Joi.string().optional().allow(''),
+//     discordUrl: Joi.string().optional().allow(''),
+//     telegramUrl: Joi.string().optional().allow(''),
+//     target: Joi.number().required().greater(0),
+//     signature: Joi.string().required(),
+// });
+type FormData = {
+    decimals: number;
+    name: string;
+    symbol: string;
+    description: string;
+    iconUrl: string;
+    website: string;
+    twitterUrl: string;
+    discordUrl: string;
+    telegramUrl: string;
+    target: number;
+    signature: string;
+}
 
 const CreateCoinForm = () => {
     const isDevMode = process.env.NODE_ENV === "development";
@@ -37,48 +63,31 @@ const CreateCoinForm = () => {
         handleSubmit,
         watch,
         formState: {errors, isSubmitted, touchedFields}
-    } = useForm<Prisma.CoinCreateInput>({
+    } = useForm<FormData>({
         // TODO Below has a bunch of default values for testing, remove this
         defaultValues: {
-            creator: "",
-            module: isDevMode ? `${dev_name.toLowerCase()}` : "",
-            packageId: "",
-            storeId: "",
+            // creator: "",
+            // module: isDevMode ? `${dev_name.toLowerCase()}` : "",
+            // packageId: "",
+            // storeId: "",
             //There items do need to be set in the form
-            name: isDevMode ? `${faker.lorem.words({min: 1, max: 3})}` :"",
-            symbol: isDevMode ? `${dev_name.toUpperCase().replace("_","").slice(0,3)}` : "",
-            description: isDevMode ? `${faker.lorem.sentence({min: 30, max: 120})}` :"",
-            decimals: 3, //TODO For now, leave hardcoded at 9. Don't let the user specify this in the form
+            name: isDevMode ? `${faker.lorem.words({min: 1, max: 3})}` : "",
+            symbol: isDevMode ? `${dev_name.toUpperCase().replace("_", "").slice(0, 3)}` : "",
+            description: isDevMode ? `${faker.lorem.sentence({min: 30, max: 120})}` : "",
+            decimals: 3,
             iconUrl: isDevMode ? "https://static-production.npmjs.com/255a118f56f5346b97e56325a1217a16.svg" : "",
-            website: isDevMode ? "https://www.npmjs.com/package/@mysten/sui.js/v/0.0.0-experimental-20230127130009?activeTab=readme" :"",
+            website: isDevMode ? "https://www.npmjs.com/package/@mysten/sui.js/v/0.0.0-experimental-20230127130009?activeTab=readme" : "",
             twitterUrl: isDevMode ? "https://twitter.com/dog_rates" : "",
             discordUrl: isDevMode ? "https://discord.gg/eHz9E7qP" : "",
             telegramUrl: "",
-            whitepaperUrl: "",
-            // image: [], //TODO This is a good idea, we can cache the image in the DB, but Prisma is SQLite and we don't have a sustainable way to store images (right now). Let's stick with the image url for now
+            target: 5_000_000, //TODO Get rid of hardcoding immediately
         }
     });
     const [showLinks, setShowLinks] = useState<boolean>(false)
     const iconUrl = watch('iconUrl');
 
-    // const {getRootProps, getInputProps, isDragActive} = useDropzone({
-    //     accept: {
-    //         "image/*": [],
-    //     },
-    //     onDrop: (acceptedFiles) => {
-    //         setForm({
-    //             ...form,
-    //             image: acceptedFiles.map((file) =>
-    //                 Object.assign(file, {
-    //                     preview: URL.createObjectURL(file),
-    //                 })
-    //             ),
-    //         });
-    //     },
-    //     maxFiles: 1,
-    // });
 
-
+    // TODO use a custom form schema w/ Yup instead of Prisma.CoinCreateInput so we can get this validation
     const validateForm = (form: Prisma.CoinCreateInput) => {
         let errors: { [key: string]: string } = {};
 
@@ -98,31 +107,63 @@ const CreateCoinForm = () => {
             errors.description = "Description cannot be more than 200 characters.";
         }
 
-        // if (!form.image) {
-        //     errors.image = "Image is required.";
-        // }
-
         return errors;
     };
 
-    const submit = async (data: Prisma.CoinCreateInput) => {
-        try {
-            // const result = await appConfig.axios.post("/coins", data)
+    const {mutate} = useSignPersonalMessage()
 
-            const result = await coinRestApi.postCoin({appConfig, token: data}) //TODO Fix this
-            // TODO, take packageId from the result, link to sui explorer, link must be aware of the network the user currently has selected
-            // Couldn't do this first pass because the dapp docs were broken
-            toast({
-                title: "Successfully launched your coin!",
-                duration: 3000,
-                action: (
-                    <ToastAction altText="View your token">
-                        <Link href={"/coin"}>
-                            Go to landing page
-                        </Link>
-                    </ToastAction>
-                ),
-            })
+
+    const submit = async (data: FormData) => {
+        try {
+            if(!account) {
+                toast({
+                    title: "Failed to create coin",
+                    duration: 3000,
+                    variant: "destructive",
+                    description: "You must connect your Sui wallet to create a coin",
+                })
+            }
+            // const result = await appConfig.axios.post("/coins", data)
+            mutate(
+                {
+                    message: new TextEncoder().encode(data.symbol),
+                },
+                {
+                    onSuccess: async (signature) => {
+                        console.log("signature", signature)
+                        try {
+
+                            const token = {...data, signature: signature.signature};
+                            const result = await coinRestApi.postCoin({appConfig, token} ); //TODO Fix this
+                            // TODO, take packageId from the result, link to sui explorer, link must be aware of the network the user currently has selected
+                            // Couldn't do this first pass because the dapp docs were broken
+                            console.log("result", result)
+                            toast({
+                                title: "Successfully launched your coin!",
+                                duration: 3000,
+                                action: (
+                                    <ToastAction altText="View your token">
+                                        <Link href={`/coin/${result.packageId}`}>
+                                            Go to landing page
+                                        </Link>
+                                    </ToastAction>
+                                ),
+                            })
+                        } catch (e) {
+                            toast({
+                                title: "Failed to create coin",
+                                duration: 3000,
+                                variant: "destructive",
+                                description: e.message,
+                            })
+                            console.error(e);
+                            setFatalError(e.message);
+                        }
+
+                    },
+                },
+            );
+
         } catch (e: any) {
             toast({
                 title: "Failed to create coin",
@@ -179,6 +220,18 @@ const CreateCoinForm = () => {
                     className="new-coin-input-field"
                 />
                 <ErrorSpan name="description"/>
+            </div>
+            <div>
+                <label htmlFor="target" className="block text-[#48d7ff]">
+                    Target
+                </label>
+                <input
+                    type="text"
+                    {...register("target")}
+                    placeholder="Description"
+                    className="new-coin-input-field"
+                />
+                <ErrorSpan name="target"/>
             </div>
             {/*<div*/}
             {/*    {...getRootProps()}*/}
@@ -300,12 +353,14 @@ const CreateCoinForm = () => {
                 </Collapsible.Content>
             </Collapsible.Root>
             {fatalError && (<div className="text-red-500 text-xs mt-1">{fatalError}</div>)}
-            <button
-                type="submit"
-                className="btn p-2 hover:text-[#5ea9ff] hover:bg-[#5db6ff42] text-white rounded w-full md:w-1/2 mx-auto block"
-            >
-                Create Coin
-            </button>
+            {!account
+                ? <ConnectButton connectText={"Connect wallet to create coin"}/>
+                : <button
+                    type="submit"
+                    className="btn p-2 hover:text-[#5ea9ff] hover:bg-[#5db6ff42] text-white rounded w-full md:w-1/2 mx-auto block"
+                >
+                    Create Coin
+                </button>}
         </form>
     );
 };

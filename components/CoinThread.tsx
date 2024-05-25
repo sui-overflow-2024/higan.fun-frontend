@@ -103,10 +103,6 @@ const NewPostTextbox: FC<{ creator: string, coinId: string }> = ({creator, coinI
                     </DialogHeader>
                     <Post id={getRandomNumber(1, 1000)} creator={creator}
                           authorId={account.address} text={watch("text")} createdAt={new Date()}/>
-
-                    {/*<DialogFooter>*/}
-                    {/*    <Button>Close</Button>*/}
-                    {/*</DialogFooter>*/}
                 </DialogContent>
             </Dialog>
 

@@ -49,6 +49,7 @@ export const CreatorAddressChip: FC<CreatorAddressChipProps> = ({
                                                                 }) => {
     const config = avatarVariants[variant]
     let avatar = <Jazzicon diameter={config.jazziconDiam} seed={jsNumberForAddress(address)}/>
+    
     if (avatarImageUrl) {
         avatar = <img src={avatarImageUrl} alt={"avatar"} className={config.avatarClass}/>
 

@@ -22,7 +22,7 @@ type CoinRestApi = {
     getTop: Fetcher<TopTokenFromRestAPI, { appConfig: AppConfig }>,
     getById: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, packageId: string }>,
     getTrades: Fetcher<TradeFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
-    postCoin: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: Prisma.CoinCreateInput }>
+    postCoin: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: Prisma.CoinCreateInput & {signature: string} }>
     postThread: Fetcher<Post, { appConfig: AppConfig, post: ThreadPostRequest }>
     getThreads: Fetcher<PostFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
 }
@@ -74,7 +74,6 @@ export const coinRestApi: CoinRestApi = {
     },
     postCoin: async ({appConfig, token}) => {
         console.log("Posting the following coin to the REST API", token)
-        console.log("appConfig.axios", appConfig.axios.defaults)
         const res = await appConfig.axios.post<TokenFromRestAPI>(`/coins`, token)
         console.log("Posted the following coin to the REST API", res.data)
         return res.data
