@@ -1,9 +1,8 @@
 'use client';
-import {TokenFromRestAPI, TradeFromRestAPI, PostFromRestAPI} from "@/lib/types";
-import {addressToBackgroundColor} from "@/lib/utils";
+import {PostFromRestAPI, TokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
-import {Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
+import {Dispatch, SetStateAction, useContext, useEffect, useRef, useState} from "react";
 import twitterLogo from '@/public/twitter.png';
 import telegramLogo from '@/public/telegram.png';
 import webLogo from '@/public/world-wide-web.png';
@@ -11,7 +10,6 @@ import Image from "next/image";
 import {BuySellDialog} from "@/components/BuySellDialog";
 import TradesTable from "@/components/TradesTable";
 import TradesChart from "@/components/TradesChart";
-import {useQuery} from "@tanstack/react-query";
 import {faker} from "@faker-js/faker";
 import useSWR from "swr";
 import {coinRestApi} from "@/lib/rest";
@@ -19,6 +17,7 @@ import {usePathname} from "next/navigation";
 import {AppConfigContext} from "@/components/Contexts";
 import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
+import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 
 type CoinMetadataProps = {
     token: TokenFromRestAPI;
@@ -38,13 +37,45 @@ type TokenHoldersProps = {
 };
 
 
-const CoinMetadata: React.FC<CoinMetadataProps> = ({token}) => {
+const ClampedDescription = ({text}) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [isOverflowing, setIsOverflowing] = useState(false);
+    const textRef = useRef(null);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+        const textHeight = textRef.current.scrollHeight;
+        const containerHeight = containerRef.current.clientHeight;
+
+        if (textHeight > containerHeight) {
+            setIsOverflowing(true);
+        }
+    }, []);
+
+    return (
+        <div>
+            <div
+                ref={containerRef}
+                className={`${isExpanded ? '' : 'line-clamp-4'} overflow-hidden text-sm text-gray-400`}
+                style={{maxHeight: isExpanded ? 'none' : '7.2rem'}} // 4 lines height approximation
+            >
+                <div ref={textRef}>{text}</div>
+            </div>
+            {isOverflowing && (
+                <button
+                    className="mt-2 text-blue-500 hover:underline"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                >
+                    {isExpanded ? 'Show Less' : 'Show More'}
+                </button>
+            )}
+        </div>
+    );
+};
+
+const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({token}) => {
     const {data: suiReserve} = {data: 100000}
     const {data: currentPrice} = {data: 1.03}
-
-    // const { data: suiReserve } = useSuiClientQuery('getSuiReserve');
-    // const { data: currentPrice } = useSuiClientQuery('getCurrentPrice');
-
 
     return (
         <div className="p-2 flex justify-between items-center rounded-lg">
@@ -62,13 +93,7 @@ const CoinMetadata: React.FC<CoinMetadataProps> = ({token}) => {
                 <span className="text-green-400 text-sm">Current Price: {currentPrice.toFixed(2)} SUI ($1)</span>
                 <div className="flex items-center space-x-2 text-sm">
                     <span>Created by:</span>
-                    <a
-                        href={`/profile/${token.creator}`}
-                        className="text-white px-1 py-1 rounded"
-                        style={{backgroundColor: addressToBackgroundColor(token.creator)}}
-                    >
-                        {token.creator.slice(2, 8)}
-                    </a>
+                    <CreatorAddressChip address={token.creator} variant={"default"} showAvatar/>
                 </div>
             </div>
         </div>
@@ -105,16 +130,18 @@ const ActivePanelButtons: React.FC<{
 
 const SocialLinks: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
     return (
+
         <div className="flex space-x-4 items-center justify-center">
+            <a href={token.website} target="_blank" rel="noopener noreferrer">
+                <Image src={webLogo} alt="Website" width={30} height={30}/>
+            </a>
             <a href={token.twitterUrl} target="_blank" rel="noopener noreferrer">
                 <Image src={twitterLogo} alt="Twitter" width={30} height={30}/>
             </a>
             <a href={token.telegramUrl} target="_blank" rel="noopener noreferrer">
                 <Image src={telegramLogo} alt="Telegram" width={30} height={30}/>
             </a>
-            <a href={token.website} target="_blank" rel="noopener noreferrer">
-                <Image src={webLogo} alt="Website" width={30} height={30}/>
-            </a>
+
         </div>
     );
 };
@@ -134,21 +161,22 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token}) => {
     const marketCap = 900000; // Example market cap
     const target = 900000; // Example target market cap
     const totalSupply = Math.floor(Math.random() * 1000000); // Example total supply
-
+    const [isExpanded, setIsExpanded] = useState(false);
     return (
         <div className="p-4 rounded-lg">
             <div className="flex items-start space-x-4">
-                <div className="border border-gray-700">
+                <div className="border border-gray-700 min-w-24 min-h-24">
                     <img
                         src={token.iconUrl || 'https://via.placeholder.com/100'}
                         alt={token.name}
                         width={100}
                         height={100}
+                        // className={"w-24 h-24"}
                     />
                 </div>
                 <div>
                     <h2 className="text-xl font-bold">{token.name} ({token.symbol})</h2>
-                    <p className="text-sm text-gray-400">{token.description}</p>
+                    <ClampedDescription text={token.description}/>
                 </div>
             </div>
             <div className="mt-4">
@@ -215,7 +243,7 @@ export default function Drilldown() {
         const intervalId = setInterval(() => {
             const fetchTrades = async () => {
                 const t = await coinRestApi.getTrades({appConfig, packageId})
-                console.log("Fetched trades", t)
+                // console.log("Fetched trades", t)
                 setTrades(t);
             }
 
@@ -230,14 +258,14 @@ export default function Drilldown() {
         const intervalId = setInterval(() => {
             const fetchPosts = async () => {
                 const p = await coinRestApi.getThreads({appConfig, packageId})
-                console.log("Fetched posts", p)
+                // console.log("Fetched posts", p)
                 setPosts(p);
             }
 
             fetchPosts()
         }, 2000);
 
-          // Clear the interval when the component is unmounted
+        // Clear the interval when the component is unmounted
         return () => clearInterval(intervalId);
     }, []);
 
@@ -263,7 +291,7 @@ export default function Drilldown() {
     ];
 
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
-    const tradesChartData =trades.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const tradesChartData = trades.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 
     return (
         // <div className="bg-gray-700 p-4 min-h-[300px] flex items-center justify-center">
@@ -273,9 +301,9 @@ export default function Drilldown() {
 
                 <main className="grid grid-cols-3 gap-8 mt-4">
                     <section className="col-span-2 space-y-4">
-                        <CoinMetadata token={token}/>
+                        <CoinMetadataHeader token={token}/>
                         <div className="bg-gray-700 min-h-[300px]">
-                             <TradesChart trades={tradesChartData} />
+                            <TradesChart trades={tradesChartData}/>
                         </div>
 
                         <div className="flex justify-between p-2">

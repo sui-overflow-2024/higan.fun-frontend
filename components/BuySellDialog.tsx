@@ -2,7 +2,7 @@
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
-import {Dispatch, SetStateAction, useContext, useEffect, useState} from "react";
+import {useContext, useEffect, useState} from "react";
 import {cn, getCoinPath, getCoinPathFunc, getFunctionPathFromCoinType, getValueWithDecimals} from "@/lib/utils";
 import Image from "next/image";
 import {TokenFromRestAPI} from "@/lib/types";
@@ -13,7 +13,6 @@ import {
     useSuiClient,
     useSuiClientQuery
 } from "@mysten/dapp-kit";
-import {coinRestApi} from "@/lib/rest";
 import {AppConfigContext} from "@/components/Contexts";
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
 import {bcs} from "@mysten/sui.js/bcs";
@@ -203,6 +202,7 @@ export const getBuyCoinPriceTxb = (coinType: string, storeId: string, amount: nu
     return txb
 }
 export const getSellCoinPriceTxb = (coinType: string, storeId: string, amount: number): TransactionBlock => {
+    console.log("getSellCoinPriceTxb", coinType, storeId, amount)
     const txb = new TransactionBlock()
     txb.moveCall({
         target: getFunctionPathFromCoinType(coinType, "get_coin_sell_price") as `${string}::${string}::${string}`,
@@ -231,10 +231,52 @@ export const getPrice: Fetcher<number, {
         sender: sender,
     });
     console.log("Inspect result", res)
+
     const price = res.results?.[0]?.returnValues?.[0][0]
     return bcs.de("u64", new Uint8Array(price || [])) as number
 }
 
+
+const PriceCalculator: React.FC<{
+    suiClient: SuiClient,
+    sender: string,
+    amount: number,
+    mode: string,
+    coinType: string,
+    storeId: string,
+    userBalance: number
+}> = ({
+          suiClient,
+          sender,
+          amount,
+          mode,
+          coinType,
+          storeId,
+    userBalance,
+      }) => {
+    const {data: price, error: priceError, isLoading} = useSWR({
+        client: suiClient,
+        sender,
+        coinType,
+        storeId,
+        amount,
+        mode
+    }, getPrice)
+
+    if (priceError) return (<div>Error fetching price {priceError.message}</div>)
+    // if(userBalance === 0 && mode === sell) return (<div>You have nothing to sell</div>)
+    // if (!price) return (<div>Loading...</div>)
+
+    return (<div>
+        <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>
+        <div className={"flex space-x-2 justify-center"}>
+            <Image src={"..//sui-sea.svg"} alt={"Sui Logo"} width={20} height={20}/>
+            <div className={"text-xl"}>
+                {isLoading ? "Loading..." : `${getValueWithDecimals(price, 9, 4)} SUI`}
+            </div>
+        </div>
+    </div>)
+}
 
 export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
 
@@ -248,7 +290,7 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
     const [mode, setMode] = useState<"buy" | "sell">("buy")
     const [userBalance, setUserBalance] = useState(0)
     const [baseTokenCoins, setBaseTokenCoins] = useState<CoinStruct[]>([])
-    const {register, handleSubmit, watch, formState: {errors,}} = useForm<{
+    const {register, handleSubmit, watch, formState: {errors,}, reset} = useForm<{
         amount: number
     }>({
         defaultValues: {
@@ -265,39 +307,33 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
             showContent: true,
         }
     })
-    const {data: price, error: priceError} = useSWR({
-        client: suiClient,
-        sender: currentAccount?.address || "0x7176223a57d720111be2c805139be7192fc5522597e6210ae35d4b2199949501",
-        coinType: token?.coinType || "",
-        storeId: token?.storeId || "",
-        amount: amount,
-        mode: mode
-    }, getPrice)
 
 
     useEffect(() => {
         const fetchBalance = async () => {
             if (!token) return
+            console.log("fetching balance for", currentAccount?.address, "token", token.coinType)
             const balance = await suiClient.getBalance({
                 owner: currentAccount?.address || "",
                 coinType: getCoinPath(token),
             })
+            console.log("balance", balance)
             setUserBalance(parseInt(balance.totalBalance || "0"))
+            console.log("userBalance", userBalance)
 
             const coins = await getAllUserCoins({
                 suiClient: suiClient,
                 type: getCoinPath(token),
                 address: currentAccount?.address || "",
             });
+            console.log("coins", coins)
             setBaseTokenCoins(coins)
         }
         fetchBalance()
-    }, [token, currentAccount?.address, suiClient])
+    }, [token, currentAccount?.address, suiClient, amount])
 
-
-    if (priceError) return (<div>Error fetching price {priceError.message}</div>)
-    if (!price) return (<div>Loading...</div>)
-
+    console.log("baseTokenCoins", baseTokenCoins)
+    if (!token) return (<div>Token not found</div>)
     return (<Card>
             <CardHeader>
                 <div className={"flex justify-between"}>
@@ -307,10 +343,13 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
                         onClick={() => setMode("buy")}>
                         Buy
                     </Button>
+
                     <Button
                         className={"min-w-36"}
                         variant={mode === "sell" ? "default" : "outline"}
-                        onClick={() => setMode("sell")}>
+                        onClick={() => setMode("sell")}
+                        disabled={userBalance === 0}
+                    >
                         Sell
                     </Button>
                 </div>
@@ -337,65 +376,46 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
                                         backgroundColor: "hsl(210, 88%, 15%)",
                                     }}
                                     {...register("amount")}
-                                    // onChange={(e) => {
-                                    //     let targetValue = parseInt(e.target.value)
-                                    //     if (targetValue > userBalance) {
-                                    //         targetValue = userBalance
-                                    //     }
-                                    //     setAmount(targetValue)
-                                    // }}
                                 />
                                 {/*<CoinSelectDropdown token={token} setToken={setToken}/>*/}
                             </div>
-                            {/*Render form errors*/}
                             {errors.amount && <div className={"text-xs text-red-500"}>{errors.amount.message}</div>}
-                            <div className={"text-xs text-muted-foreground"}>
-                                Max: {userBalance}
-                                {
-                                    process.env.NODE_ENV === "development" && <>
-                                        {/*<div className={"overflow-ellipsis"}>*/}
-                                        {/*    coinPath: {`${getCoinPath(token)}`}*/}
-                                        {/*</div>*/}
-                                        <div>
-                                            actualAmount: {amount}
-                                        </div>
-                                        {/*<div>*/}
-                                        {/*    coinObjectCount: {`${balance.data?.coinObjectCount}`}*/}
-                                        {/*</div>*/}
-                                        {/*<div>*/}
-                                        {/*    lockedBalance: {`${JSON.stringify(balance.data?.lockedBalance)}`}*/}
-                                        {/*</div>*/}
-                                        {/*<div>*/}
-                                        {/*    totalBalance: {`${balance.data?.totalBalance}`}*/}
-                                        {/*</div>*/}
-                                    </>
-                                }
-                            </div>
+                            <div className={"text-xs text-muted-foreground"}>you have: {userBalance} {token.symbol}</div>
+                            {/*<div className={"text-xs text-muted-foreground"}>*/}
+                            {/*    {*/}
+                            {/*        process.env.NODE_ENV === "development" && <>*/}
+                            {/*            actual amount: {amount}*/}
+                            {/*        </>*/}
+                            {/*    }*/}
+                            {/*</div>*/}
                         </div>
                     </div>
-                    <div className={"text-center"}>
-                        {price > 0 && <div>
-                            <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>
-                            <div className={"flex space-x-2 justify-center"}>
-                                <Image src={"./sui-sea.svg"} alt={"Sui Logo"} width={20} height={20}/>
-                                <div className={"text-xl"}>~{getValueWithDecimals(price, 9, 4)} SUI</div>
-                            </div>
-                        </div>}
-                        {process.env.NODE_ENV === "development" && <div className={"text-muted-foreground text-xs"}>
-                            Current supply: {storeRaw?.data?.content?.fields.treasury.fields.total_supply.fields.value}
-                        </div>}
-                    </div>
+
                     {/*{controls[1]}*/}
                     <div className={"flex justify-center"}>
-                        {currentAccount ?
-                            <Button className={"min-w-56"} onClick={() => signAndExecuteTransactionBlock({
-                                transactionBlock: mode === "buy"
-                                    ? generateBuyPtb(token, [], amount)
-                                    : generateSellPtb(token, baseTokenCoins, amount),
-                                chain: 'sui:devnet',
-                            })}>
-                                {mode === "buy" ? "Buy" : "Sell"}
-                            </Button> : <ConnectButton/>
+                        {currentAccount
+                            ? (<div className={"space-y-2"}>
+                                <div className={"text-center"}>
+                                    <PriceCalculator coinType={token.coinType} amount={amount}
+                                                     sender={currentAccount?.address || ""} mode={mode}
+                                                     storeId={token.storeId}
+                                                     suiClient={suiClient}
+                                                     userBalance={userBalance}
+                                    />
+                                </div>
+                                <Button className={"min-w-56"} onClick={() => {
+                                    signAndExecuteTransactionBlock({
+                                    transactionBlock: mode === "buy"
+                                        ? generateBuyPtb(token, [], amount)
+                                        : generateSellPtb(token, baseTokenCoins, amount),
+                                    chain: 'sui:devnet',
+                                })
+                                    reset({amount: 0})
+                                }}>
+                                    {mode === "buy" ? "Buy" : "Sell"}
+                                </Button>
+                            </div>)
+                            : <ConnectButton/>
                         }
                     </div>
                 </div>

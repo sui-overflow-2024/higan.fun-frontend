@@ -117,9 +117,9 @@ export const CoinThread: FC<{ coinId: string, creator: string, posts: PostFromRe
             <div className={"flex justify-center"}>
                 <NewPostTextbox creator={creator} coinId={coinId}/>
             </div>
-            {posts.map((post) => (
-                <Post key={post.id} creator={creator} {...post}/>
-            ))}
+            {/*{posts.map((post) => (*/}
+            {/*    <Post key={post.id} creator={creator} {...post}/>*/}
+            {/*))}*/}
         </div>
     );
 }
