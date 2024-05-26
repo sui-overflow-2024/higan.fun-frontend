@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "NODE_ENV=production next start",
     "lint": "next lint",
-    "createSampleCoin": "ts-node scripts/createCoin.ts"
+    "createSampleCoin": "ts-node scripts/createCoin.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@mysten/dapp-kit": "^0.12.15",
@@ -51,6 +52,8 @@
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
     "@tailwindcss/line-clamp": "^0.4.4",
+    "@types/dompurify": "^3.0.5",
+    "@types/markdown-it": "^14.1.1",
     "@types/node": "^20.12.10",
     "@types/react": "^18",
     "@types/react-dom": "^18",
