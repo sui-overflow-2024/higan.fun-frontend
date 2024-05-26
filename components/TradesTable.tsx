@@ -1,8 +1,8 @@
 import React from 'react';
 import {formatDistanceToNow} from "date-fns";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
-import { getValueWithDecimals } from "@/lib/utils";
-import { TradeFromRestAPI } from "@/rest/types";
+import {getValueWithDecimals} from "@/lib/utils";
+import {TradeFromRestAPI} from "@/lib/types";
 
 // export type TradeFromRestAPI = {
 //     account: string;

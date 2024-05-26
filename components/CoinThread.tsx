@@ -85,11 +85,12 @@ const NewPostTextbox: FC<{ creator: string, coinId: string }> = ({creator, coinI
         //TODO: notify parent? parent already refetches posts each x seconds passed
     }
 
-    return <form onSubmit={handleSubmit(submitPost)} className={"min-w-[400px]"}>
+    return <form onSubmit={handleSubmit(submitPost)} className={"min-w-[450px]"}>
 
+        <div>
         <Textarea {...register("text", {required: true})} placeholder="Type your message here. Supports markdown."/>
-
-        <div className={"flex gap-4 justify-center"}>
+        </div>
+        <div className={"flex mt-2 gap-4 justify-center"}>
             <Dialog>
                 <DialogTrigger asChild>
                     <Button variant={"outline"} className={"min-w-24"}>Preview</Button>

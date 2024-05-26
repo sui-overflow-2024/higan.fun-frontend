@@ -1,7 +1,8 @@
 import {AppConfig} from "@/components/Contexts";
-import {Post, Prisma} from "@/lib/prisma/client";
-import {TokenFromRestAPI, TopTokenFromRestAPI, TradeFromRestAPI, PostFromRestAPI} from "@/lib/types";
+import {Post} from "@/lib/prisma/client";
+import {PostFromRestAPI, TokenFromRestAPI, TopTokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {Fetcher} from "swr";
+import {CreateCoinFormData} from "@/components/CreateCoinForm";
 
 export type ThreadPostRequest = {
     coinId: string,
@@ -22,7 +23,7 @@ type CoinRestApi = {
     getTop: Fetcher<TopTokenFromRestAPI, { appConfig: AppConfig }>,
     getById: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, packageId: string }>,
     getTrades: Fetcher<TradeFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
-    postCoin: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: Prisma.CoinCreateInput & {signature: string} }>
+    postCoin: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: CreateCoinFormData }>
     postThread: Fetcher<Post, { appConfig: AppConfig, post: ThreadPostRequest }>
     getThreads: Fetcher<PostFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
 }
@@ -38,7 +39,6 @@ type CoinRestApi = {
 //     coin     Coin   @relation(fields: [coinId], references: [packageId])
 //     createdAt DateTime @default(now())
 // }
-
 
 
 export const coinRestApi: CoinRestApi = {

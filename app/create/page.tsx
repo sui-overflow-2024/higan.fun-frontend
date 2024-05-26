@@ -1,5 +1,4 @@
 import CreateCoinForm from "@/components/CreateCoinForm";
-import './style.css'
 import Filter from "@/components/ui/filter";
 const Page = () => {
   return (

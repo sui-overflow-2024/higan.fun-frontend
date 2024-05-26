@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
-import {format} from "date-fns";
-import { getValueWithDecimals } from "@/lib/utils";
-import {useEffect, useRef} from "react";
-import { createChart, ColorType, IChartApi, ISeriesApi } from 'lightweight-charts';
-import { TradeFromRestAPI } from '@/lib/types';
+import React, {useEffect, useRef} from 'react';
+import {getValueWithDecimals} from "@/lib/utils";
+import {ColorType, createChart, IChartApi, ISeriesApi} from 'lightweight-charts';
+import {TradeFromRestAPI} from '@/lib/types';
 
 
 type TradesChartProps = {
@@ -18,7 +16,7 @@ const transformTradesToLineData = (trades: TradeFromRestAPI[]) => {
         let price = parseFloat(getValueWithDecimals(trade.suiAmount / trade.coinAmount, 3));
 
         if (!acc[time]) {
-            acc[time] = { time, priceSum: 0, count: 0 };
+            acc[time] = {time, priceSum: 0, count: 0};
         }
 
         acc[time].priceSum += price;
@@ -28,15 +26,15 @@ const transformTradesToLineData = (trades: TradeFromRestAPI[]) => {
     }, {} as any);
 
 
-    const data = Object.values(aggregatedData).map((entry : any) => ({
+    const data = Object.values(aggregatedData).map((entry: any) => ({
         time: entry.time,
         value: entry.priceSum / entry.count  // Calculate average price
     }));
 
     return data;
-  };
+};
 
-const chartStyle: any =  {
+const chartStyle: any = {
     backgroundColor: '#1F2937',
     lineColor: '#2962FF',
     textColor: 'white',
@@ -45,10 +43,10 @@ const chartStyle: any =  {
 }
 // Component for the trades list
 const TradesChart: React.FC<TradesChartProps> = ({trades}) => {
-     const chartContainerRef = useRef<HTMLElement | null>(null);
-     const chartRef = useRef<IChartApi>();
-     const seriesRef = useRef<ISeriesApi<"Line">>();
-     const previousTradesRef = useRef<TradeFromRestAPI[]>([]);
+    const chartContainerRef = useRef<HTMLElement | null>(null);
+    const chartRef = useRef<IChartApi>();
+    const seriesRef = useRef<ISeriesApi<"Line">>();
+    const previousTradesRef = useRef<TradeFromRestAPI[]>([]);
 
     useEffect(() => {
         if (!chartContainerRef.current) {
@@ -56,7 +54,7 @@ const TradesChart: React.FC<TradesChartProps> = ({trades}) => {
         }
         chartRef.current = createChart(chartContainerRef.current, {
             layout: {
-                background: { type: ColorType.Solid, color: chartStyle.backgroundColor },
+                background: {type: ColorType.Solid, color: chartStyle.backgroundColor},
                 textColor: chartStyle.textColor,
             },
             width: chartContainerRef.current.clientWidth,
@@ -72,7 +70,7 @@ const TradesChart: React.FC<TradesChartProps> = ({trades}) => {
 
         const handleResize = () => {
             if (chartRef.current && chartContainerRef.current) {
-                chartRef.current.applyOptions({ width: chartContainerRef.current.clientWidth });
+                chartRef.current.applyOptions({width: chartContainerRef.current.clientWidth});
             }
         };
 
@@ -81,7 +79,7 @@ const TradesChart: React.FC<TradesChartProps> = ({trades}) => {
 
         return () => {
             window.removeEventListener('resize', handleResize);
-            if(chartRef.current) {
+            if (chartRef.current) {
                 chartRef.current.remove();
             }
         };
@@ -94,15 +92,17 @@ const TradesChart: React.FC<TradesChartProps> = ({trades}) => {
             );
 
             if (previousTradesRef.current.length === 0) {
+                // @ts-ignore
                 seriesRef.current.setData(transformTradesToLineData(trades));
             } else if (newTrades.length > 0) {
                 let data = transformTradesToLineData(newTrades);
                 data.forEach((trade) => {
+                    // @ts-ignore
                     seriesRef.current.update({
-                      time: trade.time,
-                      value: trade.value,
+                        time: trade.time,
+                        value: trade.value,
                     });
-                  });
+                });
             }
 
             previousTradesRef.current = trades;

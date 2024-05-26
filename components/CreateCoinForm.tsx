@@ -1,12 +1,10 @@
 "use client";
 import React, {useContext, useState} from "react";
-import "./styles/form.css";
-import xLogo from "@/public/twitter.png";
-import telegramLogo from "@/public/telegram.png";
-import webLogo from "@/public/world-wide-web.png";
+import xLogo from "@/public/x.svg";
+import discordLogo from "@/public/discord.svg";
+import telegramLogo from "@/public/telegram.svg";
+import webLogo from "@/public/web.svg";
 import Image from "next/image";
-import * as Collapsible from '@radix-ui/react-collapsible'
-import {Cross2Icon, RowSpacingIcon} from '@radix-ui/react-icons';
 import {AppConfigContext, PrismaClientContext} from "@/components/Contexts";
 import {Prisma} from "@/lib/prisma/client";
 import {useForm} from 'react-hook-form';
@@ -14,8 +12,12 @@ import {useToast} from "@/components/ui/use-toast";
 import Link from "next/link";
 import {ConnectButton, useAccounts, useSignPersonalMessage, useSuiClient, useWallets} from "@mysten/dapp-kit";
 import {ToastAction} from "@/components/ui/toast";
-import {coinRestApi, ThreadPostRequest} from "@/lib/rest";
+import {coinRestApi} from "@/lib/rest";
 import {faker} from "@faker-js/faker";
+import {Button} from "@/components/ui/button";
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "@/components/ui/collapsible";
+import {ChevronsUpDown} from "lucide-react";
+import {Input} from "@/components/ui/input";
 
 
 type MyFile = File & { preview: string };
@@ -33,7 +35,7 @@ type MyFile = File & { preview: string };
 //     target: Joi.number().required().greater(0),
 //     signature: Joi.string().required(),
 // });
-type FormData = {
+export type CreateCoinFormData = {
     decimals: number;
     name: string;
     symbol: string;
@@ -63,7 +65,7 @@ const CreateCoinForm = () => {
         handleSubmit,
         watch,
         formState: {errors, isSubmitted, touchedFields}
-    } = useForm<FormData>({
+    } = useForm<CreateCoinFormData>({
         // TODO Below has a bunch of default values for testing, remove this
         defaultValues: {
             // creator: "",
@@ -79,7 +81,7 @@ const CreateCoinForm = () => {
             website: isDevMode ? "https://www.npmjs.com/package/@mysten/sui.js/v/0.0.0-experimental-20230127130009?activeTab=readme" : "",
             twitterUrl: isDevMode ? "https://twitter.com/dog_rates" : "",
             discordUrl: isDevMode ? "https://discord.gg/eHz9E7qP" : "",
-            telegramUrl: "",
+            telegramUrl: "https://icon-sets.iconify.design/mdi/chevron-up-down/",
             target: 5_000_000, //TODO Get rid of hardcoding immediately
         }
     });
@@ -113,15 +115,16 @@ const CreateCoinForm = () => {
     const {mutate} = useSignPersonalMessage()
 
 
-    const submit = async (data: FormData) => {
+    const submit = async (data: CreateCoinFormData) => {
         try {
-            if(!account) {
-                toast({
-                    title: "Failed to create coin",
-                    duration: 3000,
-                    variant: "destructive",
-                    description: "You must connect your Sui wallet to create a coin",
-                })
+            if (!account) {
+                return
+                // toast({
+                //     title: "Failed to create coin",
+                //     duration: 3000,
+                //     variant: "destructive",
+                //     description: "You must connect your Sui wallet to create a coin",
+                // })
             }
             // const result = await appConfig.axios.post("/coins", data)
             mutate(
@@ -134,7 +137,7 @@ const CreateCoinForm = () => {
                         try {
 
                             const token = {...data, signature: signature.signature};
-                            const result = await coinRestApi.postCoin({appConfig, token} ); //TODO Fix this
+                            const result = await coinRestApi.postCoin({appConfig, token}); //TODO Fix this
                             // TODO, take packageId from the result, link to sui explorer, link must be aware of the network the user currently has selected
                             // Couldn't do this first pass because the dapp docs were broken
                             console.log("result", result)
@@ -149,7 +152,7 @@ const CreateCoinForm = () => {
                                     </ToastAction>
                                 ),
                             })
-                        } catch (e) {
+                        } catch (e: any) {
                             toast({
                                 title: "Failed to create coin",
                                 duration: 3000,
@@ -176,7 +179,7 @@ const CreateCoinForm = () => {
         }
     }
 
-    const ErrorSpan = ({name}: { name: keyof Prisma.CoinCreateInput }) => {
+    const ErrorSpan = ({name}: { name: keyof CreateCoinFormData }) => {
         return (!isSubmitted || touchedFields[name]) && errors[name] && (
             <span className="text-red-500 text-xs mt-1">{errors[name]?.message}</span>
         );
@@ -188,11 +191,10 @@ const CreateCoinForm = () => {
                 <label htmlFor="name" className="block text-[#48d7ff]">
                     Name
                 </label>
-                <input
+                <Input
                     type="text"
                     placeholder="Name"
                     {...register("name", {required: true, pattern: /^[A-Za-z ]+$/i})}
-                    className="new-coin-input-field"
                 />
                 <ErrorSpan name="name"/>
             </div>
@@ -201,11 +203,10 @@ const CreateCoinForm = () => {
                     Ticker
                 </label>
                 {/*TODO look up the limits of a ticker, max size, symbols allowed, etc*/}
-                <input
+                <Input
                     type="text"
                     {...register("symbol", {required: true, pattern: /^[A-Za-z0-9]+$/i})}
                     placeholder="Ticker"
-                    className="new-coin-input-field"
                 />
                 <ErrorSpan name="symbol"/>
             </div>
@@ -213,11 +214,10 @@ const CreateCoinForm = () => {
                 <label htmlFor="description" className="block text-[#48d7ff]">
                     Description
                 </label>
-                <input
+                <Input
                     type="text"
                     {...register("description")}
                     placeholder="Description"
-                    className="new-coin-input-field"
                 />
                 <ErrorSpan name="description"/>
             </div>
@@ -225,142 +225,96 @@ const CreateCoinForm = () => {
                 <label htmlFor="target" className="block text-[#48d7ff]">
                     Target
                 </label>
-                <input
+                <Input
                     type="text"
                     {...register("target")}
                     placeholder="Description"
-                    className="new-coin-input-field"
                 />
                 <ErrorSpan name="target"/>
             </div>
-            {/*<div*/}
-            {/*    {...getRootProps()}*/}
-            {/*    className="flex relative flex-col items-center justify-center p-5 border-dashed bg-[#4b6a7d7d] border border-gray-300 text-gray-400 rounded"*/}
-            {/*>*/}
-            {/*    <input {...getInputProps()} />*/}
-            {/*{form.image[0] ? (*/}
-            {/*    <div className=" absolute size-full group hover:bg-slate-400/5">*/}
-            {/*        <p className="ml-2 on hidden group-hover:block text-slate-400  text-center">*/}
-            {/*            {isDragActive*/}
-            {/*                ? "Drop the files here ..."*/}
-            {/*                : "Drag 'n' drop Image, or click to select Image"}*/}
-            {/*        </p>*/}
-            {/*    </div>*/}
-            {/*) : (*/}
-            {/*    <>*/}
-            {/*        <Image src={DND} alt="drag and drop" className=" size-[4rem]"/>*/}
-            {/*        <p className="ml-2">*/}
-            {/*            {isDragActive*/}
-            {/*                ? "Drop the files here ..."*/}
-            {/*                : "Drag 'n' drop Image, or click to select Image"}*/}
-            {/*        </p>*/}
-            {/*    </>*/}
-            {/*)}*/}
-            {/*{form.image[0] && (*/}
-            {iconUrl && (
-                <Image
-                    // src={form.image[0].preview}
-                    src={iconUrl}
-                    alt="image preview"
-                    width={500}
-                    height={300}
-                    className=" max-w-full max-h-[300px]"
-                />
-            )}
             <div>
                 <label htmlFor="iconUrl" className="block text-[#48d7ff]">
                     Icon URL
                 </label>
                 {/*TODO require URL, warn if its not a URL*/}
                 {/*TODO Look up if there's any constraints on the image url, like recommended sizes*/}
-                <input
+                <Input
                     type="text"
                     {...register("iconUrl")}
                     placeholder="Token Icon URL"
-                    className="new-coin-input-field"
                 />
                 <ErrorSpan name="iconUrl"/>
             </div>
-            {/*</div>*/}
-            <Collapsible.Root open={showLinks} onOpenChange={setShowLinks}>
+            <div className={"flex justify-center"}>
 
-                <div className=" flex items-center justify-between mb-5">
-        <span className="text-violet11 text-[15px] leading-[25px] text-[#48d7ff]">
-          Add social links
-        </span>
-                    <Collapsible.Trigger asChild>
-                        <button
-                            className="rounded-full h-[25px] w-[25px] inline-flex items-center justify-center text-violet11 shadow-[0_2px_10px] shadow-blackA4 outline-none data-[state=closed]:bg-white data-[state=open]:bg-violet3 hover:bg-violet3 focus:shadow-[0_0_0_2px] focus:shadow-black">
-                            {showLinks ? <Cross2Icon/> : <RowSpacingIcon/>}
-                        </button>
-                    </Collapsible.Trigger>
-                </div>
+                {iconUrl && (
+                    <img
+                        src={iconUrl}
+                        alt="image preview"
+                        width={300}
+                        height={300}
+                        className=" max-w-full max-h-[300px]"
+                    />
+                )}
+            </div>
+            <Collapsible open={showLinks} onOpenChange={setShowLinks}>
 
-                <Collapsible.Content>
+                    <CollapsibleTrigger asChild>
+                        <div className={"text-center"}>
+                            <Button variant="link" size="lg" className="text-lg w-9 p-0">
+                                + Add social links
+                                <ChevronsUpDown className="h-4 w-4"/>
+                                <span className="sr-only">Show social links</span>
+                            </Button>
+                        </div>
+                    </CollapsibleTrigger>
+
+                <CollapsibleContent>
                     <div className=" flex gap-5 items-center">
                         <Image src={webLogo} alt="web" className=" size-6 "/>
-                        <input
+                        <Input
                             type="text"
                             {...register("website")}
                             placeholder="Website"
-                            className="new-coin-input-field"
                         />
                         <ErrorSpan name="website"/>
                     </div>
                     <div className=" flex gap-5 items-center">
                         <Image src={xLogo} alt="X" className=" size-6 "/>
-                        <input
+                        <Input
                             type="text"
                             {...register("twitterUrl")}
                             placeholder="X"
-                            className="new-coin-input-field"
                         />
                         <ErrorSpan name="twitterUrl"/>
                     </div>
                     <div className=" flex gap-5 items-center">
-                        <Image src={telegramLogo} alt="telegram" className=" size-6 "/>
-                        <input
+                        <Image src={telegramLogo} alt="telegram" className="bg-sea color-sea size-6 "/>
+                        <Input
                             type="text"
                             {...register("telegramUrl")}
                             placeholder="Telegram"
-                            className="new-coin-input-field -z"
                         />
                         <ErrorSpan name="telegramUrl"/>
                     </div>
 
                     <div className=" flex gap-5 items-center">
-                        {/*TODO needs discord logo*/}
-                        <Image src={telegramLogo} alt="discord" className=" size-6 "/>
-                        <input
+                        <Image src={discordLogo} alt="discord" className=" size-6 "/>
+                        <Input
                             type="text"
                             {...register("discordUrl")}
                             placeholder="Discord"
-                            className="new-coin-input-field -z"
                         />
                         <ErrorSpan name="discordUrl"/>
                     </div>
-                    <div className=" flex gap-5 items-center">
-                        {/*TODO find an icon for the whitepaper*/}
-                        <Image src={webLogo} alt="whitepaperUrl" className=" size-6 "/>
-                        <input
-                            type="text"
-                            {...register("whitepaperUrl")}
-                            placeholder="Whitepaper"
-                            className="new-coin-input-field"
-                        />
-                        <ErrorSpan name="whitepaperUrl"/>
-                    </div>
-                </Collapsible.Content>
-            </Collapsible.Root>
+                </CollapsibleContent>
+            </Collapsible>
             {fatalError && (<div className="text-red-500 text-xs mt-1">{fatalError}</div>)}
-            {!account
-                ? <ConnectButton connectText={"Connect wallet to create coin"}/>
-                : <button
-                    type="submit"
-                    className="btn p-2 hover:text-[#5ea9ff] hover:bg-[#5db6ff42] text-white rounded w-full md:w-1/2 mx-auto block"
-                >
-                    Create Coin
-                </button>}
+            <div className="text-center">
+                {!account
+                    ? <ConnectButton connectText={"Connect wallet to create coin"}/>
+                    : <Button type="submit" size={"lg"}>CREATE COIN</Button>}
+            </div>
         </form>
     );
 };

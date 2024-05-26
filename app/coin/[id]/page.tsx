@@ -3,9 +3,10 @@ import {PostFromRestAPI, TokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
 import {Dispatch, SetStateAction, useContext, useEffect, useRef, useState} from "react";
-import twitterLogo from '@/public/twitter.png';
-import telegramLogo from '@/public/telegram.png';
-import webLogo from '@/public/world-wide-web.png';
+import twitterLogo from '@/public/x.svg';
+import discordLogo from '@/public/discord.svg';
+import telegramLogo from '@/public/telegram.svg';
+import webLogo from '@/public/web.svg';
 import Image from "next/image";
 import {BuySellDialog} from "@/components/BuySellDialog";
 import TradesTable from "@/components/TradesTable";
@@ -37,18 +38,22 @@ type TokenHoldersProps = {
 };
 
 
-const ClampedDescription = ({text}) => {
+const ClampedDescription = ({text}: {text: string}) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isOverflowing, setIsOverflowing] = useState(false);
     const textRef = useRef(null);
     const containerRef = useRef(null);
 
     useEffect(() => {
-        const textHeight = textRef.current.scrollHeight;
-        const containerHeight = containerRef.current.clientHeight;
+        if (textRef.current && containerRef.current) {
+            // @ts-ignore
+            const textHeight = textRef.current.scrollHeight;
+            // @ts-ignore
+            const containerHeight = containerRef.current.clientHeight;
 
-        if (textHeight > containerHeight) {
-            setIsOverflowing(true);
+            if (textHeight > containerHeight) {
+                setIsOverflowing(true);
+            }
         }
     }, []);
 
@@ -141,6 +146,9 @@ const SocialLinks: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
             <a href={token.telegramUrl} target="_blank" rel="noopener noreferrer">
                 <Image src={telegramLogo} alt="Telegram" width={30} height={30}/>
             </a>
+            <a href={token.discordUrl} target="_blank" rel="noopener noreferrer">
+                <Image src={discordLogo} alt="Telegram" width={30} height={30}/>
+            </a>
 
         </div>
     );
@@ -165,7 +173,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token}) => {
     return (
         <div className="p-4 rounded-lg">
             <div className="flex items-start space-x-4">
-                <div className="border border-gray-700 min-w-24 min-h-24">
+                <div className="border border-gray-700 min-w-24 min-h-24 align-middle">
                     <img
                         src={token.iconUrl || 'https://via.placeholder.com/100'}
                         alt={token.name}
