@@ -29,19 +29,6 @@ type CoinRestApi = {
     getSuiPrice: Fetcher<number, { appConfig: AppConfig }>,
 }
 
-// model Post {
-//     id       BigInt @id @default(autoincrement())
-//     coinId   String
-//     author String @default("")
-//     text     String
-//     // text     String @db.VarChar(1000)
-//     likes    Int    @default(0)
-//     // author   User   @relation(fields: [authorId], references: [id])
-//     coin     Coin   @relation(fields: [coinId], references: [packageId])
-//     createdAt DateTime @default(now())
-// }
-
-
 export const coinRestApi: CoinRestApi = {
     getAll: async ({appConfig, packageIds, limit, sort, order,}) => {
         const res = await appConfig.axios.get<TokenFromRestAPI[]>(`/coins`)

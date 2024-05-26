@@ -15,10 +15,10 @@ import {
 } from "@mysten/dapp-kit";
 import {AppConfigContext} from "@/components/Contexts";
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
-import {bcs} from "@mysten/sui.js/bcs";
 import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 import {useForm} from "react-hook-form";
-import useSWR, {Fetcher} from "swr";
+import useSWR from "swr";
+import {customSuiHooks} from "@/lib/suiSwr";
 
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
@@ -214,34 +214,12 @@ export const getSellCoinPriceTxb = (coinType: string, storeId: string, amount: n
     return txb
 }
 
-export const getPrice: Fetcher<number, {
-    client: SuiClient,
-    sender: string,
-    coinType: string,
-    storeId: string,
-    amount: number,
-    mode: "buy" | "sell"
-}> = async ({client, sender, coinType, storeId, amount, mode}): Promise<number> => {
-    console.log(`get coin ${mode} price`, sender)
-    const txb = mode === "buy" ? getBuyCoinPriceTxb(coinType, storeId, amount) : getSellCoinPriceTxb(coinType, storeId, amount)
-    txb.setSenderIfNotSet(sender)
-
-    const res = await client.devInspectTransactionBlock({
-        transactionBlock: txb,
-        sender: sender,
-    });
-    console.log("Inspect result", res)
-
-    const price = res.results?.[0]?.returnValues?.[0][0]
-    return bcs.de("u64", new Uint8Array(price || [])) as number
-}
-
 
 const PriceCalculator: React.FC<{
     suiClient: SuiClient,
     sender: string,
     amount: number,
-    mode: string,
+    mode: "buy" | "sell",
     coinType: string,
     storeId: string,
     userBalance: number
@@ -254,6 +232,8 @@ const PriceCalculator: React.FC<{
           storeId,
           userBalance,
       }) => {
+
+
     const {data: price, error: priceError, isLoading} = useSWR({
         client: suiClient,
         sender,
@@ -261,7 +241,12 @@ const PriceCalculator: React.FC<{
         storeId,
         amount,
         mode
-    }, getPrice)
+        // TODO Below feels bad man
+        // @ts-ignore
+    }, customSuiHooks.getCurrentCoinPriceInSui)
+
+
+    // const {data: token, error: tokenError} = useSWR({appConfig, packageId}, coinRestApi.getById)
 
     if (priceError) return (<div>Error fetching price {priceError.message}</div>)
     // if(userBalance === 0 && mode === sell) return (<div>You have nothing to sell</div>)

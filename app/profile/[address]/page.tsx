@@ -24,6 +24,7 @@ const CoinRow: FC<CoinRowProps> = ({address, coinBalance, coinFromRestApi}) => {
 
     const ctx = useSuiClientContext();
     const suiClient = useSuiClient()
+
     const [sellPrice, setSellPrice] = useState<number>(0)
     const {data: metadata, isLoading, isError, error} = useSuiClientQuery('getCoinMetadata', {
         coinType: coinBalance.coinType,
@@ -32,6 +33,7 @@ const CoinRow: FC<CoinRowProps> = ({address, coinBalance, coinFromRestApi}) => {
 
     useEffect(() => {
         const fetchCurrentPrice = async () => {
+            if(!address) return
             const path = coinFromRestApi ? `${coinFromRestApi.packageId}::${coinFromRestApi.storeId}` : coinBalance.coinType.split("::").slice(0, 2).join("::")
             console.log("path: ", path)
             const price = await suiClient.devInspectTransactionBlock({
@@ -65,7 +67,7 @@ const CoinRow: FC<CoinRowProps> = ({address, coinBalance, coinFromRestApi}) => {
             </div>
             <div className={"flex-col items-center text-center"}>
                 <div className={"text-muted-foreground text-sm"}>Value</div>
-                <div>{extractPriceFromDevInspect(sellPrice)} SUI</div>
+                <div>{sellPrice === 0 ? "?" : sellPrice} SUI</div>
             </div>
         </div>
         <div className="flex flex-col">

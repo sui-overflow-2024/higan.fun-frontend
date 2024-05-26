@@ -19,7 +19,7 @@ import {AppConfigContext} from "@/components/Contexts";
 import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
-import { getValueWithDecimals, getMarketCap } from "@/lib/utils";
+import {getMarketCap} from "@/lib/utils";
 
 type CoinMetadataProps = {
     token: TokenFromRestAPI;
@@ -42,7 +42,7 @@ type TokenHoldersProps = {
 };
 
 
-const ClampedDescription = ({text}: {text: string}) => {
+const ClampedDescription = ({text}: { text: string }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isOverflowing, setIsOverflowing] = useState(false);
     const textRef = useRef(null);
@@ -99,7 +99,8 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({token, marketCap, curr
             <div className="flex items-center space-x-8">
                 <span
                     className="text-green-400 text-sm">Market Cap: ${(marketCap).toLocaleString()}</span>
-                <span className="text-green-400 text-sm">Current Price: {currentPrice} SUI (${currentSuiPrice.toFixed(2)})</span>
+                <span
+                    className="text-green-400 text-sm">Current Price: {currentPrice} SUI (${currentSuiPrice.toFixed(2)})</span>
                 <div className="flex items-center space-x-2 text-sm">
                     <span>Created by:</span>
                     <CreatorAddressChip address={token.creator} variant={"default"} showAvatar/>
