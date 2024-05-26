@@ -89,7 +89,7 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({token, marketCap, curr
     return (
         <div className="p-2 flex justify-between items-center rounded-lg">
             <div className="flex items-center space-x-4">
-                <img
+                <Image
                     src={token.iconUrl || 'https://via.placeholder.com/40'}
                     alt={token.name}
                     className="w-10 h-10 rounded-full"
@@ -178,7 +178,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, marketCap}) => {
         <div className="p-4 rounded-lg">
             <div className="flex items-start space-x-4">
                 <div className="border border-gray-700 min-w-24 min-h-24 align-middle">
-                    <img
+                    <Image
                         src={token.iconUrl || 'https://via.placeholder.com/100'}
                         alt={token.name}
                         width={100}
@@ -265,7 +265,7 @@ export default function Drilldown() {
 
         // Clear the interval when the component is unmounted
         return () => clearInterval(intervalId);
-    }, [token]);
+    }, [appConfig, packageId, token]);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -288,7 +288,7 @@ export default function Drilldown() {
 
         // Clear the interval when the component is unmounted
         return () => clearInterval(intervalId);
-    }, []);
+    }, [appConfig, packageId]);
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
     if (!token) return (<div>Loading...</div>)

@@ -12,6 +12,7 @@ import {TokenFromRestAPI} from "@/lib/types";
 import {useToast} from "@/components/ui/use-toast";
 import {ExternalLink} from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 interface CoinRowProps {
     address: string;
@@ -42,7 +43,7 @@ const CoinRow: FC<CoinRowProps> = ({address, coinBalance, coinFromRestApi}) => {
             setSellPrice(extractPriceFromDevInspect(price))
         }
         fetchCurrentPrice()
-    }, [])
+    }, [address, coinBalance.coinType, coinBalance.totalBalance, coinFromRestApi, suiClient])
 
     // For now just hide missing metadata
     if (!metadata) return <></>
@@ -51,7 +52,7 @@ const CoinRow: FC<CoinRowProps> = ({address, coinBalance, coinFromRestApi}) => {
 
     return (<div className="flex items-center justify-between p-2 bg-gray-800 rounded-sm">
         <div className="flex items-center space-x-4">
-            {metadata.iconUrl ? <img
+            {metadata.iconUrl ? <Image
                 src={metadata.iconUrl} // Replace with actual coin image URL
                 alt={metadata.name}
                 width={40}

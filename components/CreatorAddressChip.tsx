@@ -2,6 +2,7 @@ import React, {FC} from "react";
 import Link from "next/link";
 import Jazzicon, {jsNumberForAddress} from "react-jazzicon";
 import {addressToBackgroundColor} from "@/lib/utils";
+import Image from "next/image";
 
 
 type CreatorAddressChipProps = {
@@ -52,7 +53,7 @@ export const CreatorAddressChip: FC<CreatorAddressChipProps> = ({
     let avatar = <Jazzicon diameter={config.jazziconDiam} seed={jsNumberForAddress(address)}/>
 
     if (avatarImageUrl) {
-        avatar = <img src={avatarImageUrl} alt={"avatar"} className={config.avatarClass}/>
+        avatar = <Image src={avatarImageUrl} alt={"avatar"} className={config.avatarClass}/>
 
     }
 

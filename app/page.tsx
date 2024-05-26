@@ -29,7 +29,7 @@ export default function Home() {
         }
 
         fetchTokens()
-    }, [term, sort, order])
+    }, [term, sort, order, appConfig])
 
     useEffect(() => {
         const fetchTopTokens = async () => {
@@ -47,7 +47,7 @@ export default function Home() {
 
         fetchTopTokens();
         fetchSuiPrice();
-    }, [])
+    }, [appConfig])
 
     //generate 30 fake tokens
     // for (let i = 0; i < 30; i++) {

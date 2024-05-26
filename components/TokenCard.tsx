@@ -3,13 +3,14 @@ import {Card} from "@/components/ui/card";
 import Link from "next/link";
 import {getRandomNumber, largeNumberToFixedWithSymbol} from "@/lib/utils";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
+import Image from "next/image";
 
 export const TokenCard = ({token, marketCap}: { token: TokenFromRestAPI, marketCap: string }) => {
     return (
         <Link href={`/coin/${token.packageId}`}>
             <Card className="p-4  flex flex-col hover:bg-card-hover hover:border-card-hover-border">
                 <div className="flex space-x-4 items-center">
-                    <img
+                    <Image
                         src={token.iconUrl}
                         alt="Coin Logo"
                         className="w-24 h-24"

@@ -1,6 +1,7 @@
 import * as React from "react";
 import {Dispatch, SetStateAction} from "react";
 import {TokenFromRestAPI} from "@/lib/types";
+import Image from "next/image";
 
 const CoinSelectDropdown: React.FC<{
     token: TokenFromRestAPI,
@@ -15,8 +16,9 @@ const CoinSelectDropdown: React.FC<{
             className="max-w-6 max-h-5 flex space-x-0.5 text-md"
         >
 
-            <img
+            <Image
                 src={token.iconUrl || "../../public/sui-sea.svg"} //TODO dynamic image from on-chain config
+                alt={token.symbol}
                 width={100}
                 height={100}
             />

@@ -248,7 +248,7 @@ const CreateCoinForm = () => {
             <div className={"flex justify-center"}>
 
                 {iconUrl && (
-                    <img
+                    <Image
                         src={iconUrl}
                         alt="image preview"
                         width={300}
