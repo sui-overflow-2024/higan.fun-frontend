@@ -18,8 +18,8 @@ const avatarVariants = {
         jazziconDiam: 16,
         imgSize: 4,
         avatarClass: "w-4 h-4 rounded-full",
-        textClass: "font-mono px-1 py-0.5 rounded",
         linkClass: "flex items-center space-x-1 text-xs",
+        textClass: "font-mono px-1 py-0.5 rounded hover:underline",
         text: (address: string) => address.slice(2, 8)
     },
     default: {
@@ -27,7 +27,7 @@ const avatarVariants = {
         imgSize: 6,
         avatarClass: "w-6 h-6 rounded-full",
         linkClass: "flex items-center space-x-1",
-        textClass: "font-mono px-2 py-1 rounded",
+        textClass: "font-mono px-2 py-1 rounded hover:underline",
         text: (address: string) => address.slice(2, 8)
     },
     large: {
@@ -35,7 +35,7 @@ const avatarVariants = {
         imgSize: 8,
         avatarClass: "w-8 h-8 rounded-full",
         linkClass: "flex items-center space-x-1",
-        textClass: "font-mono px-2 py-1 rounded text-md",
+        textClass: "font-mono px-2 py-1 rounded text-md hover:underline",
         text: (address: string) => address.slice(0, 6) + "..." + address.slice(-4)
 
     }

@@ -187,13 +187,13 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, marketCap}) => {
         <div className="p-4 rounded-lg">
             <div className="flex items-start space-x-4">
                 <div className="border border-gray-700 min-w-24 min-h-24 align-middle">
-                    {/*<Image*/}
-                    {/*    src={token.iconUrl || 'https://via.placeholder.com/100'}*/}
-                    {/*    alt={token.name}*/}
-                    {/*    width={100}*/}
-                    {/*    height={100}*/}
-                    {/*    className={"w-24 h-24"}*/}
-                    {/*/>*/}
+                    <Image
+                        src={token.iconUrl || 'https://via.placeholder.com/100'}
+                        alt={token.name}
+                        width={100}
+                        height={100}
+                        className={"w-24 h-24"}
+                    />
                 </div>
                 <div>
                     <h2 className="text-xl font-bold">{token.name} ({token.symbol})</h2>

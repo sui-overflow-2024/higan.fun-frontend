@@ -35,7 +35,7 @@ const getAllUserCoins = async ({
 
     let coins: CoinStruct[] = [];
     let iter = 0;
-
+console.log("getAllUserCoins", suiClient, address, type, cursor)
     do {
         try {
             const res = await suiClient.getCoins({
@@ -233,17 +233,30 @@ const PriceCalculator: React.FC<{
           userBalance,
       }) => {
 
-
-    const {data: price, error: priceError, isLoading} = useSWR({
-        client: suiClient,
-        sender,
-        coinType,
-        storeId,
-        amount,
-        mode
-        // TODO Below feels bad man
-        // @ts-ignore
-    }, customSuiHooks.getCurrentCoinPriceInSui)
+    console.log("suiclient", suiClient)
+    const [price, setPrice] = useState<number>(0)
+    const [priceError, setPriceError] = useState<Error | null>(null)
+    const [isLoading, setIsLoading] = useState<boolean>(true)
+    useEffect(() => {
+        const fetchPrice = async () => {
+            try {
+                console.log("fetching price for", suiClient, coinType, storeId, amount, mode)
+                const price = await customSuiHooks.getCurrentCoinPriceInSui({
+                    suiClient,
+                    sender,
+                    coinType,
+                    storeId,
+                    amount,
+                    mode
+                })
+                setPrice(price)
+            }  catch (e: any) {
+                setPriceError(e)
+            }
+            setIsLoading(false)
+        }
+        fetchPrice()
+    }, [suiClient, sender, coinType, storeId, amount, mode])
 
 
     // const {data: token, error: tokenError} = useSWR({appConfig, packageId}, coinRestApi.getById)
@@ -297,6 +310,9 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
     useEffect(() => {
         const fetchBalance = async () => {
             if (!token) return
+            if(!currentAccount?.address) return
+            if(!suiClient) return
+
             console.log("fetching balance for", currentAccount?.address, "token", token.coinType)
             const balance = await suiClient.getBalance({
                 owner: currentAccount?.address || "",
@@ -306,6 +322,7 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
             setUserBalance(parseInt(balance.totalBalance || "0"))
             console.log("userBalance", userBalance)
 
+            console.log()
             const coins = await getAllUserCoins({
                 suiClient: suiClient,
                 type: getCoinPath(token),
@@ -315,7 +332,7 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
             setBaseTokenCoins(coins)
         }
         fetchBalance()
-    }, [token, currentAccount?.address, suiClient, amount, userBalance])
+    }, [token, currentAccount?.address, suiClient, amount, userBalance, currentAccount])
 
     console.log("baseTokenCoins", baseTokenCoins)
     if (!token) return (<div>Token not found</div>)
@@ -376,18 +393,15 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
                             {/*</div>*/}
                         </div>
                     </div>
-
-                    {/*{controls[1]}*/}
                     <div className={"flex justify-center"}>
-                        {currentAccount
+                        {currentAccount?.address
                             ? (<div className={"space-y-2"}>
                                 <div className={"text-center"}>
                                     <PriceCalculator coinType={token.coinType} amount={amount}
                                                      sender={currentAccount?.address || ""} mode={mode}
                                                      storeId={token.storeId}
-                                                     suiClient={suiClient}
                                                      userBalance={userBalance}
-                                    />
+                                     suiClient={suiClient}/>
                                 </div>
                                 <Button className={"min-w-56"} onClick={() => {
                                     signAndExecuteTransactionBlock({

@@ -24,6 +24,7 @@ export const customSuiHooks: SuiSwrFetchers = {
                                          mode,
                                      }) => {
         console.log(`get coin ${mode} price`, sender)
+        console.log("suiClient in SWR", suiClient)
         const txb = mode === "buy" ? getBuyCoinPriceTxb(coinType, storeId, amount) : getSellCoinPriceTxb(coinType, storeId, amount)
         txb.setSenderIfNotSet(sender)
 
