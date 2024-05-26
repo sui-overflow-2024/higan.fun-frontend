@@ -15,6 +15,8 @@ export type TokenFromRestAPI = {
     telegramUrl: string,
     whitepaperUrl: string,
     coinType: string,
+    suiReserve: number,
+    // tradingVolume: number,
     createdAt: Date,
     updatedAt: Date
 }

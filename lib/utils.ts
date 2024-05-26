@@ -85,6 +85,11 @@ export const getValueWithDecimals = (value: number, decimals: number, fixed ?: n
     const result = value / divisor;
     return fixed ? result.toFixed(fixed) : result.toString()
 }
+
+export const getMarketCap = (suiReserve: number, currentSuiPrice: number): string => {
+    return getValueWithDecimals((suiReserve * currentSuiPrice), 9, 2);
+}
+
 export const extractPriceFromDevInspect = (res?: DevInspectResults) => {
     if (!res) return 0
     const price = res.results?.[0]?.returnValues?.[0][0]

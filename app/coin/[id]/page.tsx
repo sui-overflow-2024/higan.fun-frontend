@@ -19,12 +19,16 @@ import {AppConfigContext} from "@/components/Contexts";
 import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
+import { getValueWithDecimals, getMarketCap } from "@/lib/utils";
 
 type CoinMetadataProps = {
     token: TokenFromRestAPI;
+    marketCap: string;
+    currentSuiPrice: number;
 };
 type CoinDetailsProps = {
     token: TokenFromRestAPI;
+    marketCap: string;
 };
 type Holder = {
     address: string;
@@ -78,9 +82,9 @@ const ClampedDescription = ({text}: {text: string}) => {
     );
 };
 
-const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({token}) => {
-    const {data: suiReserve} = {data: 100000}
-    const {data: currentPrice} = {data: 1.03}
+const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({token, marketCap, currentSuiPrice}) => {
+    // TODO: fetch token price
+    let currentPrice = 1;
 
     return (
         <div className="p-2 flex justify-between items-center rounded-lg">
@@ -94,8 +98,8 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({token}) => {
             </div>
             <div className="flex items-center space-x-8">
                 <span
-                    className="text-green-400 text-sm">Market Cap: ${(suiReserve * currentPrice).toLocaleString()}</span>
-                <span className="text-green-400 text-sm">Current Price: {currentPrice.toFixed(2)} SUI ($1)</span>
+                    className="text-green-400 text-sm">Market Cap: ${(marketCap).toLocaleString()}</span>
+                <span className="text-green-400 text-sm">Current Price: {currentPrice} SUI (${currentSuiPrice.toFixed(2)})</span>
                 <div className="flex items-center space-x-2 text-sm">
                     <span>Created by:</span>
                     <CreatorAddressChip address={token.creator} variant={"default"} showAvatar/>
@@ -164,12 +168,12 @@ const SocialLinks: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
 //     });
 // };
 
-const CoinDetails: React.FC<CoinDetailsProps> = ({token}) => {
+const CoinDetails: React.FC<CoinDetailsProps> = ({token, marketCap}) => {
     const bondingCurveProgress = 2; // Example progress percentage
-    const marketCap = 900000; // Example market cap
     const target = 900000; // Example target market cap
     const totalSupply = Math.floor(Math.random() * 1000000); // Example total supply
     const [isExpanded, setIsExpanded] = useState(false);
+
     return (
         <div className="p-4 rounded-lg">
             <div className="flex items-start space-x-4">
@@ -240,6 +244,7 @@ export default function Drilldown() {
     const [activePanel, setActivePanel] = useState<"thread" | "trades">('thread');
     const [trades, setTrades] = useState<TradeFromRestAPI[]>([]);
     const [posts, setPosts] = useState<PostFromRestAPI[]>([]);
+    const [currentSuiPrice, setSuiPrice] = useState<number>(0);
     const packageId = usePathname().split('/').pop() || '';
     const account = useCurrentAccount()
     const suiContext = useSuiClientContext()
@@ -273,6 +278,14 @@ export default function Drilldown() {
             fetchPosts()
         }, 2000);
 
+        const fetchSuiPrice = async () => {
+            const suiPrice = await coinRestApi.getSuiPrice({appConfig})
+
+            setSuiPrice(suiPrice);
+        };
+
+        fetchSuiPrice();
+
         // Clear the interval when the component is unmounted
         return () => clearInterval(intervalId);
     }, []);
@@ -300,6 +313,7 @@ export default function Drilldown() {
 
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
     const tradesChartData = trades.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    let marketCap = getMarketCap(token.suiReserve, currentSuiPrice);
 
     return (
         // <div className="bg-gray-700 p-4 min-h-[300px] flex items-center justify-center">
@@ -309,7 +323,7 @@ export default function Drilldown() {
 
                 <main className="grid grid-cols-3 gap-8 mt-4">
                     <section className="col-span-2 space-y-4">
-                        <CoinMetadataHeader token={token}/>
+                        <CoinMetadataHeader token={token} marketCap={marketCap} currentSuiPrice={currentSuiPrice}/>
                         <div className="bg-gray-700 min-h-[300px]">
                             <TradesChart trades={tradesChartData}/>
                         </div>
@@ -334,7 +348,7 @@ export default function Drilldown() {
 
                     <aside className="space-y-4">
                         <BuySellDialog token={token}/>
-                        <CoinDetails token={token}/>
+                        <CoinDetails token={token} marketCap={marketCap}/>
                         <TokenHolders token={token} holders={exampleHolders} totalSupply={totalSupply}/>
                     </aside>
                 </main>

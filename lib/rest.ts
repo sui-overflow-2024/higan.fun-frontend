@@ -26,6 +26,7 @@ type CoinRestApi = {
     postCoin: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: CreateCoinFormData }>
     postThread: Fetcher<Post, { appConfig: AppConfig, post: ThreadPostRequest }>
     getThreads: Fetcher<PostFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
+    getSuiPrice: Fetcher<number, { appConfig: AppConfig }>,
 }
 
 // model Post {
@@ -84,5 +85,13 @@ export const coinRestApi: CoinRestApi = {
         const res = await appConfig.axios.post<Post>(`/post`, post)
         console.log("Posted the following coin to the REST API", res.data)
         return res.data
+    },
+    getSuiPrice: async ({appConfig}) => {
+        const res = await appConfig.axios.get('https://hermes.pyth.network/v2/updates/price/latest?ids%5B%5D=0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744')
+        const priceObj = res.data?.parsed?.[0]?.price;
+        const {price, expo} = priceObj;
+        const priceNumber = price *  Math.pow(10, expo);
+
+        return priceNumber;
     }
 }

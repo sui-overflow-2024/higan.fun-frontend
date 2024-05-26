@@ -4,7 +4,7 @@ import Link from "next/link";
 import {getRandomNumber, largeNumberToFixedWithSymbol} from "@/lib/utils";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 
-export const TokenCard = ({token}: { token: TokenFromRestAPI }) => {
+export const TokenCard = ({token, marketCap}: { token: TokenFromRestAPI, marketCap: string }) => {
     const fakeMarketCap = getRandomNumber(4_000, 100_000)
     return (
         <Link href={`/coin/${token.packageId}`}>
@@ -23,7 +23,7 @@ export const TokenCard = ({token}: { token: TokenFromRestAPI }) => {
                             Ticker: ${token.symbol}
                         </p>
                         <p className="text-green-400 text-sm">
-                            Market Cap: {largeNumberToFixedWithSymbol(fakeMarketCap)}
+                            Market Cap: ${marketCap}
                         </p>
 
                         <p className="text-sm flex items-centerhttps://rpc.ankr.com/sui_testnet space-x-1.5">

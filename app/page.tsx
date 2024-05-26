@@ -4,7 +4,7 @@
 import {useContext, useState, useEffect} from "react";
 import {AppConfigContext} from "@/components/Contexts";
 import {TokenFromRestAPI, TopTokenFromRestAPI} from "@/lib/types";
-import {generateFakeToken} from "@/lib/utils";
+import { getMarketCap } from "@/lib/utils";
 import {TokenCard} from "@/components/TokenCard";
 import {Button} from "@/components/ui/button";
 import Link from "next/link";
@@ -16,6 +16,7 @@ export default function Home() {
     const [term, setTerm] = useState("");
     const [sort, setSort] = useState<"created" | "marketCap" | "tvl" | "price">("created")
     const [order, setOrder] = useState<"asc" | "desc">("asc")
+    const [currentSuiPrice, setSuiPrice] = useState<number>(0);
 
     const [newestToken, setNewestToken] = useState<TokenFromRestAPI>();
     const [hottestToken, setHottestToken] = useState<TokenFromRestAPI>();
@@ -40,8 +41,14 @@ export default function Home() {
             setHottestToken(result.hottest);
             setImminentToken(result.imminent);
         }
+        const fetchSuiPrice = async () => {
+            const suiPrice = await coinRestApi.getSuiPrice({appConfig})
+
+            setSuiPrice(suiPrice);
+        };
 
         fetchTopTokens();
+        fetchSuiPrice();
     }, [])
 
      //generate 30 fake tokens
@@ -63,15 +70,15 @@ export default function Home() {
                 <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center justify-between">
                     {newestToken && <div>
                         <p className={"text-2xl text-center"}>Newest</p>
-                        <TokenCard token={newestToken}/>
+                        <TokenCard token={newestToken} marketCap={getMarketCap(newestToken.suiReserve, currentSuiPrice)}/>
                     </div>}
                     {hottestToken && <div>
                         <p className={"text-2xl text-center"}>Hottest</p>
-                        <TokenCard token={hottestToken}/>
+                        <TokenCard token={hottestToken} marketCap={getMarketCap(hottestToken.suiReserve, currentSuiPrice)}/>
                     </div>}
                     {imminentToken && <div>
                         <p className={"text-2xl text-center"}>Imminent</p>
-                        <TokenCard token={imminentToken}/>
+                        <TokenCard token={imminentToken} marketCap={getMarketCap(imminentToken.suiReserve, currentSuiPrice)}/>
                     </div>}
                 </div>
                 <div className={"text-center justify-center flex space-x-2"}>
@@ -128,7 +135,7 @@ export default function Home() {
 
                 <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center justify-between">
                     {tokens.map((token, index) => (
-                        <TokenCard key={index} token={token}/>
+                        <TokenCard key={index} token={token} marketCap={getMarketCap(token.suiReserve, currentSuiPrice)}/>
                     ))}
                 </div>
                 {/* <TokenCard token={generateFakeToken()} /> */}
