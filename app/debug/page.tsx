@@ -6,11 +6,16 @@ import JSONPretty from "react-json-pretty";
 import {useFetchCoinFromRest} from "@/hooks/useFetchCoinFromRest";
 import {FC} from "react";
 
-const DemoSingleCoin: FC<{packageId: string}> = ({packageId}) => {
+const DemoSingleCoin: FC<{ packageId: string }> = ({packageId}) => {
     const {data, isLoading, isError, error} = useFetchCoinFromRest({packageId})
 
     // useFetchManyCoinsFromRest with packageIds filter on the packageId param
-    const {data: data2, isLoading: isLoading2, isError: isError2, error: error2} = useFetchManyCoinsFromRest({packageIds: [packageId]})
+    const {
+        data: data2,
+        isLoading: isLoading2,
+        isError: isError2,
+        error: error2
+    } = useFetchManyCoinsFromRest({packageIds: [packageId]})
 
     if (isLoading) return <div>Loading...</div>
     if (isError) return <div>Error: {(error as Error).message}</div>

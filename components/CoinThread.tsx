@@ -3,7 +3,7 @@ import MarkdownIt from 'markdown-it';
 import DOMPurify from 'dompurify';
 import {PostFromRestAPI} from "@/lib/types";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
-import {ConnectButton, useCurrentAccount, useSignPersonalMessage, useSuiClient} from "@mysten/dapp-kit";
+import {ConnectButton, useCurrentAccount, useSignPersonalMessage} from "@mysten/dapp-kit";
 import {Button} from "@/components/ui/button";
 import {useForm} from "react-hook-form";
 import {
@@ -27,12 +27,12 @@ const SafeMarkdown = ({text}: { text: string }) => {
 
 }
 const Post: FC<{ id: number, creator: string, authorId: string, text: string, createdAt: Date }> = ({
-        id,
-        creator,
-        authorId,
-        text,
-        createdAt
-    }) => {
+                                                                                                        id,
+                                                                                                        creator,
+                                                                                                        authorId,
+                                                                                                        text,
+                                                                                                        createdAt
+                                                                                                    }) => {
     return (
         <div className="rounded-sm overflow-hidden bg-gray-800 text-sm p-4 space-y-1 min-w-full">
             {/*TODO, setting text style below hides links in Markdown*/}
@@ -88,7 +88,7 @@ const NewPostTextbox: FC<{ creator: string, coinId: string }> = ({creator, coinI
     return <form onSubmit={handleSubmit(submitPost)} className={"min-w-[450px]"}>
 
         <div>
-        <Textarea {...register("text", {required: true})} placeholder="Type your message here. Supports markdown."/>
+            <Textarea {...register("text", {required: true})} placeholder="Type your message here. Supports markdown."/>
         </div>
         <div className={"flex mt-2 gap-4 justify-center"}>
             <Dialog>
@@ -112,7 +112,11 @@ const NewPostTextbox: FC<{ creator: string, coinId: string }> = ({creator, coinI
     </form>
 }
 
-export const CoinThread: FC<{ coinId: string, creator: string, posts: PostFromRestAPI[] }> = ({creator, coinId, posts}) => {
+export const CoinThread: FC<{ coinId: string, creator: string, posts: PostFromRestAPI[] }> = ({
+                                                                                                  creator,
+                                                                                                  coinId,
+                                                                                                  posts
+                                                                                              }) => {
     return (
         <div className={"space-y-3"}>
             <div className={"flex justify-center"}>

@@ -259,15 +259,15 @@ const CreateCoinForm = () => {
             </div>
             <Collapsible open={showLinks} onOpenChange={setShowLinks}>
 
-                    <CollapsibleTrigger asChild>
-                        <div className={"text-center"}>
-                            <Button variant="link" size="lg" className="text-lg w-9 p-0">
-                                + Add social links
-                                <ChevronsUpDown className="h-4 w-4"/>
-                                <span className="sr-only">Show social links</span>
-                            </Button>
-                        </div>
-                    </CollapsibleTrigger>
+                <CollapsibleTrigger asChild>
+                    <div className={"text-center"}>
+                        <Button variant="link" size="lg" className="text-lg w-9 p-0">
+                            + Add social links
+                            <ChevronsUpDown className="h-4 w-4"/>
+                            <span className="sr-only">Show social links</span>
+                        </Button>
+                    </div>
+                </CollapsibleTrigger>
 
                 <CollapsibleContent>
                     <div className=" flex gap-5 items-center">

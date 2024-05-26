@@ -4,7 +4,6 @@ import {TokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import type {DevInspectResults} from "@mysten/sui.js/client";
 import {bcs} from "@mysten/sui.js/bcs";
 import {faker} from "@faker-js/faker";
-import {Trade} from "@/components/TradesTable";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -62,6 +61,7 @@ export const generateFakeToken = (): TokenFromRestAPI => {
         description: faker.lorem.sentence({min: 5, max: 60}),
         createdAt: new Date(),
         updatedAt: new Date(),
+        suiReserve: getRandomNumber(500_000_000, 100_000_000_000) // 0.5 - 100 SUI
 
     }
 }
@@ -123,7 +123,8 @@ export const generateTrades = (count: number): TradeFromRestAPI[] => {
         coinAmount: faker.number.float({min: 1, max: 80, fractionDigits: 2}),
         date: faker.date.recent().toLocaleDateString(),
         transactionId: faker.finance.ethereumAddress(),
-
+        isBuy: activity === 'buy',
+        createdAt: faker.date.recent(),
     }));
 };
 
@@ -137,12 +138,20 @@ export const largeNumberToFixedWithSymbol = (num: number, decimals: number = 2):
         return `${sign}$${(num / 1_000_000_000_000).toFixed(decimals)}T`;
     } else if (num >= 1_000_000_000) {
         return `${sign}$${(num / 1_000_000_000).toFixed(decimals)}B`;
-    }
-    else if (num >= 1_000_000) {
+    } else if (num >= 1_000_000) {
         return `${sign}$${(num / 1_000_000).toFixed(decimals)}M`;
     } else if (num >= 1_000) {
         return `${sign}$${(num / 1_000).toFixed(decimals)}k`;
     } else {
         return `${sign}$${num.toFixed(decimals)}`;
+    }
+}
+
+
+export async function copyTextToClipboard(text: string) {
+    if ('clipboard' in navigator) {
+        return await navigator.clipboard.writeText(text);
+    } else {
+        return document.execCommand('copy', true, text);
     }
 }

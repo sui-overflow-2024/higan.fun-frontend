@@ -4,15 +4,6 @@ import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import {getValueWithDecimals} from "@/lib/utils";
 import {TradeFromRestAPI} from "@/lib/types";
 
-// export type TradeFromRestAPI = {
-//     account: string;
-//     isBuy: boolean,
-//     suiAmount: number;
-//     coinAmount: number;
-//     createdAt: string;
-//     transactionId: string;
-// };
-
 type TradesListProps = {
     trades: TradeFromRestAPI[];
     coinSymbol: string;

@@ -2,7 +2,7 @@ import {createContext} from "react";
 import {PrismaClient} from "@/lib/prisma/client";
 import axios, {Axios} from "axios";
 
-export type AppConfig ={
+export type AppConfig = {
     restApiUrl: string,
     axios: Axios
 }

@@ -69,16 +69,16 @@ export default function Navbar() {
                     </div>
                     <div className="ml-auto">
                         <div className="flex items-center gap-2">
-                        <div>
-                            {account &&
+                            <div>
+                                {account &&
                                     <CreatorAddressChip address={account.address} variant={"large"} showAvatar/>
                                 }
-                        </div>
-                        <ConnectButton
-                            className={"bg-primary text-primary-foreground shadow hover:bg-primary/90"}
-                            style={{padding: "0.5rem 1rem"}}
-                        />
-                        {/*<NetworkSelector/>*/}
+                            </div>
+                            <ConnectButton
+                                className={"bg-primary text-primary-foreground shadow hover:bg-primary/90"}
+                                style={{padding: "0.5rem 1rem"}}
+                            />
+                            {/*<NetworkSelector/>*/}
                         </div>
                     </div>
                 </div>

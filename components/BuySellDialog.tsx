@@ -252,7 +252,7 @@ const PriceCalculator: React.FC<{
           mode,
           coinType,
           storeId,
-    userBalance,
+          userBalance,
       }) => {
     const {data: price, error: priceError, isLoading} = useSWR({
         client: suiClient,
@@ -272,7 +272,7 @@ const PriceCalculator: React.FC<{
         <div className={"flex space-x-2 justify-center"}>
             <Image src={"..//sui-sea.svg"} alt={"Sui Logo"} width={20} height={20}/>
             <div className={"text-xl"}>
-                {isLoading ? "Loading..." : `${getValueWithDecimals(price, 9, 4)} SUI`}
+                {isLoading ? "Loading..." : `${getValueWithDecimals(price || 0, 9, 4)} SUI`}
             </div>
         </div>
     </div>)
@@ -380,7 +380,8 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
                                 {/*<CoinSelectDropdown token={token} setToken={setToken}/>*/}
                             </div>
                             {errors.amount && <div className={"text-xs text-red-500"}>{errors.amount.message}</div>}
-                            <div className={"text-xs text-muted-foreground"}>you have: {userBalance} {token.symbol}</div>
+                            <div className={"text-xs text-muted-foreground"}>you
+                                have: {userBalance} {token.symbol}</div>
                             {/*<div className={"text-xs text-muted-foreground"}>*/}
                             {/*    {*/}
                             {/*        process.env.NODE_ENV === "development" && <>*/}
@@ -405,11 +406,11 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
                                 </div>
                                 <Button className={"min-w-56"} onClick={() => {
                                     signAndExecuteTransactionBlock({
-                                    transactionBlock: mode === "buy"
-                                        ? generateBuyPtb(token, [], amount)
-                                        : generateSellPtb(token, baseTokenCoins, amount),
-                                    chain: 'sui:devnet',
-                                })
+                                        transactionBlock: mode === "buy"
+                                            ? generateBuyPtb(token, [], amount)
+                                            : generateSellPtb(token, baseTokenCoins, amount),
+                                        chain: 'sui:devnet',
+                                    })
                                     reset({amount: 0})
                                 }}>
                                     {mode === "buy" ? "Buy" : "Sell"}

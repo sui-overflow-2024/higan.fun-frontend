@@ -5,7 +5,6 @@ import {getRandomNumber, largeNumberToFixedWithSymbol} from "@/lib/utils";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 
 export const TokenCard = ({token, marketCap}: { token: TokenFromRestAPI, marketCap: string }) => {
-    const fakeMarketCap = getRandomNumber(4_000, 100_000)
     return (
         <Link href={`/coin/${token.packageId}`}>
             <Card className="p-4  flex flex-col hover:bg-card-hover hover:border-card-hover-border">
@@ -30,10 +29,6 @@ export const TokenCard = ({token, marketCap}: { token: TokenFromRestAPI, marketC
                             <span className="muted-sm">Created by:</span>
                             <CreatorAddressChip address={token.creator} variant={"small"} showAvatar/>
                         </p>
-                        {/*<div className="text-center ml-auto">*/}
-                        {/*    <p className="text-sm text-green-400">Market Cap</p>*/}
-                        {/*    <p className="text-md text-green-400">$1,000,000,000</p>*/}
-                        {/*</div>*/}
                         <div className="h-18">
                             <p className="muted-xs line-clamp-3">
                                 {token.description}

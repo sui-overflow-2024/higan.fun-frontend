@@ -43,7 +43,7 @@ const chartStyle: any = {
 }
 // Component for the trades list
 const TradesChart: React.FC<TradesChartProps> = ({trades}) => {
-    const chartContainerRef = useRef<HTMLElement | null>(null);
+    const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const chartRef = useRef<IChartApi>();
     const seriesRef = useRef<ISeriesApi<"Line">>();
     const previousTradesRef = useRef<TradeFromRestAPI[]>([]);

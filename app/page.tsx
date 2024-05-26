@@ -1,10 +1,8 @@
 'use client'
-// Why are we still here?
-// import {generateFakeToken} from "@/lib/utils";
-import {useContext, useState, useEffect} from "react";
+import {useContext, useEffect, useState} from "react";
 import {AppConfigContext} from "@/components/Contexts";
-import {TokenFromRestAPI, TopTokenFromRestAPI} from "@/lib/types";
-import { getMarketCap } from "@/lib/utils";
+import {TokenFromRestAPI} from "@/lib/types";
+import {getMarketCap} from "@/lib/utils";
 import {TokenCard} from "@/components/TokenCard";
 import {Button} from "@/components/ui/button";
 import Link from "next/link";
@@ -51,7 +49,7 @@ export default function Home() {
         fetchSuiPrice();
     }, [])
 
-     //generate 30 fake tokens
+    //generate 30 fake tokens
     // for (let i = 0; i < 30; i++) {
     //     tokens.push(generateFakeToken())
     // }
@@ -70,15 +68,18 @@ export default function Home() {
                 <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center justify-between">
                     {newestToken && <div>
                         <p className={"text-2xl text-center"}>Newest</p>
-                        <TokenCard token={newestToken} marketCap={getMarketCap(newestToken.suiReserve, currentSuiPrice)}/>
+                        <TokenCard token={newestToken}
+                                   marketCap={getMarketCap(newestToken.suiReserve, currentSuiPrice)}/>
                     </div>}
                     {hottestToken && <div>
                         <p className={"text-2xl text-center"}>Hottest</p>
-                        <TokenCard token={hottestToken} marketCap={getMarketCap(hottestToken.suiReserve, currentSuiPrice)}/>
+                        <TokenCard token={hottestToken}
+                                   marketCap={getMarketCap(hottestToken.suiReserve, currentSuiPrice)}/>
                     </div>}
                     {imminentToken && <div>
                         <p className={"text-2xl text-center"}>Imminent</p>
-                        <TokenCard token={imminentToken} marketCap={getMarketCap(imminentToken.suiReserve, currentSuiPrice)}/>
+                        <TokenCard token={imminentToken}
+                                   marketCap={getMarketCap(imminentToken.suiReserve, currentSuiPrice)}/>
                     </div>}
                 </div>
                 <div className={"text-center justify-center flex space-x-2"}>
@@ -93,8 +94,8 @@ export default function Home() {
                     <div className={"space-x-4"}>
                         <span className="text-2xl font-bold">Sort by:</span>
                         <Button
-                        onClick={() => setSort("created")}
-                        variant={sort === "created" ? "default" : "outline"}
+                            onClick={() => setSort("created")}
+                            variant={sort === "created" ? "default" : "outline"}
                         >
                             Created at
                         </Button>
@@ -135,7 +136,8 @@ export default function Home() {
 
                 <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center justify-between">
                     {tokens.map((token, index) => (
-                        <TokenCard key={index} token={token} marketCap={getMarketCap(token.suiReserve, currentSuiPrice)}/>
+                        <TokenCard key={index} token={token}
+                                   marketCap={getMarketCap(token.suiReserve, currentSuiPrice)}/>
                     ))}
                 </div>
                 {/* <TokenCard token={generateFakeToken()} /> */}

@@ -1,6 +1,6 @@
 import * as React from "react";
-import {TokenFromRestAPI} from "@/lib/types";
 import {Dispatch, SetStateAction} from "react";
+import {TokenFromRestAPI} from "@/lib/types";
 
 const CoinSelectDropdown: React.FC<{
     token: TokenFromRestAPI,
