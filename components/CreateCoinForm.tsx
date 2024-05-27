@@ -82,7 +82,7 @@ const CreateCoinForm = () => {
             twitterUrl: isDevMode ? "https://twitter.com/dog_rates" : "",
             discordUrl: isDevMode ? "https://discord.gg/eHz9E7qP" : "",
             telegramUrl: "https://icon-sets.iconify.design/mdi/chevron-up-down/",
-            target: 5_000_000, //TODO Get rid of hardcoding immediately
+            target: 5_000_000_000, //TODO Get rid of hardcoding immediately
         }
     });
     const [showLinks, setShowLinks] = useState<boolean>(false)

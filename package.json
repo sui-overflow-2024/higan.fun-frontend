@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "NODE_ENV=development next dev",
     "build": "next build",
-    "start": "NODE_ENV=production next start",
+    "start": "NODE_ENV=production next start -p 5000",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "createSampleCoin": "ts-node scripts/createCoin.ts",

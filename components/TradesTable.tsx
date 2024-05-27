@@ -1,18 +1,30 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import {formatDistanceToNow} from "date-fns";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import {getValueWithDecimals} from "@/lib/utils";
+import {CoinGetTradesKey, coinRestApi} from "@/lib/rest";
+import {AppConfigContext} from "@/components/Contexts";
+import useSWR from "swr";
 import {TradeFromRestAPI} from "@/lib/types";
 
 type TradesListProps = {
-    trades: TradeFromRestAPI[];
+    packageId: string;
     coinSymbol: string;
     network: string;
 };
 
 
 // Component for the trades list
-const TradesList: React.FC<TradesListProps> = ({trades, coinSymbol, network}) => {
+const TradesList: React.FC<TradesListProps> = ({packageId, coinSymbol, network}) => {
+    const appConfig = useContext(AppConfigContext)
+    const {data: trades, error: fetchTradesError} = useSWR<TradeFromRestAPI[], any, CoinGetTradesKey>({
+        appConfig,
+        packageId,
+        path: "getTrades"
+    }, coinRestApi.getTrades, {refreshInterval: 5000});
+
+    if (!trades) return <div>Loading trades...</div>
+    if (fetchTradesError) return <div>Failed to load trades {fetchTradesError}</div>
     return (
         <div className="w-full">
             <div className="flex bg-gray-800 text-gray-200 p-2 rounded-t-lg">

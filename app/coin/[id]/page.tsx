@@ -1,5 +1,5 @@
 'use client';
-import {PostFromRestAPI, TokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
+import {TokenFromRestAPI} from "@/lib/types";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
 import {Dispatch, SetStateAction, useContext, useEffect, useRef, useState} from "react";
@@ -16,7 +16,7 @@ import {faker} from "@faker-js/faker";
 import useSWR from "swr";
 import {coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
-import {AppConfigContext} from "@/components/Contexts";
+import {AppConfig, AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
@@ -251,56 +251,17 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({token, holders, totalSupply}
 export default function Drilldown() {
     const appConfig = useContext(AppConfigContext)
     const [activePanel, setActivePanel] = useState<"thread" | "trades">('thread');
-    const [trades, setTrades] = useState<TradeFromRestAPI[]>([]);
-    const [posts, setPosts] = useState<PostFromRestAPI[]>([]);
-    const [currentSuiPrice, setSuiPrice] = useState<number>(0);
     const packageId = usePathname().split('/').pop() || '';
     const account = useCurrentAccount()
     const suiContext = useSuiClientContext()
-    // const trades = generateTrades(15);
 
-    const {data: token, error: tokenError} = useSWR({appConfig, packageId}, coinRestApi.getById)
+    const currentSuiPrice = useContext(CurrentSuiPriceContext)
+    const {data: token, error: tokenError} = useSWR<TokenFromRestAPI, any, {
+        appConfig: AppConfig,
+        packageId: string,
+        path: "getById"
+    }>({appConfig, packageId, path: "getById"}, coinRestApi.getById)
 
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            const fetchTrades = async () => {
-                const t = await coinRestApi.getTrades({appConfig, packageId})
-                // console.log("Fetched trades", t)
-                setTrades(t);
-            }
-
-            fetchTrades()
-        }, 2000);
-
-        // Clear the interval when the component is unmounted
-        return () => clearInterval(intervalId);
-    }, [appConfig, packageId, token]);
-
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            const fetchPosts = async () => {
-                const p = await coinRestApi.getThreads({appConfig, packageId})
-                // console.log("Fetched posts", p)
-                setPosts(p);
-            }
-
-            fetchPosts()
-        }, 2000);
-
-        const fetchSuiPrice = async () => {
-            const suiPrice = await coinRestApi.getSuiPrice({appConfig})
-
-            setSuiPrice(suiPrice);
-        };
-
-        fetchSuiPrice();
-
-        // Clear the interval when the component is unmounted
-        return () => clearInterval(intervalId);
-    }, [appConfig, packageId]);
-
-    if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
-    if (!token) return (<div>Loading...</div>)
 
     const exampleHolders: Holder[] = [
         {address: 'abcdef', balance: 700000}, // Example holder with bonding curve
@@ -320,8 +281,12 @@ export default function Drilldown() {
         // Add more holders as needed
     ];
 
+
+    if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
+    if (!token) return (<div>Loading...</div>)
+
+
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
-    const tradesChartData = trades.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     let marketCap = getMarketCap(token.suiReserve, currentSuiPrice);
 
     return (
@@ -334,7 +299,7 @@ export default function Drilldown() {
                     <section className="col-span-2 space-y-4">
                         <CoinMetadataHeader token={token} marketCap={marketCap} currentSuiPrice={currentSuiPrice}/>
                         <div className="bg-gray-700 min-h-[300px]">
-                            <TradesChart trades={tradesChartData}/>
+                            <TradesChart packageId={token.packageId}/>
                         </div>
 
                         <div className="flex justify-between p-2">
@@ -347,8 +312,9 @@ export default function Drilldown() {
                         </div>
                         <div className="p-2">
                             {activePanel === 'thread'
-                                ? <CoinThread creator={token.creator || ""} coinId={packageId} posts={posts}/>
-                                : <TradesTable trades={trades} coinSymbol={token.symbol}
+                                ? <CoinThread creator={token.creator || ""} packageId={packageId}/>
+                                : <TradesTable coinSymbol={token.symbol}
+                                               packageId={packageId}
                                                network={suiContext.network || "mainnet"}/>}
 
                         </div>

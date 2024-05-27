@@ -334,7 +334,7 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
         fetchBalance()
     }, [token, currentAccount?.address, suiClient, amount, userBalance, currentAccount])
 
-    console.log("baseTokenCoins", baseTokenCoins)
+    // console.log("baseTokenCoins", baseTokenCoins)
     if (!token) return (<div>Token not found</div>)
     return (<Card>
             <CardHeader>

@@ -7,7 +7,7 @@ import {StrictMode, useEffect, useState} from "react";
 import {SuiClientProvider, WalletProvider} from '@mysten/dapp-kit';
 import {getFullnodeUrl} from '@mysten/sui.js/client';
 import {PrismaClient} from "@/lib/prisma/client";
-import {AppConfigContext, defaultAppConfig, PrismaClientContext} from "@/components/Contexts";
+import {AppConfigContext, CurrentSuiPriceProvider, defaultAppConfig, PrismaClientContext} from "@/components/Contexts";
 import {Toaster} from "@/components/ui/toaster";
 import {ThemeProvider} from "@/components/ThemeProvider";
 import "./globals.css";
@@ -49,18 +49,21 @@ export default function RootLayout({
                 disableTransitionOnChange
             >
                 {isClient ?
+
                     <AppConfigContext.Provider value={defaultAppConfig}>
-                        <PrismaClientContext.Provider value={prismaClient}>
-                            <QueryClientProvider client={queryClient}>
-                                <SuiClientProvider networks={networks} defaultNetwork="devnet">
-                                    <WalletProvider>
-                                        <Navbar/>
-                                        {children}
-                                    </WalletProvider>
-                                </SuiClientProvider>
-                            </QueryClientProvider>
-                        </PrismaClientContext.Provider>
-                        <Toaster/>
+                        <CurrentSuiPriceProvider>
+                            <PrismaClientContext.Provider value={prismaClient}>
+                                <QueryClientProvider client={queryClient}>
+                                    <SuiClientProvider networks={networks} defaultNetwork="devnet">
+                                        <WalletProvider>
+                                            <Navbar/>
+                                            {children}
+                                        </WalletProvider>
+                                    </SuiClientProvider>
+                                </QueryClientProvider>
+                            </PrismaClientContext.Provider>
+                            <Toaster/>
+                        </CurrentSuiPriceProvider>
                     </AppConfigContext.Provider> : "How dis happen? Refresh the page to force loading as client."}
             </ThemeProvider>
         </StrictMode>

@@ -1,11 +1,15 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useContext, useEffect, useRef} from 'react';
 import {getValueWithDecimals} from "@/lib/utils";
 import {ColorType, createChart, IChartApi, ISeriesApi} from 'lightweight-charts';
 import {TradeFromRestAPI} from '@/lib/types';
+import useSWR from "swr";
+import {CoinGetTradesKey, coinRestApi} from "@/lib/rest";
+import {AppConfigContext} from "@/components/Contexts";
 
 
 type TradesChartProps = {
-    trades: TradeFromRestAPI[],
+    // trades: TradeFromRestAPI[],
+    packageId: string;
     // coinSymbol: string;
     // network: string;
 };
@@ -42,11 +46,19 @@ const chartStyle: any = {
     areaBottomColor: 'rgba(41, 98, 255, 0.28)',
 }
 // Component for the trades list
-const TradesChart: React.FC<TradesChartProps> = ({trades}) => {
+const TradesChart: React.FC<TradesChartProps> = ({packageId}) => {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const chartRef = useRef<IChartApi>();
     const seriesRef = useRef<ISeriesApi<"Line">>();
     const previousTradesRef = useRef<TradeFromRestAPI[]>([]);
+    const appConfig = useContext(AppConfigContext)
+
+    const {data: trades, error: fetchTradesError} = useSWR<TradeFromRestAPI[], any, CoinGetTradesKey>({
+        appConfig,
+        packageId,
+        path: "getTrades"
+    }, coinRestApi.getTrades, {refreshInterval: 5000});
+
 
     useEffect(() => {
         if (!chartContainerRef.current) {
@@ -85,8 +97,12 @@ const TradesChart: React.FC<TradesChartProps> = ({trades}) => {
         };
     }, []);
 
+
     useEffect(
         () => {
+
+            if(!trades) return;
+            if(!seriesRef?.current) return;
             const newTrades = trades.filter(
                 (trade) => !previousTradesRef.current.some((prevTrade) => prevTrade.id === trade.id)
             );
@@ -109,6 +125,10 @@ const TradesChart: React.FC<TradesChartProps> = ({trades}) => {
         },
         [trades]
     );
+    if(!trades) return <div>Loading trades...</div>
+    if(fetchTradesError) return <div>Failed to load trades {fetchTradesError}</div>
+    const sortedTrades = trades.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
 
     return (
         <div

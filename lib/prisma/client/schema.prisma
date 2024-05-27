@@ -2,6 +2,10 @@ generator client {
   provider = "prisma-client-js"
   output = "../src/generated/prisma/client"
 }
+generator fist {
+  provider = "prisma-client-js"
+  output = "../dist/generated/prisma/client"
+}
 
 generator frontend_client {
   provider = "prisma-client-js"
@@ -19,11 +23,12 @@ generator frontend_client {
 //   provider = "typegraphql-prisma"
 // }
 
-// TODO Switch to postgres before launch
+
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
+
 
 model Coin {
   packageId     String   @id

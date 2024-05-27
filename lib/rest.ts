@@ -3,6 +3,7 @@ import {Post} from "@/lib/prisma/client";
 import {PostFromRestAPI, TokenFromRestAPI, TopTokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {Fetcher} from "swr";
 import {CreateCoinFormData} from "@/components/CreateCoinForm";
+import axios from "axios";
 
 export type ThreadPostRequest = {
     coinId: string,
@@ -10,7 +11,11 @@ export type ThreadPostRequest = {
     signature: string,
     author: string,
 }
-
+export type CoinGetPostsKey = { appConfig: AppConfig, packageId: string, path: "getPosts" }
+export type CoinGetTopKey = { appConfig: AppConfig, path: "getTop" }
+export type CoinGetTradesKey = { appConfig: AppConfig, packageId: string, path: "getTrades" }
+export type CoinGetByIdKey = { appConfig: AppConfig, packageId: string, path: "getById" }
+export type CoinSearchKey = { appConfig: AppConfig, term: string, sort: string, order: string }
 type CoinRestApi = {
     getAll: Fetcher<TokenFromRestAPI[], {
         appConfig: AppConfig,
@@ -19,14 +24,14 @@ type CoinRestApi = {
         order: string,
         sort: string
     }>,
-    search: Fetcher<TokenFromRestAPI[], { appConfig: AppConfig, term: string, sort: string, order: string }>,
-    getTop: Fetcher<TopTokenFromRestAPI, { appConfig: AppConfig }>,
-    getById: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, packageId: string }>,
-    getTrades: Fetcher<TradeFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
+    search: Fetcher<TokenFromRestAPI[], CoinSearchKey>,
+    getTop: Fetcher<TopTokenFromRestAPI, CoinGetTopKey>,
+    getById: Fetcher<TokenFromRestAPI, CoinGetByIdKey>,
+    getTrades: Fetcher<TradeFromRestAPI[], CoinGetTradesKey>,
     postCoin: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: CreateCoinFormData }>
     postThread: Fetcher<Post, { appConfig: AppConfig, post: ThreadPostRequest }>
-    getThreads: Fetcher<PostFromRestAPI[], { appConfig: AppConfig, packageId: string }>,
-    getSuiPrice: Fetcher<number, { appConfig: AppConfig }>,
+    getPosts: Fetcher<PostFromRestAPI[], CoinGetPostsKey>,
+    getSuiPrice: Fetcher<number, string>,
 }
 
 export const coinRestApi: CoinRestApi = {
@@ -55,7 +60,8 @@ export const coinRestApi: CoinRestApi = {
         console.log("Retrieved the following trades from the REST API", res.data)
         return res.data
     },
-    getThreads: async ({appConfig, packageId}): Promise<PostFromRestAPI[]> => {
+    getPosts: async ({appConfig, packageId}): Promise<PostFromRestAPI[]> => {
+        console.log(`Getting posts for the following coin from the REST API /coin/${packageId}/posts`)
         const res = await appConfig.axios.get<PostFromRestAPI[]>(`/coin/${packageId}/posts`)
         console.log("Retrieved the following posts from the REST API", res.data)
         return res.data
@@ -73,12 +79,10 @@ export const coinRestApi: CoinRestApi = {
         console.log("Posted the following coin to the REST API", res.data)
         return res.data
     },
-    getSuiPrice: async ({appConfig}) => {
-        const res = await appConfig.axios.get('https://hermes.pyth.network/v2/updates/price/latest?ids%5B%5D=0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744')
+    getSuiPrice: async () => {
+        const res = await axios.get('https://hermes.pyth.network/v2/updates/price/latest?ids%5B%5D=0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744')
         const priceObj = res.data?.parsed?.[0]?.price;
         const {price, expo} = priceObj;
-        const priceNumber = price *  Math.pow(10, expo);
-
-        return priceNumber;
+        return price * Math.pow(10, expo);
     }
 }

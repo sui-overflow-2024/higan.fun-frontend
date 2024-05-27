@@ -40,3 +40,5 @@ next-env.d.ts
 .envrc
 .env
 dev.db
+.envrc
+.env.prod

@@ -16,9 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import {getRandomNumber} from "@/lib/utils";
 import {Textarea} from "@/components/ui/textarea";
-import {coinRestApi, ThreadPostRequest} from "@/lib/rest";
+import {CoinGetPostsKey, coinRestApi, ThreadPostRequest} from "@/lib/rest";
 import {AppConfigContext} from "@/components/Contexts";
 import {formatDistanceToNow} from "date-fns";
+import useSWR, {mutate} from "swr";
 
 const SafeMarkdown = ({text}: { text: string }) => {
     const md = new MarkdownIt();
@@ -36,10 +37,10 @@ const Post: FC<{ id: number, creator: string, authorId: string, text: string, cr
     return (
         <div className="rounded-sm overflow-hidden bg-gray-800 text-sm p-4 space-y-1 min-w-full">
             {/*TODO, setting text style below hides links in Markdown*/}
-            <div className={"flex gap-2 text-xs text-muted-foreground"}>
+            <div className={"flex gap-2 text-xs"}>
                 <CreatorAddressChip address={authorId} variant={"small"}
                                     isCreator={creator !== "" && creator === authorId}/>
-                <p>{formatDistanceToNow(new Date(createdAt), {addSuffix: true})}</p> <p>#{id.toString()}</p>
+                <p className={"text-muted-foreground"}>{formatDistanceToNow(new Date(createdAt), {addSuffix: true})}</p> <p className={"text-muted-foreground"}>#{id.toString()}</p>
             </div>
             <SafeMarkdown text={text}/>
         </div>
@@ -47,7 +48,7 @@ const Post: FC<{ id: number, creator: string, authorId: string, text: string, cr
 
 
 }
-const NewPostTextbox: FC<{ creator: string, coinId: string }> = ({creator, coinId}) => {
+const NewPostTextbox: FC<{ creator: string, packageId: string }> = ({creator, packageId}) => {
     const account = useCurrentAccount()
     const appConfig = useContext(AppConfigContext)
     const {register, handleSubmit, watch, reset} = useForm<{ text: string }>({
@@ -55,14 +56,14 @@ const NewPostTextbox: FC<{ creator: string, coinId: string }> = ({creator, coinI
             text: ""
         }
     });
-    const {mutate} = useSignPersonalMessage()
+    const {mutate: signPost} = useSignPersonalMessage()
     if (!account) {
         return <ConnectButton connectText={"Connect wallet to reply"}/>
     }
 
     const submitPost = async (data: any) => {
-        console.log(data)
-        mutate(
+        console.log("Submitting post with the following form data: ", data)
+        signPost(
             {
                 message: new TextEncoder().encode(data.text),
             },
@@ -71,7 +72,7 @@ const NewPostTextbox: FC<{ creator: string, coinId: string }> = ({creator, coinI
                     console.log("signature", signature)
                     const postData: ThreadPostRequest = {
                         signature: signature.signature,
-                        coinId: coinId,
+                        coinId: packageId,
                         text: data.text,
                         author: account.address
                     }
@@ -79,10 +80,10 @@ const NewPostTextbox: FC<{ creator: string, coinId: string }> = ({creator, coinI
                     const thread = await coinRestApi.postThread({appConfig, post: postData})
                     console.log("threadResponse", thread)
                     reset({text: ""});
+                    await mutate({appConfig, packageId, path: "getThreads"})
                 },
             },
         );
-        //TODO: notify parent? parent already refetches posts each x seconds passed
     }
 
     return <form onSubmit={handleSubmit(submitPost)} className={"min-w-[450px]"}>
@@ -112,19 +113,32 @@ const NewPostTextbox: FC<{ creator: string, coinId: string }> = ({creator, coinI
     </form>
 }
 
-export const CoinThread: FC<{ coinId: string, creator: string, posts: PostFromRestAPI[] }> = ({
-                                                                                                  creator,
-                                                                                                  coinId,
-                                                                                                  posts
-                                                                                              }) => {
+export const CoinThread: FC<{ packageId: string, creator: string }> = ({
+                                                                           creator,
+                                                                           packageId,
+                                                                       }) => {
+    const appConfig = useContext(AppConfigContext);
+
+    const {data: posts, error: postsError} = useSWR<PostFromRestAPI[], any, CoinGetPostsKey>({
+        appConfig,
+        packageId,
+        path: "getPosts"
+    }, coinRestApi.getPosts, {refreshInterval: 5000});
+    console.log(posts)
+    if (!posts) {
+        return <div>Loading posts...</div>
+    }
+    if (postsError) {
+        return <div>Error loading posts {postsError}</div>
+    }
     return (
         <div className={"space-y-3"}>
             <div className={"flex justify-center"}>
-                <NewPostTextbox creator={creator} coinId={coinId}/>
+                <NewPostTextbox creator={creator} packageId={packageId}/>
             </div>
-            {/*{posts.map((post) => (*/}
-            {/*    <Post key={post.id} creator={creator} {...post}/>*/}
-            {/*))}*/}
+            {posts.map((post) => (
+                <Post key={post.id} creator={creator} {...post}/>
+            ))}
         </div>
     );
 }
