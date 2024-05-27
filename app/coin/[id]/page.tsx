@@ -13,22 +13,28 @@ import {BuySellDialog} from "@/components/BuySellDialog";
 import TradesTable from "@/components/TradesTable";
 import TradesChart from "@/components/TradesChart";
 import {faker} from "@faker-js/faker";
-import useSWR from "swr";
-import {coinRestApi} from "@/lib/rest";
+import useSWR, {Fetcher} from "swr";
+import {CoinGetByIdKey, coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
 import {AppConfig, AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
-import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
+import {useCurrentAccount, useSuiClientContext, useSuiClient, SuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
-import {getMarketCap} from "@/lib/utils";
+import { TransactionBlock } from "@mysten/sui.js/transactions";
+import {bcs} from "@mysten/sui.js/bcs";
+import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
+import {cn, getCoinPath, getCoinPathFunc, getFunctionPathFromCoinType, getValueWithDecimals, getMarketCap} from "@/lib/utils";
 
 type CoinMetadataProps = {
+    tokenMetrics: TokenMetric,
+    client: SuiClient,
     token: TokenFromRestAPI;
     marketCap: string;
     currentSuiPrice: number;
 };
 type CoinDetailsProps = {
     token: TokenFromRestAPI;
+    tokenMetrics: TokenMetric,
     marketCap: string;
 };
 type Holder = {
@@ -83,9 +89,12 @@ const ClampedDescription = ({text}: { text: string }) => {
     );
 };
 
-const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({token, marketCap, currentSuiPrice}) => {
-    // TODO: fetch token price
-    let currentPrice = 1;
+const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, token, marketCap, currentSuiPrice}) => {
+    let {tokenPrice, suiBalance, tokenTotalSupply } = tokenMetrics;
+
+    // if (priceError) return (<div>Error fetching token price {priceError.message}</div>)
+    // if (!tokenPrice) return (<div>Loading...</div>)
+    // console.log(tokenPrice, "tokenPrice", priceError)
 
     return (
         <div className="p-2 flex justify-between items-center rounded-lg">
@@ -102,8 +111,7 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({token, marketCap, curr
             <div className="flex items-center space-x-8">
                 <span
                     className="text-green-400 text-sm">Market Cap: ${(marketCap).toLocaleString()}</span>
-                <span
-                    className="text-green-400 text-sm">Current Price: {currentPrice} SUI (${currentSuiPrice.toFixed(2)})</span>
+                <span className="text-green-400 text-sm">Current Price: {getValueWithDecimals(tokenPrice, 3)} SUI (${currentSuiPrice.toFixed(2)})</span>
                 <div className="flex items-center space-x-2 text-sm">
                     <span>Created by:</span>
                     <CreatorAddressChip address={token.creator} variant={"default"} showAvatar/>
@@ -177,10 +185,10 @@ const SocialLinks: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
 //     });
 // };
 
-const CoinDetails: React.FC<CoinDetailsProps> = ({token, marketCap}) => {
-    const bondingCurveProgress = 2; // Example progress percentage
-    const target = 900000; // Example target market cap
-    const totalSupply = Math.floor(Math.random() * 1000000); // Example total supply
+const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap}) => {
+    const target = token.target; // Example target market cap
+    const totalSupply = tokenMetrics.totalSupply;
+    const bondingCurveProgress = Math.min((tokenMetrics.suiBalance / target) * 100, 100); // Example progress percentage
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
@@ -247,6 +255,57 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({token, holders, totalSupply}
     );
 };
 
+type TokenMetric = {
+    tokenPrice: number,
+    suiBalance: number,
+    totalSupply: number,
+}
+export type TokenMetricKey = {
+    path: "tokenMetrics",
+    client: SuiClient,
+    sender: string,
+    coin?: TokenFromRestAPI,
+}
+const getTokenMetrics: Fetcher<TokenMetric, TokenMetricKey> = async ({client, sender, coin}): Promise<TokenMetric> => {
+    if (!coin) {
+        return { tokenPrice: 0, suiBalance: 0, totalSupply: 0 };
+    }
+
+    const txb = new TransactionBlock()
+    txb.moveCall({
+        target: getCoinPathFunc(coin, "get_coin_price") as `${string}::${string}::${string}`,
+        arguments: [
+            txb.object(coin.storeId),
+        ],
+    });
+    txb.moveCall({
+        target: getCoinPathFunc(coin, "get_sui_balance") as `${string}::${string}::${string}`,
+        arguments: [
+            txb.object(coin.storeId),
+        ],
+    });
+    txb.moveCall({
+        target: getCoinPathFunc(coin, "get_coin_total_supply") as `${string}::${string}::${string}`,
+        arguments: [
+            txb.object(coin.storeId),
+        ],
+    });
+    const res = await client.devInspectTransactionBlock({
+        transactionBlock: txb,
+        sender: sender,
+    });
+    console.log("Inspect result", res)
+
+    const price = res.results?.[0]?.returnValues?.[0][0]
+    let suiBalanceEncoded = res.results?.[1]?.returnValues?.[0][0]
+    let tokenTotalSupply = res.results?.[2]?.returnValues?.[0][0]
+
+    return {
+        tokenPrice: bcs.de("u64", new Uint8Array(price || [])) as number,
+        suiBalance:  bcs.de("u64", new Uint8Array(suiBalanceEncoded || [])) as number,
+        totalSupply: bcs.de("u64", new Uint8Array(tokenTotalSupply || [])) as number,
+    }
+}
 
 export default function Drilldown() {
     const appConfig = useContext(AppConfigContext)
@@ -254,14 +313,23 @@ export default function Drilldown() {
     const packageId = usePathname().split('/').pop() || '';
     const account = useCurrentAccount()
     const suiContext = useSuiClientContext()
-
     const currentSuiPrice = useContext(CurrentSuiPriceContext)
-    const {data: token, error: tokenError} = useSWR<TokenFromRestAPI, any, {
-        appConfig: AppConfig,
-        packageId: string,
-        path: "getById"
-    }>({appConfig, packageId, path: "getById"}, coinRestApi.getById)
 
+    const {data: token, error: tokenError} = useSWR<TokenFromRestAPI, any, CoinGetByIdKey>(
+        {appConfig, packageId, path: "getById"}, coinRestApi.getById)
+
+    const {data: tokenMetrics, error: priceError, isLoading: isLoadingTokenPrice} = useSWR<TokenMetric, any, TokenMetricKey>(
+        {
+            client: suiContext.client,
+            sender: "0xbd81e46b4f6c750606445c10eccd486340ac168c9b34e4c4ab587fac447529f5",
+            coin: token,
+            path: "tokenMetrics",
+        }, getTokenMetrics, {refreshInterval: 5000});
+    console.log("console metrics", tokenMetrics);
+
+
+    if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
+    if (!token || !tokenMetrics) return (<div>Loading...</div>)
 
     const exampleHolders: Holder[] = [
         {address: 'abcdef', balance: 700000}, // Example holder with bonding curve
@@ -297,7 +365,7 @@ export default function Drilldown() {
 
                 <main className="grid grid-cols-3 gap-8 mt-4">
                     <section className="col-span-2 space-y-4">
-                        <CoinMetadataHeader token={token} marketCap={marketCap} currentSuiPrice={currentSuiPrice}/>
+                        <CoinMetadataHeader tokenMetrics={tokenMetrics} client={suiContext.client} token={token} marketCap={marketCap} currentSuiPrice={currentSuiPrice}/>
                         <div className="bg-gray-700 min-h-[300px]">
                             <TradesChart packageId={token.packageId}/>
                         </div>
@@ -323,7 +391,7 @@ export default function Drilldown() {
 
                     <aside className="space-y-4">
                         <BuySellDialog token={token}/>
-                        <CoinDetails token={token} marketCap={marketCap}/>
+                        <CoinDetails tokenMetrics={tokenMetrics} token={token} marketCap={marketCap}/>
                         <TokenHolders token={token} holders={exampleHolders} totalSupply={totalSupply}/>
                     </aside>
                 </main>

@@ -16,6 +16,7 @@ export type TokenFromRestAPI = {
     whitepaperUrl: string,
     coinType: string,
     suiReserve: number,
+    target: number,
     // tradingVolume: number,
     createdAt: Date,
     updatedAt: Date
