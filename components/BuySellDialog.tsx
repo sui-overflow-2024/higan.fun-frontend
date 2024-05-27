@@ -2,7 +2,7 @@
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
-import {useContext, useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import {cn, getCoinPath, getCoinPathFunc, getFunctionPathFromCoinType, getValueWithDecimals} from "@/lib/utils";
 import Image from "next/image";
 import {TokenFromRestAPI} from "@/lib/types";
@@ -13,12 +13,11 @@ import {
     useSuiClient,
     useSuiClientQuery
 } from "@mysten/dapp-kit";
-import {AppConfigContext} from "@/components/Contexts";
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
 import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 import {useForm} from "react-hook-form";
-import useSWR from "swr";
 import {customSuiHooks} from "@/lib/suiSwr";
+import {useTransactionExecution} from "@/hooks/useTransactionexecution";
 
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
@@ -35,7 +34,7 @@ const getAllUserCoins = async ({
 
     let coins: CoinStruct[] = [];
     let iter = 0;
-console.log("getAllUserCoins", suiClient, address, type, cursor)
+    console.log("getAllUserCoins", suiClient, address, type, cursor)
     do {
         try {
             const res = await suiClient.getCoins({
@@ -250,7 +249,7 @@ const PriceCalculator: React.FC<{
                     mode
                 })
                 setPrice(price)
-            }  catch (e: any) {
+            } catch (e: any) {
                 setPriceError(e)
             }
             setIsLoading(false)
@@ -281,8 +280,7 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
 
     const suiClient = useSuiClient()
     const currentAccount = useCurrentAccount()
-    const appConfig = useContext(AppConfigContext)
-
+    const executeTranscation = useTransactionExecution()
 
     const {mutate: signAndExecuteTransactionBlock} = useSignAndExecuteTransactionBlock();
     const [mode, setMode] = useState<"buy" | "sell">("buy")
@@ -310,8 +308,8 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
     useEffect(() => {
         const fetchBalance = async () => {
             if (!token) return
-            if(!currentAccount?.address) return
-            if(!suiClient) return
+            if (!currentAccount?.address) return
+            if (!suiClient) return
 
             console.log("fetching balance for", currentAccount?.address, "token", token.coinType)
             const balance = await suiClient.getBalance({
@@ -334,6 +332,16 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
         fetchBalance()
     }, [token, currentAccount?.address, suiClient, amount, userBalance, currentAccount])
 
+    const submit = async (data: { amount: number }) => {
+        console.log(`${mode}ing ${data.amount} of the token now`)
+        const txb =  mode === "buy"
+            ? generateBuyPtb(token, [], amount)
+            : generateSellPtb(token, baseTokenCoins, amount);
+
+        await executeTranscation(txb)
+
+        reset({amount: 0})
+    }
     // console.log("baseTokenCoins", baseTokenCoins)
     if (!token) return (<div>Token not found</div>)
     return (<Card>
@@ -358,67 +366,61 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
             </CardHeader>
             <CardContent>
 
-                <div className={"space-y-2 relative"}>
-                    <div className={"space-y-4"}>
-                        <div className={"rounded-lg p-2"}
-                             style={{
-                                 backgroundColor: "hsl(210, 88%, 15%)"
-                             }}>
-                            <p className={"text-xs text-muted-foreground w-full"}>
-                                {mode === "buy" ? "You receive" : "You sell"}
-                            </p>
-                            <div className={"flex pb-2 "}>
-                                <input
-                                    className={cn(
-                                        "flex h-10" +
-                                        " focus:outline-none" +
-                                        " disabled:cursor-not-allowed disabled:opacity-50 text-2xl",
-                                    )}
-                                    style={{
-                                        backgroundColor: "hsl(210, 88%, 15%)",
-                                    }}
-                                    {...register("amount")}
-                                />
-                                {/*<CoinSelectDropdown token={token} setToken={setToken}/>*/}
+                <form onSubmit={handleSubmit(submit)}>
+                    <div className={"space-y-2 relative"}>
+                        <div className={"space-y-4"}>
+                            <div className={"rounded-lg p-2"}
+                                 style={{
+                                     backgroundColor: "hsl(210, 88%, 15%)"
+                                 }}>
+                                <p className={"text-xs text-muted-foreground w-full"}>
+                                    {mode === "buy" ? "You receive" : "You sell"}
+                                </p>
+                                <div className={"flex pb-2 "}>
+                                    <input
+                                        className={cn(
+                                            "flex h-10" +
+                                            " focus:outline-none" +
+                                            " disabled:cursor-not-allowed disabled:opacity-50 text-2xl",
+                                        )}
+                                        style={{
+                                            backgroundColor: "hsl(210, 88%, 15%)",
+                                        }}
+                                        {...register("amount")}
+                                    />
+                                    {/*<CoinSelectDropdown token={token} setToken={setToken}/>*/}
+                                </div>
+                                {errors.amount && <div className={"text-xs text-red-500"}>{errors.amount.message}</div>}
+                                <div className={"text-xs text-muted-foreground"}>you
+                                    have: {userBalance} {token.symbol}</div>
+                                {/*<div className={"text-xs text-muted-foreground"}>*/}
+                                {/*    {*/}
+                                {/*        process.env.NODE_ENV === "development" && <>*/}
+                                {/*            actual amount: {amount}*/}
+                                {/*        </>*/}
+                                {/*    }*/}
+                                {/*</div>*/}
                             </div>
-                            {errors.amount && <div className={"text-xs text-red-500"}>{errors.amount.message}</div>}
-                            <div className={"text-xs text-muted-foreground"}>you
-                                have: {userBalance} {token.symbol}</div>
-                            {/*<div className={"text-xs text-muted-foreground"}>*/}
-                            {/*    {*/}
-                            {/*        process.env.NODE_ENV === "development" && <>*/}
-                            {/*            actual amount: {amount}*/}
-                            {/*        </>*/}
-                            {/*    }*/}
-                            {/*</div>*/}
+                        </div>
+                        <div className={"flex justify-center"}>
+                            {currentAccount?.address
+                                ? (<div className={"space-y-2"}>
+                                    <div className={"text-center"}>
+                                        <PriceCalculator coinType={token.coinType} amount={amount}
+                                                         sender={currentAccount?.address || ""} mode={mode}
+                                                         storeId={token.storeId}
+                                                         userBalance={userBalance}
+                                                         suiClient={suiClient}/>
+                                    </div>
+                                    <Button className={"min-w-56"} type={"submit"}>
+                                        {mode === "buy" ? "Buy" : "Sell"}
+                                    </Button>
+                                </div>)
+                                : <ConnectButton/>
+                            }
                         </div>
                     </div>
-                    <div className={"flex justify-center"}>
-                        {currentAccount?.address
-                            ? (<div className={"space-y-2"}>
-                                <div className={"text-center"}>
-                                    <PriceCalculator coinType={token.coinType} amount={amount}
-                                                     sender={currentAccount?.address || ""} mode={mode}
-                                                     storeId={token.storeId}
-                                                     userBalance={userBalance}
-                                     suiClient={suiClient}/>
-                                </div>
-                                <Button className={"min-w-56"} onClick={() => {
-                                    signAndExecuteTransactionBlock({
-                                        transactionBlock: mode === "buy"
-                                            ? generateBuyPtb(token, [], amount)
-                                            : generateSellPtb(token, baseTokenCoins, amount),
-                                        chain: 'sui:devnet',
-                                    })
-                                    reset({amount: 0})
-                                }}>
-                                    {mode === "buy" ? "Buy" : "Sell"}
-                                </Button>
-                            </div>)
-                            : <ConnectButton/>
-                        }
-                    </div>
-                </div>
+                </form>
             </CardContent>
         </Card>
 

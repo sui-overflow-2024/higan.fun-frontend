@@ -193,8 +193,11 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
     const totalSupply = tokenMetrics.totalSupply;
     const bondingCurveProgress = Math.min((tokenMetrics.suiBalance / target) * 100, 100).toFixed(2); // Example progress percentage
     const targetUSD = getValueWithDecimals(target * currentSuiPrice , 9, 2);
+    const totalSupplyWithDecimals = totalSupply * (Math.pow(10, -1 * token.decimals));
+    tokenMetrics.suiBalance
     const [isExpanded, setIsExpanded] = useState(false);
 
+    console.log(tokenMetrics, "tokenMetrics", tokenMetrics.tokenPrice, "tokenPrice")
     return (
         <div className="p-4 rounded-lg">
             <div className="flex items-start space-x-4">
@@ -222,11 +225,11 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
                 </div>
             </div>
             <div className="flex justify-between text-green-400 mt-4 text-sm">
-                <div>Market Cap: ${marketCap.toLocaleString()}</div>
+                <div>Market Cap:  ${marketCap.toLocaleString()}</div>
                 <div>Target: ${targetUSD}</div>
             </div>
             <div className="text-gray-400 mt-2 text-sm">
-                Total Supply: {totalSupply.toLocaleString()}
+                Total Supply: {totalSupplyWithDecimals.toLocaleString()}
             </div>
         </div>
     );
@@ -333,7 +336,7 @@ export default function Drilldown() {
 
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
-    if (!token || !tokenMetrics) return (<div>Loading...</div>)
+    if (!token || !tokenMetrics) return (<div>Loading token metrics...</div>)
 
     const exampleHolders: Holder[] = [
         {address: 'abcdef', balance: 700000}, // Example holder with bonding curve
@@ -359,7 +362,7 @@ export default function Drilldown() {
 
 
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
-    let marketCap = getMarketCap(token.suiReserve, currentSuiPrice);
+    let marketCap = getMarketCap(tokenMetrics.suiBalance, currentSuiPrice);
 
     return (
         // <div className="bg-gray-700 p-4 min-h-[300px] flex items-center justify-center">
