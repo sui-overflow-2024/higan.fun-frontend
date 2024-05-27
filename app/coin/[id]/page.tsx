@@ -90,11 +90,12 @@ const ClampedDescription = ({text}: { text: string }) => {
 };
 
 const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, token, marketCap, currentSuiPrice}) => {
-    let {tokenPrice, suiBalance, tokenTotalSupply } = tokenMetrics;
+    let {tokenPrice } = tokenMetrics;
 
     // if (priceError) return (<div>Error fetching token price {priceError.message}</div>)
     // if (!tokenPrice) return (<div>Loading...</div>)
     // console.log(tokenPrice, "tokenPrice", priceError)
+    let tokenPriceUSD = getValueWithDecimals(tokenPrice * currentSuiPrice, 9);
 
     return (
         <div className="p-2 flex justify-between items-center rounded-lg">
@@ -111,7 +112,7 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, 
             <div className="flex items-center space-x-8">
                 <span
                     className="text-green-400 text-sm">Market Cap: ${(marketCap).toLocaleString()}</span>
-                <span className="text-green-400 text-sm">Current Price: {getValueWithDecimals(tokenPrice, 3)} SUI (${currentSuiPrice.toFixed(2)})</span>
+                <span className="text-green-400 text-sm">Current Price: {getValueWithDecimals(tokenPrice, 9)} SUI ({(tokenPrice * Math.pow(10, -9)) * currentSuiPrice < 0.01  ? "< $0.01" : tokenPriceUSD})</span>
                 <div className="flex items-center space-x-2 text-sm">
                     <span>Created by:</span>
                     <CreatorAddressChip address={token.creator} variant={"default"} showAvatar/>
@@ -186,9 +187,12 @@ const SocialLinks: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
 // };
 
 const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap}) => {
+    const currentSuiPrice = useContext(CurrentSuiPriceContext);
+
     const target = token.target; // Example target market cap
     const totalSupply = tokenMetrics.totalSupply;
-    const bondingCurveProgress = Math.min((tokenMetrics.suiBalance / target) * 100, 100); // Example progress percentage
+    const bondingCurveProgress = Math.min((tokenMetrics.suiBalance / target) * 100, 100).toFixed(2); // Example progress percentage
+    const targetUSD = getValueWithDecimals(target * currentSuiPrice , 9, 2);
     const [isExpanded, setIsExpanded] = useState(false);
 
     return (
@@ -219,7 +223,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
             </div>
             <div className="flex justify-between text-green-400 mt-4 text-sm">
                 <div>Market Cap: ${marketCap.toLocaleString()}</div>
-                <div>Target: ${target.toLocaleString()}</div>
+                <div>Target: ${targetUSD}</div>
             </div>
             <div className="text-gray-400 mt-2 text-sm">
                 Total Supply: {totalSupply.toLocaleString()}
