@@ -1,5 +1,5 @@
 'use client'
-import {useContext, useEffect, useState} from "react";
+import {FC, useContext, useEffect, useState} from "react";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 import {TokenFromRestAPI, TopTokenFromRestAPI} from "@/lib/types";
 import {getMarketCap} from "@/lib/utils";
@@ -11,12 +11,13 @@ import {CoinGetTopKey, coinRestApi} from "@/lib/rest";
 import useSWR from "swr";
 
 
-const TopTokens: React.FC<{currentSuiPrice: number}> = ({currentSuiPrice}) => {
+const TopTokens: FC = () => {
     const appConfig = useContext(AppConfigContext)
-    const { data: topTokens, error: fetchTopTokensError } = useSWR({
+    const currentSuiPrice = useContext(CurrentSuiPriceContext)
+    const {data: topTokens, error: fetchTopTokensError} = useSWR({
         appConfig,
         path: "getTop"
-    }, coinRestApi.getTop, { refreshInterval: 5000 });
+    }, coinRestApi.getTop, {refreshInterval: 5000});
 
     if (fetchTopTokensError) {
         return <div>Error loading top tokens {fetchTopTokensError}</div>
@@ -27,21 +28,21 @@ const TopTokens: React.FC<{currentSuiPrice: number}> = ({currentSuiPrice}) => {
     }
 
     return (
-        <div>
+        <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center justify-between">
             <div>
                 <p className={"text-2xl text-center"}>Newest</p>
                 <TokenCard token={topTokens.newest}
-                           marketCap={getMarketCap(topTokens.newest.suiReserve, currentSuiPrice)} />
+                           marketCap={getMarketCap(topTokens.newest.suiReserve, currentSuiPrice)}/>
             </div>
             <div>
                 <p className={"text-2xl text-center"}>Hottest</p>
                 <TokenCard token={topTokens.hottest}
-                           marketCap={getMarketCap(topTokens.hottest.suiReserve, currentSuiPrice)} />
+                           marketCap={getMarketCap(topTokens.hottest.suiReserve, currentSuiPrice)}/>
             </div>
             <div>
                 <p className={"text-2xl text-center"}>Imminent</p>
                 <TokenCard token={topTokens.imminent}
-                           marketCap={getMarketCap(topTokens.imminent.suiReserve, currentSuiPrice)} />
+                           marketCap={getMarketCap(topTokens.imminent.suiReserve, currentSuiPrice)}/>
             </div>
         </div>
     );
@@ -69,8 +70,6 @@ export default function Home() {
     }, [term, sort, order, appConfig])
 
 
-
-
     return (
         <main className="min-h-screen container">
             <div className="flex-col items-center justify-center space-y-8 mt-8">
@@ -83,8 +82,8 @@ export default function Home() {
                         </Button>
                     </Link>
                 </div>
-                <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center justify-between">
-
+                <div>
+                    <TopTokens/>
                 </div>
                 <div className={"text-center justify-center flex space-x-2"}>
                     <Input
