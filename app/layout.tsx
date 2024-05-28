@@ -18,7 +18,7 @@ const inter = Inter({subsets: ["latin"]});
 const queryClient = new QueryClient();
 const networks = {
     // localnet: {url: getFullnodeUrl('localnet')},
-    devnet: {url: getFullnodeUrl('devnet')},
+    // devnet: {url: getFullnodeUrl('devnet')},
     testnet: {url: getFullnodeUrl('testnet')},
     // mainnet: {url: getFullnodeUrl('mainnet')},
 };

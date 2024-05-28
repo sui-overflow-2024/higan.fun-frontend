@@ -114,11 +114,6 @@ export default function Home() {
                         >
                             TVL last 24h
                         </Button>
-                        <Button
-                            onClick={() => setSort("price")}
-                            variant={sort === "price" ? "default" : "outline"}
-                        > Price
-                        </Button>
                     </div>
                     <div className={"space-x-4 ml-auto"}>
                         <span className="text-xl font-bold">Order:</span>

@@ -16,17 +16,17 @@ import {faker} from "@faker-js/faker";
 import useSWR, {Fetcher} from "swr";
 import {CoinGetByIdKey, coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
-import {AppConfig, AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
-import {useCurrentAccount, useSuiClientContext, useSuiClient, SuiClientContext} from "@mysten/dapp-kit";
+import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
+import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
-import { TransactionBlock } from "@mysten/sui.js/transactions";
+import {TransactionBlock} from "@mysten/sui.js/transactions";
 import {bcs} from "@mysten/sui.js/bcs";
-import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
-import {cn, getCoinPath, getCoinPathFunc, getFunctionPathFromCoinType, getValueWithDecimals, getMarketCap} from "@/lib/utils";
+import type {SuiClient} from '@mysten/sui.js/client';
+import {getCoinPathFunc, getMarketCap, getValueWithDecimals} from "@/lib/utils";
 
 type CoinMetadataProps = {
-    tokenMetrics: TokenMetric,
+    tokenMetrics?: TokenMetric,
     client: SuiClient,
     token: TokenFromRestAPI;
     marketCap: string;
@@ -34,7 +34,7 @@ type CoinMetadataProps = {
 };
 type CoinDetailsProps = {
     token: TokenFromRestAPI;
-    tokenMetrics: TokenMetric,
+    tokenMetrics?: TokenMetric,
     marketCap: string;
 };
 type Holder = {
@@ -90,7 +90,8 @@ const ClampedDescription = ({text}: { text: string }) => {
 };
 
 const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, token, marketCap, currentSuiPrice}) => {
-    let {tokenPrice } = tokenMetrics;
+    if (!tokenMetrics) return (<div>Loading...</div>)
+    let {tokenPrice} = tokenMetrics;
 
     // if (priceError) return (<div>Error fetching token price {priceError.message}</div>)
     // if (!tokenPrice) return (<div>Loading...</div>)
@@ -112,7 +113,8 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, 
             <div className="flex items-center space-x-8">
                 <span
                     className="text-green-400 text-sm">Market Cap: ${(marketCap).toLocaleString()}</span>
-                <span className="text-green-400 text-sm">Current Price: {getValueWithDecimals(tokenPrice, 9)} SUI ({(tokenPrice * Math.pow(10, -9)) * currentSuiPrice < 0.01  ? "< $0.01" : tokenPriceUSD})</span>
+                <span
+                    className="text-green-400 text-sm">Current Price: {getValueWithDecimals(tokenPrice, 9)} SUI ({(tokenPrice * Math.pow(10, -9)) * currentSuiPrice < 0.01 ? "< $0.01" : tokenPriceUSD})</span>
                 <div className="flex items-center space-x-2 text-sm">
                     <span>Created by:</span>
                     <CreatorAddressChip address={token.creator} variant={"default"} showAvatar/>
@@ -177,26 +179,21 @@ const SocialLinks: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
 };
 
 
-// // Stub useQuery hook for totalSupply
-// const useTotalSupply = () => {
-//     return useQuery('totalSupply', async () => {
-//         // Simulate an API call
-//         await new Promise(resolve => setTimeout(resolve, 1000));
-//         return 21000; // Example total supply
-//     });
-// };
 
 const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap}) => {
+
     const currentSuiPrice = useContext(CurrentSuiPriceContext);
+    if (!tokenMetrics) return (<div>Loading...</div>)
+
 
     const target = token.target; // Example target market cap
     const totalSupply = tokenMetrics.totalSupply;
     const bondingCurveProgress = Math.min((tokenMetrics.suiBalance / target) * 100, 100).toFixed(2); // Example progress percentage
-    const targetUSD = getValueWithDecimals(target * currentSuiPrice , 9, 2);
+    const targetUSD = getValueWithDecimals(target * currentSuiPrice, 9, 2);
     const totalSupplyWithDecimals = totalSupply * (Math.pow(10, -1 * token.decimals));
     const [isExpanded, setIsExpanded] = useState(false);
 
-    console.log(tokenMetrics, "tokenMetrics", tokenMetrics.tokenPrice, "tokenPrice")
+
     return (
         <div className="p-4 rounded-lg">
             <div className="flex items-start space-x-4">
@@ -224,7 +221,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
                 </div>
             </div>
             <div className="flex justify-between text-green-400 mt-4 text-sm">
-                <div>Market Cap:  ${marketCap.toLocaleString()}</div>
+                <div>Market Cap: ${marketCap.toLocaleString()}</div>
                 <div>Target: ${targetUSD}</div>
             </div>
             <div className="text-gray-400 mt-2 text-sm">
@@ -274,7 +271,7 @@ export type TokenMetricKey = {
 }
 const getTokenMetrics: Fetcher<TokenMetric, TokenMetricKey> = async ({client, sender, coin}): Promise<TokenMetric> => {
     if (!coin) {
-        return { tokenPrice: 0, suiBalance: 0, totalSupply: 0 };
+        return {tokenPrice: 0, suiBalance: 0, totalSupply: 0};
     }
 
     const txb = new TransactionBlock()
@@ -308,7 +305,7 @@ const getTokenMetrics: Fetcher<TokenMetric, TokenMetricKey> = async ({client, se
 
     return {
         tokenPrice: bcs.de("u64", new Uint8Array(price || [])) as number,
-        suiBalance:  bcs.de("u64", new Uint8Array(suiBalanceEncoded || [])) as number,
+        suiBalance: bcs.de("u64", new Uint8Array(suiBalanceEncoded || [])) as number,
         totalSupply: bcs.de("u64", new Uint8Array(tokenTotalSupply || [])) as number,
     }
 }
@@ -324,7 +321,11 @@ export default function Drilldown() {
     const {data: token, error: tokenError} = useSWR<TokenFromRestAPI, any, CoinGetByIdKey>(
         {appConfig, packageId, path: "getById"}, coinRestApi.getById)
 
-    const {data: tokenMetrics, error: priceError, isLoading: isLoadingTokenPrice} = useSWR<TokenMetric, any, TokenMetricKey>(
+    const {
+        data: tokenMetrics,
+        error: fetchTokenMetricsError,
+        isLoading: isLoadingTokenPrice
+    } = useSWR<TokenMetric, any, TokenMetricKey>(
         {
             client: suiContext.client,
             sender: "0xbd81e46b4f6c750606445c10eccd486340ac168c9b34e4c4ab587fac447529f5",
@@ -334,8 +335,6 @@ export default function Drilldown() {
     console.log("console metrics", tokenMetrics);
 
 
-    if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
-    if (!token || !tokenMetrics) return (<div>Loading token metrics...</div>)
 
     const exampleHolders: Holder[] = [
         {address: 'abcdef', balance: 700000}, // Example holder with bonding curve
@@ -356,11 +355,11 @@ export default function Drilldown() {
 
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
-    if (!token) return (<div>Loading...</div>)
+    if (!token) return (<div>Loading token...</div>)
 
 
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
-    let marketCap = getMarketCap(tokenMetrics.suiBalance, currentSuiPrice);
+    let marketCap = getMarketCap(tokenMetrics?.suiBalance || 0, currentSuiPrice);
 
     return (
         // <div className="bg-gray-700 p-4 min-h-[300px] flex items-center justify-center">
@@ -370,7 +369,8 @@ export default function Drilldown() {
 
                 <main className="grid grid-cols-3 gap-8 mt-4">
                     <section className="col-span-2 space-y-4">
-                        <CoinMetadataHeader tokenMetrics={tokenMetrics} client={suiContext.client} token={token} marketCap={marketCap} currentSuiPrice={currentSuiPrice}/>
+                        <CoinMetadataHeader tokenMetrics={tokenMetrics} client={suiContext.client} token={token}
+                                            marketCap={marketCap} currentSuiPrice={currentSuiPrice}/>
                         <div className="bg-gray-700 min-h-[300px]">
                             <TradesChart packageId={token.packageId}/>
                         </div>
