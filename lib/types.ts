@@ -33,6 +33,7 @@ export type TradeFromRestAPI = {
     isBuy: boolean,
     suiAmount: number,
     coinAmount: number,
+    coinPrice: number,
     account: string,
     createdAt: Date,
     transactionId: string
