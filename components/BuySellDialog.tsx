@@ -232,7 +232,6 @@ const PriceCalculator: React.FC<{
           userBalance,
       }) => {
 
-    console.log("suiclient", suiClient)
     const [price, setPrice] = useState<number>(0)
     const [priceError, setPriceError] = useState<Error | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
@@ -257,12 +256,7 @@ const PriceCalculator: React.FC<{
         fetchPrice()
     }, [suiClient, sender, coinType, storeId, amount, mode])
 
-
-    // const {data: token, error: tokenError} = useSWR({appConfig, packageId}, coinRestApi.getById)
-
     if (priceError) return (<div>Error fetching price {priceError.message}</div>)
-    // if(userBalance === 0 && mode === sell) return (<div>You have nothing to sell</div>)
-    // if (!price) return (<div>Loading...</div>)
 
     return (<div>
         <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>
@@ -304,7 +298,6 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
         }
     })
 
-
     useEffect(() => {
         const fetchBalance = async () => {
             if (!token) return
@@ -334,11 +327,12 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
 
     const submit = async (data: { amount: number }) => {
         console.log(`${mode}ing ${data.amount} of the token now`)
-        const txb =  mode === "buy"
+        const txb = mode === "buy"
             ? generateBuyPtb(token, [], amount)
             : generateSellPtb(token, baseTokenCoins, amount);
 
         await executeTranscation(txb)
+        // TODO you can refresh trades and your own balance here
 
         reset({amount: 0})
     }
@@ -365,7 +359,6 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
                 </div>
             </CardHeader>
             <CardContent>
-
                 <form onSubmit={handleSubmit(submit)}>
                     <div className={"space-y-2 relative"}>
                         <div className={"space-y-4"}>

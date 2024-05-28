@@ -15,9 +15,9 @@ export const PrismaClientContext = createContext<PrismaClient>(new PrismaClient(
 ));
 
 export const defaultAppConfig = {
-    restApiUrl: process.env.REST_API_URL || "http://127.0.0.1:3000",
+    restApiUrl: process.env.NEXT_PUBLIC_REST_API_URL || "https://higan.fun/api",
     axios: axios.create({
-        baseURL: process.env.REST_API_URL || "http://127.0.0.1:3000",
+        baseURL: process.env.NEXT_PUBLIC_REST_API_URL || "https://higan.fun/api",
     }),
 }
 

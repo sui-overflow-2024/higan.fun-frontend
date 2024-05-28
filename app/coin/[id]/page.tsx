@@ -194,7 +194,6 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
     const bondingCurveProgress = Math.min((tokenMetrics.suiBalance / target) * 100, 100).toFixed(2); // Example progress percentage
     const targetUSD = getValueWithDecimals(target * currentSuiPrice , 9, 2);
     const totalSupplyWithDecimals = totalSupply * (Math.pow(10, -1 * token.decimals));
-    tokenMetrics.suiBalance
     const [isExpanded, setIsExpanded] = useState(false);
 
     console.log(tokenMetrics, "tokenMetrics", tokenMetrics.tokenPrice, "tokenPrice")
@@ -353,7 +352,6 @@ export default function Drilldown() {
         {address: faker.finance.ethereumAddress(), balance: 50000},
         {address: faker.finance.ethereumAddress(), balance: 50000},
         {address: faker.finance.ethereumAddress(), balance: 50000},
-        // Add more holders as needed
     ];
 
 

@@ -23,7 +23,7 @@ const TopTokens: FC = () => {
         return <div>Error loading top tokens {fetchTopTokensError}</div>
     }
 
-    if (!topTokens) {
+    if (!topTokens || !topTokens.newest || !topTokens.hottest || !topTokens.imminent) {
         return <div>Loading...</div>
     }
 

@@ -40,6 +40,7 @@ export const generateFakeToken = (): TokenFromRestAPI => {
     const name = faker.lorem.words({min: 2, max: 5}).split(' ')
     const coinType = `${packageId}::${toSnakeCase(name.join(' '))}::${toSnakeCaseUpper(name.join(' '))}`
     return {
+        target: 5_000_000_000,
         coinType,
         creator: "0xb2720b42e26a7fc1eb555ecd154ef3dc2446f80c1f186af901cd38b842e52044",
         decimals: 3,

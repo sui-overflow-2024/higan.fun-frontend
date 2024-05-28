@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as a parent image
-FROM node:18-alpine AS base
+FROM node:22-bookworm-slim AS base
 
 # Enable Corepack, which includes pnpm
 RUN corepack enable
@@ -20,7 +20,7 @@ COPY . .
 RUN pnpm run build
 
 # Use a minimal base image for the final stage
-FROM node:18-alpine AS runtime
+FROM node:22-bookworm-slim AS runtime
 
 # Enable Corepack
 RUN corepack enable
@@ -36,7 +36,7 @@ COPY --from=base /app/public ./public
 COPY --from=base /app/node_modules ./node_modules
 
 # Expose the port the app runs on
-EXPOSE 3000
-
+EXPOSE 5000
+RUN npx next telemetry disable
 # Start the Next.js application
 CMD ["pnpm", "start"]

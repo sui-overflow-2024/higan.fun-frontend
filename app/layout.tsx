@@ -17,10 +17,10 @@ const inter = Inter({subsets: ["latin"]});
 
 const queryClient = new QueryClient();
 const networks = {
-    localnet: {url: getFullnodeUrl('localnet')},
+    // localnet: {url: getFullnodeUrl('localnet')},
     devnet: {url: getFullnodeUrl('devnet')},
     testnet: {url: getFullnodeUrl('testnet')},
-    mainnet: {url: getFullnodeUrl('mainnet')},
+    // mainnet: {url: getFullnodeUrl('mainnet')},
 };
 
 export default function RootLayout({
@@ -54,7 +54,7 @@ export default function RootLayout({
                         <CurrentSuiPriceProvider>
                             <PrismaClientContext.Provider value={prismaClient}>
                                 <QueryClientProvider client={queryClient}>
-                                    <SuiClientProvider networks={networks} defaultNetwork="devnet">
+                                    <SuiClientProvider networks={networks} defaultNetwork="testnet">
                                         <WalletProvider>
                                             <Navbar/>
                                             {children}
