@@ -11,19 +11,14 @@ export type ThreadPostRequest = {
     signature: string,
     author: string,
 }
+export type CoinGetAllKey = {appConfig: AppConfig, packageIds?: string[], creator?: string, path: "getAll"}
 export type CoinGetPostsKey = { appConfig: AppConfig, packageId: string, path: "getPosts" }
 export type CoinGetTopKey = { appConfig: AppConfig, path: "getTop" }
 export type CoinGetTradesKey = { appConfig: AppConfig, packageId: string, path: "getTrades" }
 export type CoinGetByIdKey = { appConfig: AppConfig, packageId: string, path: "getById" }
 export type CoinSearchKey = { appConfig: AppConfig, term: string, sort: string, order: string }
 type CoinRestApi = {
-    getAll: Fetcher<TokenFromRestAPI[], {
-        appConfig: AppConfig,
-        packageIds: string[],
-        limit: number,
-        order: string,
-        sort: string
-    }>,
+    getAll: Fetcher<TokenFromRestAPI[], CoinGetAllKey>,
     search: Fetcher<TokenFromRestAPI[], CoinSearchKey>,
     getTop: Fetcher<TopTokenFromRestAPI, CoinGetTopKey>,
     getById: Fetcher<TokenFromRestAPI, CoinGetByIdKey>,
@@ -35,10 +30,18 @@ type CoinRestApi = {
 }
 
 export const coinRestApi: CoinRestApi = {
-    getAll: async ({appConfig, packageIds, limit, sort, order,}) => {
-        const res = await appConfig.axios.get<TokenFromRestAPI[]>(`/coins`)
-        console.log("Retrieved the following coin from the REST API", res.data)
-        return res.data
+    getAll: async ({appConfig, packageIds, creator }) => {
+        const params: {packageIds?: string[], creator?: string} = {};
+        if (packageIds && packageIds.length > 0){
+            params['packageIds'] = packageIds;
+        }
+
+        if (creator) {
+            params['creator'] = creator;
+        }
+        const res = await appConfig.axios.get<TokenFromRestAPI[]>('/coins', { params });
+        console.log("Retrieved the following coin from the REST API", res.data);
+        return res.data;
     },
     search: async ({appConfig, term, sort, order}): Promise<TokenFromRestAPI[]> => {
         const res = await appConfig.axios.get<TokenFromRestAPI[]>(`/coins/search?term=${term}&order=${order}&sort=${sort}`)

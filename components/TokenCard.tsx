@@ -1,11 +1,14 @@
 import {TokenFromRestAPI} from "@/lib/types";
 import {Card} from "@/components/ui/card";
 import Link from "next/link";
-import {getRandomNumber, largeNumberToFixedWithSymbol} from "@/lib/utils";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import Image from "next/image";
+import {useContext} from "react";
+import {CurrentSuiPriceContext} from "@/components/Contexts";
+import {suiToUsdLocaleString} from "@/lib/utils";
 
-export const TokenCard = ({token, marketCap}: { token: TokenFromRestAPI, marketCap: string }) => {
+export const TokenCard = ({token}: { token: TokenFromRestAPI }) => {
+    const currentSuiPrice = useContext(CurrentSuiPriceContext)
     return (
         <Link href={`/coin/${token.packageId}`}>
             <Card className="p-4  flex flex-col hover:bg-card-hover hover:border-card-hover-border">
@@ -23,9 +26,8 @@ export const TokenCard = ({token, marketCap}: { token: TokenFromRestAPI, marketC
                             Ticker: ${token.symbol}
                         </p>
                         <p className="text-green-400 text-sm">
-                            Market Cap: ${marketCap}
+                            Market Cap: ${suiToUsdLocaleString(token.suiReserve, currentSuiPrice)}
                         </p>
-
                         <p className="text-sm flex items-centerhttps://rpc.ankr.com/sui_testnet space-x-1.5">
                             <span className="muted-sm">Created by:</span>
                             <CreatorAddressChip address={token.creator} variant={"small"} showAvatar/>

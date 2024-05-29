@@ -2,13 +2,13 @@
 import {FC, useContext, useEffect, useState} from "react";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 import {TokenFromRestAPI, TopTokenFromRestAPI} from "@/lib/types";
-import {getMarketCap} from "@/lib/utils";
 import {TokenCard} from "@/components/TokenCard";
 import {Button} from "@/components/ui/button";
 import Link from "next/link";
 import {Input} from "@/components/ui/input";
 import {CoinGetTopKey, coinRestApi} from "@/lib/rest";
 import useSWR from "swr";
+import {suiToUsdLocaleString} from "@/lib/utils";
 
 
 const TopTokens: FC = () => {
@@ -31,18 +31,15 @@ const TopTokens: FC = () => {
         <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center justify-between">
             <div>
                 <p className={"text-2xl text-center"}>Newest</p>
-                <TokenCard token={topTokens.newest}
-                           marketCap={getMarketCap(topTokens.newest.suiReserve, currentSuiPrice)}/>
+                <TokenCard token={topTokens.newest}/>
             </div>
             <div>
                 <p className={"text-2xl text-center"}>Hottest</p>
-                <TokenCard token={topTokens.hottest}
-                           marketCap={getMarketCap(topTokens.hottest.suiReserve, currentSuiPrice)}/>
+                <TokenCard token={topTokens.hottest}/>
             </div>
             <div>
                 <p className={"text-2xl text-center"}>Imminent</p>
-                <TokenCard token={topTokens.imminent}
-                           marketCap={getMarketCap(topTokens.imminent.suiReserve, currentSuiPrice)}/>
+                <TokenCard token={topTokens.imminent}/>
             </div>
         </div>
     );
@@ -134,8 +131,7 @@ export default function Home() {
 
                 <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center justify-between">
                     {tokens.map((token, index) => (
-                        <TokenCard key={index} token={token}
-                                   marketCap={getMarketCap(token.suiReserve, currentSuiPrice)}/>
+                        <TokenCard key={index} token={token}/>
                     ))}
                 </div>
                 {/* <TokenCard token={generateFakeToken()} /> */}

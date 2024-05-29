@@ -87,9 +87,14 @@ export const getValueWithDecimals = (value: number, decimals: number, fixed ?: n
     return fixed ? result.toFixed(fixed) : result.toString()
 }
 
-export const getMarketCap = (suiReserve: number, currentSuiPrice: number): string => {
-    return getValueWithDecimals((suiReserve * currentSuiPrice), 9, 2);
+export const suiToUsdLocaleString = (suiReserve: number, currentSuiPrice: number): string => {
+    const val = (suiReserve * Math.pow(10, -9)) * currentSuiPrice
+    if (val < 0.01) {
+        return "<$0.01"
+    }
+    return `$${val.toFixed(2)}`
 }
+
 
 export const extractPriceFromDevInspect = (res?: DevInspectResults) => {
     if (!res) return 0
@@ -126,6 +131,7 @@ export const generateTrades = (count: number): TradeFromRestAPI[] => {
         transactionId: faker.finance.ethereumAddress(),
         isBuy: activity === 'buy',
         createdAt: faker.date.recent(),
+        coinPrice: faker.number.float({min: 1, max: 80, fractionDigits: 2}),
     }));
 };
 

@@ -51,10 +51,7 @@ export type CreateCoinFormData = {
 
 const CreateCoinForm = () => {
     const isDevMode = process.env.NODE_ENV === "development";
-    const prismaClient = useContext(PrismaClientContext);
     const appConfig = useContext(AppConfigContext);
-    const suiClient = useSuiClient();
-    const [wallet] = useWallets()
     const [account] = useAccounts()
     const {toast} = useToast()
     const [fatalError, setFatalError] = useState<string | null>(null);
@@ -68,11 +65,6 @@ const CreateCoinForm = () => {
     } = useForm<CreateCoinFormData>({
         // TODO Below has a bunch of default values for testing, remove this
         defaultValues: {
-            // creator: "",
-            // module: isDevMode ? `${dev_name.toLowerCase()}` : "",
-            // packageId: "",
-            // storeId: "",
-            //There items do need to be set in the form
             name: isDevMode ? `${faker.lorem.words({min: 1, max: 3})}` : "",
             symbol: isDevMode ? `${dev_name.toUpperCase().replace("_", "").slice(0, 3)}` : "",
             description: isDevMode ? `${faker.lorem.sentence({min: 30, max: 120})}` : "",
@@ -119,14 +111,7 @@ const CreateCoinForm = () => {
         try {
             if (!account) {
                 return
-                // toast({
-                //     title: "Failed to create coin",
-                //     duration: 3000,
-                //     variant: "destructive",
-                //     description: "You must connect your Sui wallet to create a coin",
-                // })
             }
-            // const result = await appConfig.axios.post("/coins", data)
             mutate(
                 {
                     message: new TextEncoder().encode(data.symbol),

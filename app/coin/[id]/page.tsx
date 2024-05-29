@@ -13,17 +13,16 @@ import {BuySellDialog} from "@/components/BuySellDialog";
 import TradesTable from "@/components/TradesTable";
 import TradesChart from "@/components/TradesChart";
 import {faker} from "@faker-js/faker";
-import useSWR, {Fetcher} from "swr";
+import useSWR from "swr";
 import {CoinGetByIdKey, coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
-import {TransactionBlock} from "@mysten/sui.js/transactions";
-import {bcs} from "@mysten/sui.js/bcs";
 import type {SuiClient} from '@mysten/sui.js/client';
-import {getCoinPathFunc, getMarketCap, getValueWithDecimals} from "@/lib/utils";
+import {getValueWithDecimals, suiToUsdLocaleString} from "@/lib/utils";
+import {getTokenMetrics, TokenMetric, TokenMetricKey} from "@/lib/sui";
 
 type CoinMetadataProps = {
     tokenMetrics?: TokenMetric,
@@ -179,7 +178,6 @@ const SocialLinks: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
 };
 
 
-
 const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap}) => {
 
     const currentSuiPrice = useContext(CurrentSuiPriceContext);
@@ -191,8 +189,6 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
     const bondingCurveProgress = Math.min((tokenMetrics.suiBalance / target) * 100, 100).toFixed(2); // Example progress percentage
     const targetUSD = getValueWithDecimals(target * currentSuiPrice, 9, 2);
     const totalSupplyWithDecimals = totalSupply * (Math.pow(10, -1 * token.decimals));
-    const [isExpanded, setIsExpanded] = useState(false);
-
 
     return (
         <div className="p-4 rounded-lg">
@@ -258,57 +254,6 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({token, holders, totalSupply}
     );
 };
 
-type TokenMetric = {
-    tokenPrice: number,
-    suiBalance: number,
-    totalSupply: number,
-}
-export type TokenMetricKey = {
-    path: "tokenMetrics",
-    client: SuiClient,
-    sender: string,
-    coin?: TokenFromRestAPI,
-}
-const getTokenMetrics: Fetcher<TokenMetric, TokenMetricKey> = async ({client, sender, coin}): Promise<TokenMetric> => {
-    if (!coin) {
-        return {tokenPrice: 0, suiBalance: 0, totalSupply: 0};
-    }
-
-    const txb = new TransactionBlock()
-    txb.moveCall({
-        target: getCoinPathFunc(coin, "get_coin_price") as `${string}::${string}::${string}`,
-        arguments: [
-            txb.object(coin.storeId),
-        ],
-    });
-    txb.moveCall({
-        target: getCoinPathFunc(coin, "get_sui_balance") as `${string}::${string}::${string}`,
-        arguments: [
-            txb.object(coin.storeId),
-        ],
-    });
-    txb.moveCall({
-        target: getCoinPathFunc(coin, "get_coin_total_supply") as `${string}::${string}::${string}`,
-        arguments: [
-            txb.object(coin.storeId),
-        ],
-    });
-    const res = await client.devInspectTransactionBlock({
-        transactionBlock: txb,
-        sender: sender,
-    });
-    console.log("Inspect result", res)
-
-    const price = res.results?.[0]?.returnValues?.[0][0]
-    let suiBalanceEncoded = res.results?.[1]?.returnValues?.[0][0]
-    let tokenTotalSupply = res.results?.[2]?.returnValues?.[0][0]
-
-    return {
-        tokenPrice: bcs.de("u64", new Uint8Array(price || [])) as number,
-        suiBalance: bcs.de("u64", new Uint8Array(suiBalanceEncoded || [])) as number,
-        totalSupply: bcs.de("u64", new Uint8Array(tokenTotalSupply || [])) as number,
-    }
-}
 
 export default function Drilldown() {
     const appConfig = useContext(AppConfigContext)
@@ -335,7 +280,6 @@ export default function Drilldown() {
     console.log("console metrics", tokenMetrics);
 
 
-
     const exampleHolders: Holder[] = [
         {address: 'abcdef', balance: 700000}, // Example holder with bonding curve
         {address: faker.finance.ethereumAddress(), balance: 100000}, // Example creator
@@ -359,7 +303,7 @@ export default function Drilldown() {
 
 
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
-    let marketCap = getMarketCap(tokenMetrics?.suiBalance || 0, currentSuiPrice);
+    let marketCap = suiToUsdLocaleString(tokenMetrics?.suiBalance || 0, currentSuiPrice);
 
     return (
         // <div className="bg-gray-700 p-4 min-h-[300px] flex items-center justify-center">
