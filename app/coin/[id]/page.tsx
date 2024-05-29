@@ -17,7 +17,7 @@ import useSWR from "swr";
 import {CoinGetByIdKey, coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
-import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
+import {useCurrentAccount, useSuiClient, useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import type {SuiClient} from '@mysten/sui.js/client';
@@ -300,7 +300,7 @@ export default function Drilldown() {
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
     if (!token) return (<div>Loading token...</div>)
-
+console.log("fetchTokenMetricsError", fetchTokenMetricsError)
 
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
     let marketCap = suiToUsdLocaleString(tokenMetrics?.suiBalance || 0, currentSuiPrice);
@@ -339,7 +339,7 @@ export default function Drilldown() {
 
 
                     <aside className="space-y-4">
-                        <BuySellDialog token={token}/>
+                        <BuySellDialog token={token} suiClient={suiContext.client}/>
                         <CoinDetails tokenMetrics={tokenMetrics} token={token} marketCap={marketCap}/>
                         <TokenHolders token={token} holders={exampleHolders} totalSupply={totalSupply}/>
                     </aside>

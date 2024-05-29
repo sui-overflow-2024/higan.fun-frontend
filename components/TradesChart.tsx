@@ -36,7 +36,7 @@ const transformTradesToLineData = (trades: TradeFromRestAPI[], currentSuiPrice: 
         time: entry.time,
         value: entry.priceSum / entry.count  // Calculate average price
     }));
-
+debugger
     return data;
 };
 
@@ -111,13 +111,16 @@ const TradesChart: React.FC<TradesChartProps> = ({packageId}) => {
         () => {
             if(!trades) return;
             if(!seriesRef?.current) return;
+            if(currentSuiPrice === 0) return;
             const newTrades = trades.filter(
                 (trade) => !previousTradesRef.current.some((prevTrade) => prevTrade.id === trade.id)
             );
 
             if (previousTradesRef.current.length === 0) {
-                // @ts-ignore
                 seriesRef.current.setData(transformTradesToLineData(trades, currentSuiPrice));
+
+                // @ts-ignore
+                chartRef.current.timeScale().fitContent();
             } else if (newTrades.length > 0) {
                 let data = transformTradesToLineData(newTrades, currentSuiPrice);
                 data.forEach((trade) => {
@@ -131,7 +134,7 @@ const TradesChart: React.FC<TradesChartProps> = ({packageId}) => {
 
             previousTradesRef.current = trades;
         },
-        [trades]
+        [currentSuiPrice, trades]
     );
 
     return (

@@ -30,6 +30,8 @@ export const CurrentSuiPriceProvider: FC<PropsWithChildren> = ({children}) => {
         data: currentSuiPrice,
         error: fetchCurrentSuiPriceError
     } = useSWR("getSuiPrice", coinRestApi.getSuiPrice, {refreshInterval: 5000})
+    console.log("currentSuiPrice", currentSuiPrice);
+
     return (<CurrentSuiPriceContext.Provider value={currentSuiPrice || 0}>
         {children}
     </CurrentSuiPriceContext.Provider>)

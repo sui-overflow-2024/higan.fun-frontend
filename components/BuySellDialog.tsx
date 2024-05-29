@@ -18,6 +18,7 @@ import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 import {useForm} from "react-hook-form";
 import {customSuiHooks} from "@/lib/sui";
 import {useTransactionExecution} from "@/hooks/useTransactionexecution";
+import {mutate} from "swr";
 
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
@@ -30,7 +31,7 @@ const getAllUserCoins = async ({
     type: string;
     address: string;
 }): Promise<CoinStruct[]> => {
-    let cursor: string | null | undefined = "";
+    let cursor: string | null | undefined = null;
 
     let coins: CoinStruct[] = [];
     let iter = 0;
@@ -160,19 +161,19 @@ const generateSellPtb = (coin: TokenFromRestAPI, userCoins: CoinStruct[], amount
     }
 
     const txb = new TransactionBlock();
-    getExactCoinByAmount(getCoinPath(coin), userCoins, BigInt(amountToSell), txb)
+    const exactCoinByAmount = getExactCoinByAmount(getCoinPath(coin), userCoins, BigInt(amountToSell), txb)
     //Amount here already has multiplication for decimals applied (see TokenAmountInput)
     //txb.gas() for the coin because you purchase the custom coin w/ Sui
 
     console.log("Splitting coins", txb.gas)
-    const splitCoin = txb.moveCall({
-        target: getCoinPathFunc(coin, "get_coin_sell_price"),
-        arguments: [
-            txb.object(coin.storeId),
-            txb.pure(amountToSell),
-        ],
-    })
-    const [coinToSendToSell] = txb.splitCoins(getCoinPath(coin), [txb.object(splitCoin)]);
+    // const splitCoin = txb.moveCall({
+    //     target: getCoinPathFunc(coin, "get_coin_sell_price"),
+    //     arguments: [
+    //         txb.object(coin.storeId),
+    //         txb.pure(amountToSell),
+    //     ],
+    // })
+    // const [coinToSendToSell] = txb.splitCoins(getCoinPath(coin), [txb.object(splitCoin)]);
 
     //Amount here already has multiplication for decimals applied (see TokenAmountInput)
     //txb.gas() for the coin because you purchase the custom coin w/ Sui
@@ -182,8 +183,7 @@ const generateSellPtb = (coin: TokenFromRestAPI, userCoins: CoinStruct[], amount
         target: getCoinPathFunc(coin, "sell_coins"),
         arguments: [
             txb.object(coin.storeId),
-            txb.object(coinToSendToSell),
-            txb.pure(amountToSell),
+            txb.object(exactCoinByAmount),
         ],
     });
     return txb;
@@ -269,14 +269,12 @@ const PriceCalculator: React.FC<{
     </div>)
 }
 
-export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
+export const BuySellDialog: React.FC<{ token: TokenFromRestAPI, suiClient: SuiClient }> = ({token, suiClient}) => {
 
 
-    const suiClient = useSuiClient()
     const currentAccount = useCurrentAccount()
     const executeTranscation = useTransactionExecution()
 
-    const {mutate: signAndExecuteTransactionBlock} = useSignAndExecuteTransactionBlock();
     const [mode, setMode] = useState<"buy" | "sell">("buy")
     const [userBalance, setUserBalance] = useState(0)
     const [baseTokenCoins, setBaseTokenCoins] = useState<CoinStruct[]>([])
@@ -333,6 +331,13 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI }> = ({token}) =>
 
         await executeTranscation(txb)
         // TODO you can refresh trades and your own balance here
+
+        await mutate({
+            client: suiClient,
+            sender: "0xbd81e46b4f6c750606445c10eccd486340ac168c9b34e4c4ab587fac447529f5",
+            coin: token,
+            path: "tokenMetrics",
+        })
 
         reset({amount: 0})
     }
