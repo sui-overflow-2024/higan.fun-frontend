@@ -48,7 +48,7 @@ export default function Home() {
     const appConfig = useContext(AppConfigContext)
     const [term, setTerm] = useState("");
     const [sort, setSort] = useState<"created" | "marketCap" | "tvl" | "price">("created")
-    const [order, setOrder] = useState<"asc" | "desc">("asc")
+    const [order, setOrder] = useState<"asc" | "desc">("desc")
     const [tokens, setTokens] = useState<TokenFromRestAPI[]>([]);
     const currentSuiPrice = useContext(CurrentSuiPriceContext)
 
