@@ -17,9 +17,10 @@ RUN pnpm install
 COPY . .
 
 # Build the Next.js application
-RUN #pnpm run build
+RUN pnpm run build
 
-CMD ["pnpm", "dev"]
+#CMD ["pnpm", "dev"]
+CMD ["pnpm", "start"]
 
 # Use a minimal base image for the final stage
 #FROM node:22-bookworm-slim AS runtime

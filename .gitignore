@@ -43,3 +43,5 @@ dev.db
 .envrc
 .env.prod
 lib/prisma/client
+# Million Lint
+.million

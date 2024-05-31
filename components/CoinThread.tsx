@@ -1,3 +1,4 @@
+'use client'
 import React, {FC, useContext} from 'react';
 import MarkdownIt from 'markdown-it';
 import DOMPurify from 'dompurify';

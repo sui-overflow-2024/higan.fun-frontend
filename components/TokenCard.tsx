@@ -1,3 +1,4 @@
+'use client';
 import {TokenFromRestAPI} from "@/lib/types";
 import {Card} from "@/components/ui/card";
 import Link from "next/link";
@@ -26,7 +27,7 @@ export const TokenCard = ({token}: { token: TokenFromRestAPI }) => {
                             Ticker: ${token.symbol}
                         </p>
                         <p className="text-green-400 text-sm">
-                            Market Cap: ${suiToUsdLocaleString(token.suiReserve, currentSuiPrice)}
+                            Market Cap: {suiToUsdLocaleString(token.suiReserve, currentSuiPrice)}
                         </p>
                         <p className="text-sm flex items-centerhttps://rpc.ankr.com/sui_testnet space-x-1.5">
                             <span className="muted-sm">Created by:</span>

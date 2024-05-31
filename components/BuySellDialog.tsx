@@ -3,22 +3,24 @@ import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
 import {useEffect, useState} from "react";
-import {cn, getCoinPath, getCoinPathFunc, getFunctionPathFromCoinType, getValueWithDecimals} from "@/lib/utils";
+import {
+    cn,
+    getCoinPath,
+    getCoinPathFunc,
+    getFunctionPathFromCoinType,
+    getValueWithDecimals,
+    truncateDecimals
+} from "@/lib/utils";
 import Image from "next/image";
 import {TokenFromRestAPI} from "@/lib/types";
-import {
-    ConnectButton,
-    useCurrentAccount,
-    useSignAndExecuteTransactionBlock,
-    useSuiClient,
-    useSuiClientQuery
-} from "@mysten/dapp-kit";
+import {ConnectButton, useCurrentAccount, useSuiClientQuery} from "@mysten/dapp-kit";
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
 import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 import {useForm} from "react-hook-form";
 import {customSuiHooks} from "@/lib/sui";
 import {useTransactionExecution} from "@/hooks/useTransactionexecution";
 import {mutate} from "swr";
+import {Input} from "@/components/ui/input";
 
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
@@ -347,14 +349,14 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI, suiClient: SuiCl
             <CardHeader>
                 <div className={"flex justify-between"}>
                     <Button
-                        className={"min-w-36"}
+                        className={"w-36"}
                         variant={mode === "buy" ? "default" : "outline"}
                         onClick={() => setMode("buy")}>
                         Buy
                     </Button>
 
                     <Button
-                        className={"min-w-36"}
+                        className={"w-36"}
                         variant={mode === "sell" ? "default" : "outline"}
                         onClick={() => setMode("sell")}
                         disabled={userBalance === 0}
@@ -372,32 +374,49 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI, suiClient: SuiCl
                                      backgroundColor: "hsl(210, 88%, 15%)"
                                  }}>
                                 <p className={"text-xs text-muted-foreground w-full"}>
-                                    {mode === "buy" ? "You receive" : "You sell"}
+                                    {mode === "buy" ? "You're buying" : "You're selling"}
                                 </p>
-                                <div className={"flex pb-2 "}>
+                                <div className="flex p-2 items-center gap-2">
                                     <input
-                                        className={cn(
-                                            "flex h-10" +
-                                            " focus:outline-none" +
-                                            " disabled:cursor-not-allowed disabled:opacity-50 text-2xl",
-                                        )}
+                                        className={"w-full h-10 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 text-2xl"}
+                                        {...register("amount", {
+                                            required: "This field is required",
+                                            valueAsNumber: true,
+                                            min: {
+                                                value: 0,
+                                                message: "Amount must be greater than 1"
+                                            },
+                                            validate: value => {
+                                                console.log("value", value)
+                                                return !isNaN(value) || "Amount must be a number"
+                                            }
+                                        })}
+                                        type={"number"}
                                         style={{
                                             backgroundColor: "hsl(210, 88%, 15%)",
+                                            width: "100%",
                                         }}
                                         {...register("amount")}
                                     />
-                                    {/*<CoinSelectDropdown token={token} setToken={setToken}/>*/}
+                                    <div className={"text-2xl text-muted-foreground"}>
+                                        {token.symbol}
+                                    </div>
+                                    <div
+                                        className="rounded-full border-2 border-white inline-flex items-center justify-center">
+                                        <Image
+                                            src={token.iconUrl}
+                                            alt={token.symbol}
+                                            width={48}
+                                            height={48}
+                                            className="rounded-full"
+                                        />
+                                    </div>
                                 </div>
+
+
                                 {errors.amount && <div className={"text-xs text-red-500"}>{errors.amount.message}</div>}
-                                <div className={"text-xs text-muted-foreground"}>you
-                                    have: {userBalance} {token.symbol}</div>
-                                {/*<div className={"text-xs text-muted-foreground"}>*/}
-                                {/*    {*/}
-                                {/*        process.env.NODE_ENV === "development" && <>*/}
-                                {/*            actual amount: {amount}*/}
-                                {/*        </>*/}
-                                {/*    }*/}
-                                {/*</div>*/}
+                                {currentAccount && <div className={"text-xs text-muted-foreground"}>you
+                                    have: {truncateDecimals(userBalance, token.decimals)} {token.symbol}</div>}
                             </div>
                         </div>
                         <div className={"flex justify-center"}>
@@ -410,7 +429,7 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI, suiClient: SuiCl
                                                          userBalance={userBalance}
                                                          suiClient={suiClient}/>
                                     </div>
-                                    <Button className={"min-w-56"} type={"submit"}>
+                                    <Button className={"w-56"} type={"submit"}>
                                         {mode === "buy" ? "Buy" : "Sell"}
                                     </Button>
                                 </div>)

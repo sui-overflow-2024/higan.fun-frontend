@@ -1,3 +1,4 @@
+'use client'
 import {createContext, FC, PropsWithChildren} from "react";
 import {PrismaClient} from "@/lib/prisma/client";
 import axios, {Axios} from "axios";

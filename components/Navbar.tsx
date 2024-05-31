@@ -1,4 +1,3 @@
-'use client';
 import Link from 'next/link';
 import {ConnectButton, useCurrentAccount, useSuiClientContext} from '@mysten/dapp-kit';
 import {Button} from "@/components/ui/button";
@@ -34,8 +33,6 @@ function NetworkSelector() {
 
 export default function Navbar() {
     const account = useCurrentAccount();
-    const shortAddress = account && `${account.address.slice(0, 6)}...${account.address.slice(-6)}`;
-    const adressString = `${account?.address.slice(0, 6)}...${account?.address.slice(-6)}`;
     const pathname = usePathname()
     return (
         <nav className="border-b-2 border-gray-800">

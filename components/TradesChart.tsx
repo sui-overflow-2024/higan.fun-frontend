@@ -36,7 +36,6 @@ const transformTradesToLineData = (trades: TradeFromRestAPI[], currentSuiPrice: 
         time: entry.time,
         value: entry.priceSum / entry.count  // Calculate average price
     }));
-debugger
     return data;
 };
 

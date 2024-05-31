@@ -162,3 +162,7 @@ export async function copyTextToClipboard(text: string) {
         return document.execCommand('copy', true, text);
     }
 }
+
+export function truncateDecimals(num: number, decimals: number): number {
+    return num * Math.pow(10, -1 * decimals);
+}

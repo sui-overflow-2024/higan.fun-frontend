@@ -17,7 +17,7 @@ import useSWR from "swr";
 import {CoinGetByIdKey, coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
-import {useCurrentAccount, useSuiClient, useSuiClientContext} from "@mysten/dapp-kit";
+import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import type {SuiClient} from '@mysten/sui.js/client';
@@ -111,7 +111,7 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, 
             </div>
             <div className="flex items-center space-x-8">
                 <span
-                    className="text-green-400 text-sm">Market Cap: ${(marketCap).toLocaleString()}</span>
+                    className="text-green-400 text-sm">Market Cap: {marketCap.toLocaleString()}</span>
                 <span
                     className="text-green-400 text-sm">Current Price: {getValueWithDecimals(tokenPrice, 9)} SUI ({(tokenPrice * Math.pow(10, -9)) * currentSuiPrice < 0.01 ? "< $0.01" : tokenPriceUSD})</span>
                 <div className="flex items-center space-x-2 text-sm">
@@ -217,7 +217,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
                 </div>
             </div>
             <div className="flex justify-between text-green-400 mt-4 text-sm">
-                <div>Market Cap: ${marketCap.toLocaleString()}</div>
+                <div>Market Cap: {marketCap.toLocaleString()}</div>
                 <div>Target: ${targetUSD}</div>
             </div>
             <div className="text-gray-400 mt-2 text-sm">
@@ -300,7 +300,7 @@ export default function Drilldown() {
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
     if (!token) return (<div>Loading token...</div>)
-console.log("fetchTokenMetricsError", fetchTokenMetricsError)
+    console.log("fetchTokenMetricsError", fetchTokenMetricsError)
 
     const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
     let marketCap = suiToUsdLocaleString(tokenMetrics?.suiBalance || 0, currentSuiPrice);
