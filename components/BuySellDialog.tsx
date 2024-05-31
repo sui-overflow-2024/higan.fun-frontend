@@ -2,7 +2,7 @@
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useEffect, useState, useContext} from "react";
 import {
     cn,
     getCoinPath,
@@ -11,6 +11,7 @@ import {
     getValueWithDecimals,
     truncateDecimals
 } from "@/lib/utils";
+import {AppConfigContext} from "@/components/Contexts";
 import Image from "next/image";
 import {TokenFromRestAPI} from "@/lib/types";
 import {ConnectButton, useCurrentAccount, useSuiClientQuery} from "@mysten/dapp-kit";
@@ -274,6 +275,7 @@ const PriceCalculator: React.FC<{
 export const BuySellDialog: React.FC<{ token: TokenFromRestAPI, suiClient: SuiClient }> = ({token, suiClient}) => {
 
 
+    const appConfig = useContext(AppConfigContext)
     const currentAccount = useCurrentAccount()
     const executeTranscation = useTransactionExecution()
 
@@ -340,6 +342,7 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI, suiClient: SuiCl
             coin: token,
             path: "tokenMetrics",
         })
+        await mutate({appConfig, packageId: token.packageId, path: "getHolders"})
 
         reset({amount: 0})
     }

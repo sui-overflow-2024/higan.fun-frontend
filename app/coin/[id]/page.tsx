@@ -1,5 +1,5 @@
 'use client';
-import {TokenFromRestAPI} from "@/lib/types";
+import {HoldersFromRestAPI, TokenFromRestAPI} from "@/lib/types";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
 import {Dispatch, SetStateAction, useContext, useEffect, useRef, useState} from "react";
@@ -14,7 +14,7 @@ import TradesTable from "@/components/TradesTable";
 import TradesChart from "@/components/TradesChart";
 import {faker} from "@faker-js/faker";
 import useSWR from "swr";
-import {CoinGetByIdKey, coinRestApi} from "@/lib/rest";
+import {CoinGetByIdKey, CoinGetHoldersByKey, coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
@@ -43,8 +43,6 @@ type Holder = {
 
 type TokenHoldersProps = {
     token: TokenFromRestAPI;
-    holders: Holder[];
-    totalSupply: number;
 };
 
 
@@ -230,13 +228,21 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
 
 const bondingCurveAddress = 'abcdef';
 
-const TokenHolders: React.FC<TokenHoldersProps> = ({token, holders, totalSupply}) => {
+const TokenHolders: React.FC<TokenHoldersProps> = ({token}) => {
     // Sort holders by balance in descending order and take the top 20
+    const appConfig = useContext(AppConfigContext)
+    const {data: holders, error: holdersError} = useSWR<HoldersFromRestAPI[], any, CoinGetHoldersByKey>(
+        {appConfig, packageId: token.packageId, path: "getHolders"}, coinRestApi.getHolders)
+
+    if (holdersError) return (<div>Error fetching holders</div>)
+    if (!holders) return (<div>Loading</div>)
+
     const sortedHolders = [...holders].sort((a, b) => b.balance - a.balance).slice(0, 20);
+    const totalSupply = sortedHolders.reduce((acc, holder) => acc + holder.balance, 0);
 
     return (
         <div className="p-2 rounded-lg">
-            <h2 className="text-xl font-bold mb-4">Whales</h2>
+            <h2 className="text-xl font-bold mb-4">Top Holders</h2>
             <ul className="list-decimal list-inside">
                 {sortedHolders.map((holder, index) => (
                     <li key={holder.address} className="flex justify-between items-center">
@@ -280,29 +286,28 @@ export default function Drilldown() {
     console.log("console metrics", tokenMetrics);
 
 
-    const exampleHolders: Holder[] = [
-        {address: 'abcdef', balance: 700000}, // Example holder with bonding curve
-        {address: faker.finance.ethereumAddress(), balance: 100000}, // Example creator
-        {address: faker.finance.ethereumAddress(), balance: 100000},
-        {address: account?.address || faker.finance.ethereumAddress(), balance: 50000},
-        {address: faker.finance.ethereumAddress(), balance: 50000},
-        {address: faker.finance.ethereumAddress(), balance: 50000},
-        {address: faker.finance.ethereumAddress(), balance: 50000},
-        {address: faker.finance.ethereumAddress(), balance: 50000},
-        {address: faker.finance.ethereumAddress(), balance: 50000},
-        {address: faker.finance.ethereumAddress(), balance: 50000},
-        {address: faker.finance.ethereumAddress(), balance: 50000},
-        {address: faker.finance.ethereumAddress(), balance: 50000},
-        {address: faker.finance.ethereumAddress(), balance: 50000},
-        {address: faker.finance.ethereumAddress(), balance: 50000},
-    ];
+    // const exampleHolders: Holder[] = [
+    //     {address: 'abcdef', balance: 700000}, // Example holder with bonding curve
+    //     {address: faker.finance.ethereumAddress(), balance: 100000}, // Example creator
+    //     {address: faker.finance.ethereumAddress(), balance: 100000},
+    //     {address: account?.address || faker.finance.ethereumAddress(), balance: 50000},
+    //     {address: faker.finance.ethereumAddress(), balance: 50000},
+    //     {address: faker.finance.ethereumAddress(), balance: 50000},
+    //     {address: faker.finance.ethereumAddress(), balance: 50000},
+    //     {address: faker.finance.ethereumAddress(), balance: 50000},
+    //     {address: faker.finance.ethereumAddress(), balance: 50000},
+    //     {address: faker.finance.ethereumAddress(), balance: 50000},
+    //     {address: faker.finance.ethereumAddress(), balance: 50000},
+    //     {address: faker.finance.ethereumAddress(), balance: 50000},
+    //     {address: faker.finance.ethereumAddress(), balance: 50000},
+    //     {address: faker.finance.ethereumAddress(), balance: 50000},
+    // ];
 
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
     if (!token) return (<div>Loading token...</div>)
     console.log("fetchTokenMetricsError", fetchTokenMetricsError)
 
-    const totalSupply = exampleHolders.reduce((acc, holder) => acc + holder.balance, 0);
     let marketCap = suiToUsdLocaleString(tokenMetrics?.suiBalance || 0, currentSuiPrice);
 
     return (
@@ -341,7 +346,7 @@ export default function Drilldown() {
                     <aside className="space-y-4">
                         <BuySellDialog token={token} suiClient={suiContext.client}/>
                         <CoinDetails tokenMetrics={tokenMetrics} token={token} marketCap={marketCap}/>
-                        <TokenHolders token={token} holders={exampleHolders} totalSupply={totalSupply}/>
+                        <TokenHolders token={token}/>
                     </aside>
                 </main>
             </div>

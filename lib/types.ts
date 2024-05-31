@@ -56,6 +56,11 @@ export type CoinPost = {
     createdAt: Date,
 }
 
+export type HoldersFromRestAPI = {
+    address: string,
+    balance: number,
+}
+
 export type TokenFromChain = TokenFromRestAPI
 
 //

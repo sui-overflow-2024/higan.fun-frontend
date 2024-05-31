@@ -1,6 +1,6 @@
 import {AppConfig} from "@/components/Contexts";
 import {Post} from "@/lib/prisma/client";
-import {PostFromRestAPI, TokenFromRestAPI, TopTokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
+import {PostFromRestAPI, TokenFromRestAPI, TopTokenFromRestAPI, TradeFromRestAPI, HoldersFromRestAPI} from "@/lib/types";
 import {Fetcher} from "swr";
 import {CreateCoinFormData} from "@/components/CreateCoinForm";
 import axios from "axios";
@@ -15,14 +15,17 @@ export type CoinGetAllKey = {appConfig: AppConfig, packageIds?: string[], creato
 export type CoinGetPostsKey = { appConfig: AppConfig, packageId: string, path: "getPosts" }
 export type CoinGetTopKey = { appConfig: AppConfig, path: "getTop" }
 export type CoinGetTradesKey = { appConfig: AppConfig, packageId: string, path: "getTrades" }
+export type CoinGetHoldersByKey = { appConfig: AppConfig, packageId: string, path: "getHolders" }
 export type CoinGetByIdKey = { appConfig: AppConfig, packageId: string, path: "getById" }
 export type CoinSearchKey = { appConfig: AppConfig, term: string, sort: string, order: string }
+
 type CoinRestApi = {
     getAll: Fetcher<TokenFromRestAPI[], CoinGetAllKey>,
     search: Fetcher<TokenFromRestAPI[], CoinSearchKey>,
     getTop: Fetcher<TopTokenFromRestAPI, CoinGetTopKey>,
     getById: Fetcher<TokenFromRestAPI, CoinGetByIdKey>,
     getTrades: Fetcher<TradeFromRestAPI[], CoinGetTradesKey>,
+    getHolders: Fetcher<HoldersFromRestAPI[], CoinGetHoldersByKey>,
     postCoin: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: CreateCoinFormData }>
     postThread: Fetcher<Post, { appConfig: AppConfig, post: ThreadPostRequest }>
     getPosts: Fetcher<PostFromRestAPI[], CoinGetPostsKey>,
@@ -66,6 +69,12 @@ export const coinRestApi: CoinRestApi = {
     getPosts: async ({appConfig, packageId}): Promise<PostFromRestAPI[]> => {
         console.log(`Getting posts for the following coin from the REST API /coin/${packageId}/posts`)
         const res = await appConfig.axios.get<PostFromRestAPI[]>(`/coin/${packageId}/posts`)
+        console.log("Retrieved the following posts from the REST API", res.data)
+        return res.data
+    },
+    getHolders: async ({appConfig, packageId}): Promise<HoldersFromRestAPI[]> => {
+        console.log(`Getting posts for the following coin from the REST API /coin/${packageId}/holders`)
+        const res = await appConfig.axios.get<HoldersFromRestAPI[]>(`/coin/${packageId}/holders`)
         console.log("Retrieved the following posts from the REST API", res.data)
         return res.data
     },
