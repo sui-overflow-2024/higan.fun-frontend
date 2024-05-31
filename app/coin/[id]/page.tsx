@@ -43,6 +43,7 @@ type Holder = {
 
 type TokenHoldersProps = {
     token: TokenFromRestAPI;
+    tokenMetrics: TokenMetric;
 };
 
 
@@ -228,9 +229,10 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
 
 const bondingCurveAddress = 'abcdef';
 
-const TokenHolders: React.FC<TokenHoldersProps> = ({token}) => {
+const TokenHolders: React.FC<TokenHoldersProps> = ({token, tokenMetrics}) => {
     // Sort holders by balance in descending order and take the top 20
     const appConfig = useContext(AppConfigContext)
+    const totalSupply = tokenMetrics?.totalSupply || 0;
     const {data: holders, error: holdersError} = useSWR<HoldersFromRestAPI[], any, CoinGetHoldersByKey>(
         {appConfig, packageId: token.packageId, path: "getHolders"}, coinRestApi.getHolders)
 
@@ -238,7 +240,6 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({token}) => {
     if (!holders) return (<div>Loading</div>)
 
     const sortedHolders = [...holders].sort((a, b) => b.balance - a.balance).slice(0, 20);
-    const totalSupply = sortedHolders.reduce((acc, holder) => acc + holder.balance, 0);
 
     return (
         <div className="p-2 rounded-lg">
@@ -305,7 +306,7 @@ export default function Drilldown() {
 
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
-    if (!token) return (<div>Loading token...</div>)
+    if (!token || !tokenMetrics) return (<div>Loading token...</div>)
     console.log("fetchTokenMetricsError", fetchTokenMetricsError)
 
     let marketCap = suiToUsdLocaleString(tokenMetrics?.suiBalance || 0, currentSuiPrice);
@@ -346,7 +347,7 @@ export default function Drilldown() {
                     <aside className="space-y-4">
                         <BuySellDialog token={token} suiClient={suiContext.client}/>
                         <CoinDetails tokenMetrics={tokenMetrics} token={token} marketCap={marketCap}/>
-                        <TokenHolders token={token}/>
+                        <TokenHolders token={token} tokenMetrics={tokenMetrics}/>
                     </aside>
                 </main>
             </div>
