@@ -1,6 +1,6 @@
 import {AppConfig} from "@/components/Contexts";
 import {Post} from "@/lib/prisma/client";
-import {PostFromRestAPI, TokenFromRestAPI, TopTokenFromRestAPI, TradeFromRestAPI, HoldersFromRestAPI} from "@/lib/types";
+import {PostFromRestAPI, CoinFromRestAPI, TopCoinFromRestAPI, TradeFromRestAPI, HoldersFromRestAPI} from "@/lib/types";
 import {Fetcher} from "swr";
 import {CreateCoinFormData} from "@/components/CreateCoinForm";
 import axios from "axios";
@@ -20,13 +20,13 @@ export type CoinGetByIdKey = { appConfig: AppConfig, packageId: string, path: "g
 export type CoinSearchKey = { appConfig: AppConfig, term: string, sort: string, order: string }
 
 type CoinRestApi = {
-    getAll: Fetcher<TokenFromRestAPI[], CoinGetAllKey>,
-    search: Fetcher<TokenFromRestAPI[], CoinSearchKey>,
-    getTop: Fetcher<TopTokenFromRestAPI, CoinGetTopKey>,
-    getById: Fetcher<TokenFromRestAPI, CoinGetByIdKey>,
+    getAll: Fetcher<CoinFromRestAPI[], CoinGetAllKey>,
+    search: Fetcher<CoinFromRestAPI[], CoinSearchKey>,
+    getTop: Fetcher<TopCoinFromRestAPI, CoinGetTopKey>,
+    getById: Fetcher<CoinFromRestAPI, CoinGetByIdKey>,
     getTrades: Fetcher<TradeFromRestAPI[], CoinGetTradesKey>,
     getHolders: Fetcher<HoldersFromRestAPI[], CoinGetHoldersByKey>,
-    postCoin: Fetcher<TokenFromRestAPI, { appConfig: AppConfig, token: CreateCoinFormData }>
+    postCoin: Fetcher<CoinFromRestAPI, { appConfig: AppConfig, token: CreateCoinFormData }>
     postThread: Fetcher<Post, { appConfig: AppConfig, post: ThreadPostRequest }>
     getPosts: Fetcher<PostFromRestAPI[], CoinGetPostsKey>,
     getSuiPrice: Fetcher<number, string>,
@@ -42,22 +42,22 @@ export const coinRestApi: CoinRestApi = {
         if (creator) {
             params['creator'] = creator;
         }
-        const res = await appConfig.axios.get<TokenFromRestAPI[]>('/coins', { params });
+        const res = await appConfig.axios.get<CoinFromRestAPI[]>('/coins', { params });
         console.log("Retrieved the following coin from the REST API", res.data);
         return res.data;
     },
-    search: async ({appConfig, term, sort, order}): Promise<TokenFromRestAPI[]> => {
-        const res = await appConfig.axios.get<TokenFromRestAPI[]>(`/coins/search?term=${term}&order=${order}&sort=${sort}`)
+    search: async ({appConfig, term, sort, order}): Promise<CoinFromRestAPI[]> => {
+        const res = await appConfig.axios.get<CoinFromRestAPI[]>(`/coins/search?term=${term}&order=${order}&sort=${sort}`)
         console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
-    getTop: async ({appConfig}): Promise<TopTokenFromRestAPI> => {
-        const res = await appConfig.axios.get<TopTokenFromRestAPI>(`/top_coins`)
+    getTop: async ({appConfig}): Promise<TopCoinFromRestAPI> => {
+        const res = await appConfig.axios.get<TopCoinFromRestAPI>(`/top_coins`)
         console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
     getById: async ({appConfig, packageId}) => {
-        const res = await appConfig.axios.get<TokenFromRestAPI>(`/coins/${packageId}`)
+        const res = await appConfig.axios.get<CoinFromRestAPI>(`/coins/${packageId}`)
         console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
@@ -80,7 +80,7 @@ export const coinRestApi: CoinRestApi = {
     },
     postCoin: async ({appConfig, token}) => {
         console.log("Posting the following coin to the REST API", token)
-        const res = await appConfig.axios.post<TokenFromRestAPI>(`/coins`, token)
+        const res = await appConfig.axios.post<CoinFromRestAPI>(`/coins`, token)
         console.log("Posted the following coin to the REST API", res.data)
         return res.data
     },

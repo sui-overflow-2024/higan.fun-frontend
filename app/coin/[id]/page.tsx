@@ -1,5 +1,5 @@
 'use client';
-import {HoldersFromRestAPI, TokenFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI, HoldersFromRestAPI} from "@/lib/types";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
 import {Dispatch, SetStateAction, useContext, useEffect, useRef, useState} from "react";
@@ -12,7 +12,6 @@ import Image from "next/image";
 import {BuySellDialog} from "@/components/BuySellDialog";
 import TradesTable from "@/components/TradesTable";
 import TradesChart from "@/components/TradesChart";
-import {faker} from "@faker-js/faker";
 import useSWR from "swr";
 import {CoinGetByIdKey, CoinGetHoldersByKey, coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
@@ -27,12 +26,12 @@ import {getTokenMetrics, TokenMetric, TokenMetricKey} from "@/lib/sui";
 type CoinMetadataProps = {
     tokenMetrics?: TokenMetric,
     client: SuiClient,
-    token: TokenFromRestAPI;
+    token: CoinFromRestAPI;
     marketCap: string;
     currentSuiPrice: number;
 };
 type CoinDetailsProps = {
-    token: TokenFromRestAPI;
+    token: CoinFromRestAPI;
     tokenMetrics?: TokenMetric,
     marketCap: string;
 };
@@ -42,7 +41,7 @@ type Holder = {
 };
 
 type TokenHoldersProps = {
-    token: TokenFromRestAPI;
+    token: CoinFromRestAPI;
     tokenMetrics: TokenMetric;
 };
 
@@ -99,8 +98,8 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, 
     return (
         <div className="p-2 flex justify-between items-center rounded-lg">
             <div className="flex items-center space-x-4">
-                <Image
-                    src={token.iconUrl || 'https://via.placeholder.com/40'}
+                <img
+                    src={token.iconUrl || "./public/garfield.png"}
                     alt={token.name}
                     width={10}
                     height={10}
@@ -150,7 +149,7 @@ const ActivePanelButtons: React.FC<{
     );
 };
 
-const SocialLinks: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
+const SocialLinks: React.FC<{ token: CoinFromRestAPI }> = ({token}) => {
     const ctx = useSuiClientContext();
     return (
 
@@ -168,7 +167,7 @@ const SocialLinks: React.FC<{ token: TokenFromRestAPI }> = ({token}) => {
                 <Image src={discordLogo} alt="Telegram" width={30} height={30}/>
             </a>
             {/*TODO below className w-5 is a hack, couldn't get the image to work with just width and height*/}
-            <a href={`https://suiscan.xyz/${ctx.network || "mainnet"}/coin/${token.packageId}`} target="_blank">
+            <a href={`https://suiscan.xyz/${ctx.network || "mainnet"}/object/${token.packageId}`} target="_blank">
                 <Image src={suiLogo} alt={"SuiScan"} width={30} height={30} className={"w-5"}/>
             </a>
 
@@ -193,7 +192,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
         <div className="p-4 rounded-lg">
             <div className="flex items-start space-x-4">
                 <div className="border border-gray-700 min-w-24 min-h-24 align-middle">
-                    <Image
+                    <img
                         src={token.iconUrl || 'https://via.placeholder.com/100'}
                         alt={token.name}
                         width={100}
@@ -270,7 +269,7 @@ export default function Drilldown() {
     const suiContext = useSuiClientContext()
     const currentSuiPrice = useContext(CurrentSuiPriceContext)
 
-    const {data: token, error: tokenError} = useSWR<TokenFromRestAPI, any, CoinGetByIdKey>(
+    const {data: token, error: tokenError} = useSWR<CoinFromRestAPI, any, CoinGetByIdKey>(
         {appConfig, packageId, path: "getById"}, coinRestApi.getById)
 
     const {

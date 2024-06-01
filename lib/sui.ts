@@ -3,7 +3,7 @@ import {getBuyCoinPriceTxb, getSellCoinPriceTxb} from "@/components/BuySellDialo
 import type {SuiClient} from '@mysten/sui.js/client';
 import {bcs} from "@mysten/sui.js/bcs";
 import {getCoinPathFunc} from "@/lib/utils";
-import {TokenFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI} from "@/lib/types";
 import {TransactionBlock} from "@mysten/sui.js/transactions";
 
 export type TokenMetric = {
@@ -15,7 +15,7 @@ export type TokenMetricKey = {
     path: "tokenMetrics",
     client: SuiClient,
     sender: string,
-    coin?: TokenFromRestAPI,
+    coin?: CoinFromRestAPI,
 }
 
 type SuiSwrFetchers = {

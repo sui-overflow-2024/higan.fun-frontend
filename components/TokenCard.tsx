@@ -1,21 +1,20 @@
 'use client';
-import {TokenFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI} from "@/lib/types";
 import {Card} from "@/components/ui/card";
 import Link from "next/link";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
-import Image from "next/image";
 import {useContext} from "react";
 import {CurrentSuiPriceContext} from "@/components/Contexts";
 import {suiToUsdLocaleString} from "@/lib/utils";
 
-export const TokenCard = ({token}: { token: TokenFromRestAPI }) => {
+export const TokenCard = ({token}: { token: CoinFromRestAPI }) => {
     const currentSuiPrice = useContext(CurrentSuiPriceContext)
     return (
         <Link href={`/coin/${token.packageId}`}>
             <Card className="p-4  flex flex-col hover:bg-card-hover hover:border-card-hover-border">
                 <div className="flex space-x-4 items-center">
-                    <Image
-                        src={token.iconUrl}
+                    <img
+                        src={token.iconUrl || ""}
                         alt="Coin Logo"
                         className="w-24 h-24"
                         width={60}

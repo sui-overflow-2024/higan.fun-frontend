@@ -5,18 +5,16 @@ import discordLogo from "@/public/discord.svg";
 import telegramLogo from "@/public/telegram.svg";
 import webLogo from "@/public/web.svg";
 import Image from "next/image";
-import {AppConfigContext, PrismaClientContext} from "@/components/Contexts";
+import {AppConfigContext} from "@/components/Contexts";
 import {Prisma} from "@/lib/prisma/client";
 import {useForm} from 'react-hook-form';
 import {useToast} from "@/components/ui/use-toast";
 import Link from "next/link";
-import {ConnectButton, useAccounts, useSignPersonalMessage, useSuiClient, useWallets} from "@mysten/dapp-kit";
+import {ConnectButton, useAccounts, useSignPersonalMessage} from "@mysten/dapp-kit";
 import {ToastAction} from "@/components/ui/toast";
 import {coinRestApi} from "@/lib/rest";
 import {faker} from "@faker-js/faker";
 import {Button} from "@/components/ui/button";
-import {Collapsible, CollapsibleContent, CollapsibleTrigger} from "@/components/ui/collapsible";
-import {ChevronsUpDown} from "lucide-react";
 import {Input} from "@/components/ui/input";
 
 
@@ -233,8 +231,8 @@ const CreateCoinForm = () => {
             <div className={"flex justify-center"}>
 
                 {iconUrl && (
-                    <Image
-                        src={iconUrl}
+                    <img
+                        src={iconUrl || ""}
                         alt="image preview"
                         width={300}
                         height={300}
@@ -242,58 +240,56 @@ const CreateCoinForm = () => {
                     />
                 )}
             </div>
-            <Collapsible open={showLinks} onOpenChange={setShowLinks}>
+            <div className=" flex gap-5 items-center">
+                <label htmlFor="website" className="block text-[#48d7ff]">
+                    Website URL
+                </label>
+                <Image src={webLogo} alt="web" className=" size-6 "/>
+                <Input
+                    type="text"
+                    {...register("website")}
+                    placeholder="Website"
+                />
+                <ErrorSpan name="website"/>
+            </div>
+            <div className=" flex gap-5 items-center">
+                <label htmlFor="twitterUrl" className="block text-[#48d7ff]">
+                    X URL
+                </label>
+                <Image src={xLogo} alt="X" className=" size-6 "/>
+                <Input
+                    type="text"
+                    {...register("twitterUrl")}
+                    placeholder="X"
+                />
+                <ErrorSpan name="twitterUrl"/>
+            </div>
+            <div className=" flex gap-5 items-center">
+                <label htmlFor="telegramUrl" className="block text-[#48d7ff]">
+                    Telegram URL
+                </label>
+                <Image src={telegramLogo} alt="telegram" className="bg-sea color-sea size-6 "/>
+                <Input
+                    type="text"
+                    {...register("telegramUrl")}
+                    placeholder="Telegram"
+                />
+                <ErrorSpan name="telegramUrl"/>
+            </div>
 
-                <CollapsibleTrigger asChild>
-                    <div className={"text-center"}>
-                        <Button variant="link" size="lg" className="text-lg w-9 p-0">
-                            + Add social links
-                            <ChevronsUpDown className="h-4 w-4"/>
-                            <span className="sr-only">Show social links</span>
-                        </Button>
-                    </div>
-                </CollapsibleTrigger>
+            <div className=" flex gap-5 items-center">
+                <label htmlFor="discordUrl" className="block text-[#48d7ff]">
+                    Discord Server URL
+                </label>
+                <Image src={discordLogo} alt="discord" className=" size-6 "/>
+                <Input
+                    type="text"
+                    {...register("discordUrl")}
+                    placeholder="Discord"
+                />
+                <ErrorSpan name="discordUrl"/>
+            </div>
 
-                <CollapsibleContent>
-                    <div className=" flex gap-5 items-center">
-                        <Image src={webLogo} alt="web" className=" size-6 "/>
-                        <Input
-                            type="text"
-                            {...register("website")}
-                            placeholder="Website"
-                        />
-                        <ErrorSpan name="website"/>
-                    </div>
-                    <div className=" flex gap-5 items-center">
-                        <Image src={xLogo} alt="X" className=" size-6 "/>
-                        <Input
-                            type="text"
-                            {...register("twitterUrl")}
-                            placeholder="X"
-                        />
-                        <ErrorSpan name="twitterUrl"/>
-                    </div>
-                    <div className=" flex gap-5 items-center">
-                        <Image src={telegramLogo} alt="telegram" className="bg-sea color-sea size-6 "/>
-                        <Input
-                            type="text"
-                            {...register("telegramUrl")}
-                            placeholder="Telegram"
-                        />
-                        <ErrorSpan name="telegramUrl"/>
-                    </div>
-
-                    <div className=" flex gap-5 items-center">
-                        <Image src={discordLogo} alt="discord" className=" size-6 "/>
-                        <Input
-                            type="text"
-                            {...register("discordUrl")}
-                            placeholder="Discord"
-                        />
-                        <ErrorSpan name="discordUrl"/>
-                    </div>
-                </CollapsibleContent>
-            </Collapsible>
             {fatalError && (<div className="text-red-500 text-xs mt-1">{fatalError}</div>)}
             <div className="text-center">
                 {!account

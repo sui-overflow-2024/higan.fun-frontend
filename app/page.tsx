@@ -1,14 +1,13 @@
 'use client'
 import {FC, useContext, useEffect, useState} from "react";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
-import {TokenFromRestAPI, TopTokenFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI, TopCoinFromRestAPI} from "@/lib/types";
 import {TokenCard} from "@/components/TokenCard";
 import {Button} from "@/components/ui/button";
 import Link from "next/link";
 import {Input} from "@/components/ui/input";
 import {CoinGetTopKey, coinRestApi} from "@/lib/rest";
 import useSWR from "swr";
-import {suiToUsdLocaleString} from "@/lib/utils";
 
 
 const TopTokens: FC = () => {
@@ -49,10 +48,10 @@ export default function Home() {
     const [term, setTerm] = useState("");
     const [sort, setSort] = useState<"created" | "marketCap" | "tvl" | "price">("created")
     const [order, setOrder] = useState<"asc" | "desc">("desc")
-    const [tokens, setTokens] = useState<TokenFromRestAPI[]>([]);
+    const [tokens, setTokens] = useState<CoinFromRestAPI[]>([]);
     const currentSuiPrice = useContext(CurrentSuiPriceContext)
 
-    const {data: topTokens, error: fetchTopTokensError} = useSWR<TopTokenFromRestAPI, any, CoinGetTopKey>({
+    const {data: topTokens, error: fetchTopTokensError} = useSWR<TopCoinFromRestAPI, any, CoinGetTopKey>({
         appConfig,
         path: "getTop"
     }, coinRestApi.getTop, {refreshInterval: 5000});

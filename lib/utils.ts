@@ -1,6 +1,6 @@
 import {type ClassValue, clsx} from "clsx"
 import {twMerge} from "tailwind-merge"
-import {TokenFromRestAPI, TradeFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import type {DevInspectResults} from "@mysten/sui.js/client";
 import {bcs} from "@mysten/sui.js/bcs";
 import {faker} from "@faker-js/faker";
@@ -29,7 +29,7 @@ const toSnakeCaseUpper = (str: string): string => {
 }
 
 //
-export const generateFakeToken = (): TokenFromRestAPI => {
+export const generateFakeToken = (): CoinFromRestAPI => {
     // Capitalize the first letter of each word
 
     const logos = ["./dai.svg", "./usdc.svg", "./usdt.svg", "./sui-sea.svg",];
@@ -40,6 +40,7 @@ export const generateFakeToken = (): TokenFromRestAPI => {
     const name = faker.lorem.words({min: 2, max: 5}).split(' ')
     const coinType = `${packageId}::${toSnakeCase(name.join(' '))}::${toSnakeCaseUpper(name.join(' '))}`
     return {
+        status: getRandomNumber(0,3),
         target: 5_000_000_000,
         coinType,
         creator: "0xb2720b42e26a7fc1eb555ecd154ef3dc2446f80c1f186af901cd38b842e52044",
@@ -71,11 +72,11 @@ export function getRandomNumber(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export const getCoinPath = (token: TokenFromRestAPI): string => {
+export const getCoinPath = (token: CoinFromRestAPI): string => {
     return `${token.packageId}::${token.module}::${token.module.toUpperCase()}`
 }
 
-export const getCoinPathFunc = (token: TokenFromRestAPI, func: string): `${string}::${string}::${string}` => {
+export const getCoinPathFunc = (token: CoinFromRestAPI, func: string): `${string}::${string}::${string}` => {
     return `${token.packageId}::${token.module}::${func}`
 }
 

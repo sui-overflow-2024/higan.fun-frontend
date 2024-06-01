@@ -7,7 +7,7 @@ import {copyTextToClipboard, extractPriceFromDevInspect, getValueWithDecimals, s
 import Jazzicon, {jsNumberForAddress} from "react-jazzicon";
 import {getSellCoinPriceTxb} from "@/components/BuySellDialog";
 import {useParams} from "next/navigation";
-import {TokenFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI} from "@/lib/types";
 import {useToast} from "@/components/ui/use-toast";
 import {ExternalLink} from "lucide-react";
 import Link from "next/link";
@@ -20,7 +20,7 @@ import {getTokenMetrics, TokenMetric, TokenMetricKey} from "@/lib/sui";
 interface CoinHeldRowProps {
     address: string;
     coinBalance: CoinBalance;
-    coinFromRestApi?: TokenFromRestAPI;
+    coinFromRestApi?: CoinFromRestAPI;
 }
 
 
@@ -54,8 +54,8 @@ const CoinsHeldRow: FC<CoinHeldRowProps> = ({address, coinBalance, coinFromRestA
 
     return (<div className="grid grid-cols-10 items-center  p-2 bg-gray-800 rounded-sm">
         <div className={"col-span-1"}>
-            <Image
-                src={metadata.iconUrl || ""}
+            <img
+                src={metadata.iconUrl || "./public/garfield.png"}
                 alt={metadata.name}
                 width={40}
                 height={40}
@@ -91,7 +91,7 @@ const CoinsHeld: FC<{ profileAddress: string }> = ({profileAddress}) => {
     })
     const appConfig = useContext(AppConfigContext)
 
-    const {data: coinsFromRestApi, error: errorFromRestApi} = useSWR<TokenFromRestAPI[], any, CoinGetAllKey>({
+    const {data: coinsFromRestApi, error: errorFromRestApi} = useSWR<CoinFromRestAPI[], any, CoinGetAllKey>({
         appConfig,
         packageIds: coins?.map(coin => coin.coinType.split("::")[0]) || [],
         path: "getAll",
@@ -116,7 +116,7 @@ const CoinsHeld: FC<{ profileAddress: string }> = ({profileAddress}) => {
     </div>);
 }
 
-const CoinsCreatedRow: FC<{ token: TokenFromRestAPI }> = ({token}) => {
+const CoinsCreatedRow: FC<{ token: CoinFromRestAPI }> = ({token}) => {
     const client = useSuiClient()
     const {
         data: tokenMetrics,
@@ -134,8 +134,8 @@ const CoinsCreatedRow: FC<{ token: TokenFromRestAPI }> = ({token}) => {
 
     return <div className="grid grid-cols-12 items-center  p-2 bg-gray-800 rounded-sm">
         <div className={"col-span-1"}>
-            <Image
-                src={token.iconUrl}
+            <img
+                src={token.iconUrl || "./public/garfield.png"}
                 alt={token.name}
                 width={40}
                 height={40}
@@ -169,7 +169,7 @@ const CoinsCreated: FC<{ profileAddress: string }> = ({profileAddress}) => {
 
     const appConfig = useContext(AppConfigContext)
     const account = useCurrentAccount()
-    const {data: coinsFromRestApi, error: errorFromRestApi} = useSWR<TokenFromRestAPI[], any, CoinGetAllKey>({
+    const {data: coinsFromRestApi, error: errorFromRestApi} = useSWR<CoinFromRestAPI[], any, CoinGetAllKey>({
         appConfig,
         creator: profileAddress,
         path: "getAll",

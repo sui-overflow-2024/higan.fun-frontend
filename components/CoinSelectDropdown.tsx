@@ -1,12 +1,12 @@
 'use client'
 import * as React from "react";
 import {Dispatch, SetStateAction} from "react";
-import {TokenFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI} from "@/lib/types";
 import Image from "next/image";
 
 const CoinSelectDropdown: React.FC<{
-    token: TokenFromRestAPI,
-    setToken: Dispatch<SetStateAction<TokenFromRestAPI>>
+    token: CoinFromRestAPI,
+    setToken: Dispatch<SetStateAction<CoinFromRestAPI>>
 }> = ({token}) => {
     /*TODO below should open coin selection dialog on click*/
     return (<div

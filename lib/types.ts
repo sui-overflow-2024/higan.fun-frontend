@@ -1,4 +1,4 @@
-export type TokenFromRestAPI = {
+export type CoinFromRestAPI = {
     packageId: string,
     module: string,
     storeId: string,
@@ -17,15 +17,16 @@ export type TokenFromRestAPI = {
     coinType: string,
     suiReserve: number,
     target: number,
+    status: number,
     // tradingVolume: number,
     createdAt: Date,
     updatedAt: Date
 }
 
-export type TopTokenFromRestAPI = {
-    newest: TokenFromRestAPI,
-    hottest: TokenFromRestAPI,
-    imminent: TokenFromRestAPI
+export type TopCoinFromRestAPI = {
+    newest: CoinFromRestAPI,
+    hottest: CoinFromRestAPI,
+    imminent: CoinFromRestAPI
 }
 
 export type TradeFromRestAPI = {
@@ -47,30 +48,14 @@ export type PostFromRestAPI = {
     createdAt: Date,
 }
 
-export type CoinPost = {
-    id: bigint,
-    coinId: string,
-    author: string,
-    text: string,
-    likes: number,
-    createdAt: Date,
+export enum CoinStatus {
+    STARTING_UP = 0,
+    OPEN = 1,
+    CLOSE_IN_PROGRESS = 2,
+    CLOSED = 3
 }
 
 export type HoldersFromRestAPI = {
     address: string,
     balance: number,
 }
-
-export type TokenFromChain = TokenFromRestAPI
-
-//
-// export type TokenWithAdditionalMetadata = Token & {
-//     creator: string,
-//     decimals: number,
-//     website: string,
-//     twitterUrl: string,
-//     discordUrl: string,
-//     telegramUrl: string,
-// }
-
-

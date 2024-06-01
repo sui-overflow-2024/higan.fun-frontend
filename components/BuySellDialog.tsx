@@ -2,9 +2,8 @@
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
-import {useEffect, useState, useContext} from "react";
+import {useContext, useEffect, useState} from "react";
 import {
-    cn,
     getCoinPath,
     getCoinPathFunc,
     getFunctionPathFromCoinType,
@@ -13,15 +12,14 @@ import {
 } from "@/lib/utils";
 import {AppConfigContext} from "@/components/Contexts";
 import Image from "next/image";
-import {TokenFromRestAPI} from "@/lib/types";
-import {ConnectButton, useCurrentAccount, useSuiClientQuery} from "@mysten/dapp-kit";
+import {CoinFromRestAPI, CoinStatus} from "@/lib/types";
+import {useCurrentAccount, useSuiClientQuery} from "@mysten/dapp-kit";
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
 import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 import {useForm} from "react-hook-form";
 import {customSuiHooks} from "@/lib/sui";
 import {useTransactionExecution} from "@/hooks/useTransactionexecution";
 import {mutate} from "swr";
-import {Input} from "@/components/ui/input";
 
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
@@ -125,7 +123,7 @@ const getExactCoinByAmount = (
     }
 };
 
-const generateBuyPtb = (coin: TokenFromRestAPI, userCoins: CoinStruct[], amountToBuy: number): TransactionBlock => {
+const generateBuyPtb = (coin: CoinFromRestAPI, userCoins: CoinStruct[], amountToBuy: number): TransactionBlock => {
     console.log("Attempting to buy ", amountToBuy, "of", coin.symbol, "packageId", coin.packageId, "storeId", coin.storeId, "module", coin.module, "decimals", coin.decimals)
     if (amountToBuy <= 0) {
         throw new Error("Attempt to buy 0 or less tokens")
@@ -157,7 +155,7 @@ const generateBuyPtb = (coin: TokenFromRestAPI, userCoins: CoinStruct[], amountT
     return txb
 }
 
-const generateSellPtb = (coin: TokenFromRestAPI, userCoins: CoinStruct[], amountToSell: number): TransactionBlock => {
+const generateSellPtb = (coin: CoinFromRestAPI, userCoins: CoinStruct[], amountToSell: number): TransactionBlock => {
     console.log("Attempting to sell ", amountToSell, "of", coin.symbol, "packageId", coin.packageId, "storeId", coin.storeId, "module", coin.module, "decimals", coin.decimals)
     if (amountToSell <= 0) {
         throw new Error("Attempt to buy 0 or less tokens")
@@ -238,13 +236,18 @@ const PriceCalculator: React.FC<{
     const [price, setPrice] = useState<number>(0)
     const [priceError, setPriceError] = useState<Error | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
+    const appConfig = useContext(AppConfigContext)
     useEffect(() => {
         const fetchPrice = async () => {
             try {
+                if (isNaN(amount)) {
+                    console.log("amount is not a number")
+                    return
+                }
                 console.log("fetching price for", suiClient, coinType, storeId, amount, mode)
                 const price = await customSuiHooks.getCurrentCoinPriceInSui({
                     suiClient,
-                    sender,
+                    sender: sender || appConfig.fallbackDevInspectAddress,
                     coinType,
                     storeId,
                     amount,
@@ -264,7 +267,7 @@ const PriceCalculator: React.FC<{
     return (<div>
         <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>
         <div className={"flex space-x-2 justify-center"}>
-            <Image src={"..//sui-sea.svg"} alt={"Sui Logo"} width={20} height={20}/>
+            <img src={"..//sui-sea.svg"} alt={"Sui Logo"} width={20} height={20}/>
             <div className={"text-xl"}>
                 {isLoading ? "Loading..." : `${getValueWithDecimals(price || 0, 9, 4)} SUI`}
             </div>
@@ -272,7 +275,7 @@ const PriceCalculator: React.FC<{
     </div>)
 }
 
-export const BuySellDialog: React.FC<{ token: TokenFromRestAPI, suiClient: SuiClient }> = ({token, suiClient}) => {
+export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiClient }> = ({token, suiClient}) => {
 
 
     const appConfig = useContext(AppConfigContext)
@@ -423,21 +426,20 @@ export const BuySellDialog: React.FC<{ token: TokenFromRestAPI, suiClient: SuiCl
                             </div>
                         </div>
                         <div className={"flex justify-center"}>
-                            {currentAccount?.address
-                                ? (<div className={"space-y-2"}>
-                                    <div className={"text-center"}>
-                                        <PriceCalculator coinType={token.coinType} amount={amount}
-                                                         sender={currentAccount?.address || ""} mode={mode}
-                                                         storeId={token.storeId}
-                                                         userBalance={userBalance}
-                                                         suiClient={suiClient}/>
-                                    </div>
-                                    <Button className={"w-56"} type={"submit"}>
-                                        {mode === "buy" ? "Buy" : "Sell"}
-                                    </Button>
-                                </div>)
-                                : <ConnectButton/>
-                            }
+                            <div className={"space-y-2"}>
+                                <div className={"text-center"}>
+                                    <PriceCalculator coinType={token.coinType} amount={amount}
+                                                     sender={currentAccount?.address || ""} mode={mode}
+                                                     storeId={token.storeId}
+                                                     userBalance={userBalance}
+                                                     suiClient={suiClient}/>
+                                </div>
+                                <Button
+                                    disabled={token.status !== CoinStatus.OPEN}
+                                    className={"w-56"} type={"submit"}>
+                                    {mode === "buy" ? "Buy" : "Sell"}
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </form>
