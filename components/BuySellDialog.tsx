@@ -6,7 +6,7 @@ import {useContext, useEffect, useState} from "react";
 import {getCoinTypePath, getManagerFuncPath, getValueWithDecimals, truncateDecimals} from "@/lib/utils";
 import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI, CoinStatus} from "@/lib/types";
-import {useCurrentAccount, useSuiClientQuery} from "@mysten/dapp-kit";
+import {ConnectButton, useCurrentAccount, useSuiClientQuery} from "@mysten/dapp-kit";
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
 import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 import {useForm} from "react-hook-form";
@@ -418,12 +418,16 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
                                                      userBalance={userBalance}
                                                      suiClient={suiClient}/>
                                 </div>
-                                <Button
-                                    disabled={token.status !== CoinStatus.OPEN}
-                                    className={"w-56"}
-                                    type={"submit"}>
-                                    {mode === "buy" ? "Buy" : "Sell"}
-                                </Button>
+                                {currentAccount?.address
+                                    ? (<Button
+                                        disabled={token.status !== CoinStatus.OPEN}
+                                        className={"w-56"}
+                                        type={"submit"}>
+                                        {mode === "buy" ? "Buy" : "Sell"}
+                                    </Button>)
+                                    : <ConnectButton connectText={`Connect wallet to buy ${token.symbol}`}/>
+                                }
+
                             </div>
                         </div>
                     </div>
