@@ -16,7 +16,7 @@ import useSWR from "swr";
 import {CoinGetByIdKey, CoinGetHoldersByKey, coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
-import {useCurrentAccount, useSuiClientContext} from "@mysten/dapp-kit";
+import {useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import type {SuiClient} from '@mysten/sui.js/client';
@@ -265,7 +265,6 @@ export default function Drilldown() {
     const appConfig = useContext(AppConfigContext)
     const [activePanel, setActivePanel] = useState<"thread" | "trades">('thread');
     const packageId = usePathname().split('/').pop() || '';
-    const account = useCurrentAccount()
     const suiContext = useSuiClientContext()
     const currentSuiPrice = useContext(CurrentSuiPriceContext)
 

@@ -40,7 +40,7 @@ export const generateFakeToken = (): CoinFromRestAPI => {
     const name = faker.lorem.words({min: 2, max: 5}).split(' ')
     const coinType = `${packageId}::${toSnakeCase(name.join(' '))}::${toSnakeCaseUpper(name.join(' '))}`
     return {
-        status: getRandomNumber(0,3),
+        status: getRandomNumber(0, 3),
         target: 5_000_000_000,
         coinType,
         creator: "0xb2720b42e26a7fc1eb555ecd154ef3dc2446f80c1f186af901cd38b842e52044",
@@ -50,7 +50,7 @@ export const generateFakeToken = (): CoinFromRestAPI => {
         storeId: "0x8cb5bc618d9943730a9404ad11143b9588dcd2033033cb6ded0c1bf87c4ceab3",
         telegramUrl: "https://sui.io/community-events-hub",
         twitterUrl: "https://x.com/dog_rates",
-        website: "https://github.com/ad0ll/we-hate-the-ui",
+        websiteUrl: "https://github.com/ad0ll/we-hate-the-ui",
         whitepaperUrl: "https://githubnext.com/projects/copilot-workspace",
         packageId: generateRandomHex(16),
         name: toInitCap(faker.lorem.words({min: 2, max: 5}).split(' ')),

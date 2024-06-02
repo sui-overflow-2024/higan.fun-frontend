@@ -436,7 +436,8 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
                                 </div>
                                 <Button
                                     disabled={token.status !== CoinStatus.OPEN}
-                                    className={"w-56"} type={"submit"}>
+                                    className={"w-56"}
+                                    type={"submit"}>
                                     {mode === "buy" ? "Buy" : "Sell"}
                                 </Button>
                             </div>

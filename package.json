@@ -12,6 +12,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.4.2",
     "@mysten/dapp-kit": "^0.12.15",
     "@mysten/sui.js": "^0.54.1",
     "@prisma/client": "5.13.0",
