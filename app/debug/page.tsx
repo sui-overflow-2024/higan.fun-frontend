@@ -4,7 +4,8 @@ import 'react-json-pretty/themes/monikai.css';
 
 import JSONPretty from "react-json-pretty";
 import {useFetchCoinFromRest} from "@/hooks/useFetchCoinFromRest";
-import {FC} from "react";
+import {FC, useContext} from "react";
+import {AppConfigContext} from "@/components/Contexts";
 
 const DemoSingleCoin: FC<{ packageId: string }> = ({packageId}) => {
     const {data, isLoading, isError, error} = useFetchCoinFromRest({packageId})
@@ -30,11 +31,14 @@ const DemoSingleCoin: FC<{ packageId: string }> = ({packageId}) => {
 
 export default function DebugPage() {
     const {data, isLoading, isError, error} = useFetchManyCoinsFromRest({})
+    const appConfig = useContext(AppConfigContext)
     console.log("rest coins data:", data)
     if (isLoading) return <div>Loading...</div>
     if (isError) return <div>Error: {(error as Error).message}</div>
     return (<div>
-        <p className={"text-xl bg-white"}>All Coins</p>
+        <h2 className={"text-xl"}>AppConfig</h2>
+        <JSONPretty data={appConfig || {}}/>
+        <h2 className={"text-xl"}>All Coins</h2>
         <JSONPretty data={data || {}}/>
         {data?.map((coin) => <DemoSingleCoin key={coin.packageId} packageId={coin.packageId}/>)}
     </div>)

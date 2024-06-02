@@ -7,10 +7,10 @@ import {StrictMode, useEffect, useState} from "react";
 import {SuiClientProvider, WalletProvider} from '@mysten/dapp-kit';
 import {getFullnodeUrl} from '@mysten/sui.js/client';
 import {PrismaClient} from "@/lib/prisma/client";
-import {AppConfigContext, CurrentSuiPriceProvider, defaultAppConfig, PrismaClientContext} from "@/components/Contexts";
+import {AppConfigContext, CurrentSuiPriceProvider, ThemeProvider} from "@/components/Contexts";
 import {Toaster} from "@/components/ui/toaster";
-import {ThemeProvider} from "@/components/ThemeProvider";
 import "./globals.css";
+import {defaultAppConfig} from "@/lib/config";
 
 
 const inter = Inter({subsets: ["latin"]});
@@ -52,16 +52,14 @@ export default function RootLayout({
 
                     <AppConfigContext.Provider value={defaultAppConfig}>
                         <CurrentSuiPriceProvider>
-                            <PrismaClientContext.Provider value={prismaClient}>
-                                <QueryClientProvider client={queryClient}>
-                                    <SuiClientProvider networks={networks} defaultNetwork="testnet">
-                                        <WalletProvider>
-                                            <Navbar/>
-                                            {children}
-                                        </WalletProvider>
-                                    </SuiClientProvider>
-                                </QueryClientProvider>
-                            </PrismaClientContext.Provider>
+                            <QueryClientProvider client={queryClient}>
+                                <SuiClientProvider networks={networks} defaultNetwork="testnet">
+                                    <WalletProvider>
+                                        <Navbar/>
+                                        {children}
+                                    </WalletProvider>
+                                </SuiClientProvider>
+                            </QueryClientProvider>
                             <Toaster/>
                         </CurrentSuiPriceProvider>
                     </AppConfigContext.Provider> : "How dis happen? Refresh the page to force loading as client."}

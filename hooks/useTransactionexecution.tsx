@@ -1,5 +1,5 @@
 'use client';
-import {useSignTransactionBlock, useSuiClient} from "@mysten/dapp-kit";
+import {useSignTransactionBlock, useSuiClientContext} from "@mysten/dapp-kit";
 import type {TransactionBlock} from "@mysten/sui.js/transactions";
 import type {SuiTransactionBlockResponse} from "@mysten/sui.js/client";
 import {useToast} from "@/components/ui/use-toast";
@@ -8,7 +8,7 @@ import Link from "next/link";
 import React from "react";
 
 export function useTransactionExecution() {
-    const client = useSuiClient();
+    const suiCtx = useSuiClientContext()
     const {mutateAsync: signTransactionBlock} = useSignTransactionBlock();
     const {toast} = useToast();
 
@@ -20,7 +20,7 @@ export function useTransactionExecution() {
                 transactionBlock: txb,
             });
 
-            const res = await client.executeTransactionBlock({
+            const res = await suiCtx.client.executeTransactionBlock({
                 transactionBlock: signature.transactionBlockBytes,
                 signature: signature.signature,
                 options: {
@@ -29,15 +29,18 @@ export function useTransactionExecution() {
                 },
             });
             toast({
-                    title: "Successfully executed transaction!",
-                    duration: 3000,
-        //             action: (<ToastAction altText="View tx in explorer">
-        //                          <Link href={`/coin/${result.packageId}`}>
-        //         Go to landing page
-        //     </Link>
-        //     </ToastAction>
-        // )
-        })
+                title: "Successfully executed transaction!",
+                duration: 3000,
+                action: (<ToastAction altText="View tx in explorer">
+                        <Link
+                            href={`https://suiscan.xyz/${suiCtx.network}/tx/${res.digest}`}
+                            target="_blank"
+                            rel="noopener noreferrer">
+                            View in explorer
+                        </Link>
+                    </ToastAction>
+                )
+            })
 
 
             return res;

@@ -39,7 +39,20 @@
 // // })
 // // console.log("Mutate result", b)
 
-
+// const {data: demo, error: demoError} = useSuiClientQuery('getObject', {
+//     id: token?.packageId || "",
+//     options: {
+//         showContent: true,
+//         showBcs: true,
+//         showDisplay: true,
+//         showOwner: true,
+//         showType: true,
+//         showPreviousTransaction: true,
+//         showStorageRebate: true,
+//     }
+// })
+// console.log("demo", demo)
+// console.log("demoError", demoError)
 
 // import {useSuiClientQuery} from "@mysten/dapp-kit";
 // import {getCoinPath} from "@/lib/utils";

@@ -96,9 +96,9 @@ const CreateCoinForm = () => {
                 //TODO get from config
                 const [payment] = txb.splitCoins(txb.gas, [txb.pure(5_000_000_000)]);
                 txb.moveCall({
-                    target: `${appConfig.managementContractPackageId}::manager_contract::prepare_to_list`,
+                    target: `${appConfig.managerContractPackageId}::manager_contract::prepare_to_list`,
                     arguments: [
-                        txb.object(appConfig.managementContractConfigId),
+                        txb.object(appConfig.managerContractConfigId),
                         txb.object(payment),
                         txb.pure.string(data.name),
                         txb.pure.string(data.symbol),
@@ -113,7 +113,7 @@ const CreateCoinForm = () => {
                 })
                 //TODO below gives you a toast message because the tx was successful,
                 // but that doesn't mean the backend created it. Really we shouldn't show a toast
-                // and should instead 
+                // and should instead
                 await executeTransaction(txb)
             } catch (e: any) {
                 toast({

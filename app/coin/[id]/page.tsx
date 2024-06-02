@@ -13,7 +13,7 @@ import {BuySellDialog} from "@/components/BuySellDialog";
 import TradesTable from "@/components/TradesTable";
 import TradesChart from "@/components/TradesChart";
 import useSWR from "swr";
-import {CoinGetByIdKey, CoinGetHoldersByKey, coinRestApi} from "@/lib/rest";
+import {CoinGetByPackageIdKey, CoinGetHoldersByKey, coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 import {useSuiClientContext} from "@mysten/dapp-kit";
@@ -42,7 +42,7 @@ type Holder = {
 
 type TokenHoldersProps = {
     token: CoinFromRestAPI;
-    tokenMetrics: TokenMetric;
+    tokenMetrics?: TokenMetric;
 };
 
 
@@ -154,7 +154,7 @@ const SocialLinks: React.FC<{ token: CoinFromRestAPI }> = ({token}) => {
     return (
 
         <div className="flex space-x-4 items-center justify-center">
-            <a href={token.website} target="_blank" rel="noopener noreferrer">
+            <a href={token.websiteUrl} target="_blank" rel="noopener noreferrer">
                 <Image src={webLogo} alt="Website" width={30} height={30}/>
             </a>
             <a href={token.twitterUrl} target="_blank" rel="noopener noreferrer">
@@ -233,10 +233,12 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({token, tokenMetrics}) => {
     const appConfig = useContext(AppConfigContext)
     const totalSupply = tokenMetrics?.totalSupply || 0;
     const {data: holders, error: holdersError} = useSWR<HoldersFromRestAPI[], any, CoinGetHoldersByKey>(
-        {appConfig, packageId: token.packageId, path: "getHolders"}, coinRestApi.getHolders)
+        {appConfig, bondingCurveId: token.bondingCurveId, path: "getHolders"}, coinRestApi.getHolders)
 
+
+    if (!tokenMetrics) return (<div>Loading token metrics...</div>)
     if (holdersError) return (<div>Error fetching holders</div>)
-    if (!holders) return (<div>Loading</div>)
+    if (!holders) return (<div>Loading holders</div>)
 
     const sortedHolders = [...holders].sort((a, b) => b.balance - a.balance).slice(0, 20);
 
@@ -268,8 +270,8 @@ export default function Drilldown() {
     const suiContext = useSuiClientContext()
     const currentSuiPrice = useContext(CurrentSuiPriceContext)
 
-    const {data: token, error: tokenError} = useSWR<CoinFromRestAPI, any, CoinGetByIdKey>(
-        {appConfig, packageId, path: "getById"}, coinRestApi.getById)
+    const {data: token, error: tokenError} = useSWR<CoinFromRestAPI, any, CoinGetByPackageIdKey>(
+        {appConfig, packageId, path: "getById"}, coinRestApi.getByPackageId)
 
     const {
         data: tokenMetrics,
@@ -277,35 +279,15 @@ export default function Drilldown() {
         isLoading: isLoadingTokenPrice
     } = useSWR<TokenMetric, any, TokenMetricKey>(
         {
+            appConfig,
             client: suiContext.client,
             sender: "0xbd81e46b4f6c750606445c10eccd486340ac168c9b34e4c4ab587fac447529f5",
             coin: token,
             path: "tokenMetrics",
         }, getTokenMetrics, {refreshInterval: 5000});
-    console.log("console metrics", tokenMetrics);
-
-
-    // const exampleHolders: Holder[] = [
-    //     {address: 'abcdef', balance: 700000}, // Example holder with bonding curve
-    //     {address: faker.finance.ethereumAddress(), balance: 100000}, // Example creator
-    //     {address: faker.finance.ethereumAddress(), balance: 100000},
-    //     {address: account?.address || faker.finance.ethereumAddress(), balance: 50000},
-    //     {address: faker.finance.ethereumAddress(), balance: 50000},
-    //     {address: faker.finance.ethereumAddress(), balance: 50000},
-    //     {address: faker.finance.ethereumAddress(), balance: 50000},
-    //     {address: faker.finance.ethereumAddress(), balance: 50000},
-    //     {address: faker.finance.ethereumAddress(), balance: 50000},
-    //     {address: faker.finance.ethereumAddress(), balance: 50000},
-    //     {address: faker.finance.ethereumAddress(), balance: 50000},
-    //     {address: faker.finance.ethereumAddress(), balance: 50000},
-    //     {address: faker.finance.ethereumAddress(), balance: 50000},
-    //     {address: faker.finance.ethereumAddress(), balance: 50000},
-    // ];
-
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
-    if (!token || !tokenMetrics) return (<div>Loading token...</div>)
-    console.log("fetchTokenMetricsError", fetchTokenMetricsError)
+    if (!token) return (<div>Loading token...</div>)
 
     let marketCap = suiToUsdLocaleString(tokenMetrics?.suiBalance || 0, currentSuiPrice);
 
@@ -320,7 +302,7 @@ export default function Drilldown() {
                         <CoinMetadataHeader tokenMetrics={tokenMetrics} client={suiContext.client} token={token}
                                             marketCap={marketCap} currentSuiPrice={currentSuiPrice}/>
                         <div className="bg-gray-700 min-h-[300px]">
-                            <TradesChart packageId={token.packageId}/>
+                            <TradesChart bondingCurveId={token.bondingCurveId}/>
                         </div>
 
                         <div className="flex justify-between p-2">
@@ -333,9 +315,9 @@ export default function Drilldown() {
                         </div>
                         <div className="p-2">
                             {activePanel === 'thread'
-                                ? <CoinThread creator={token.creator || ""} packageId={packageId}/>
+                                ? <CoinThread creator={token.creator || ""} bondingCurveId={token.bondingCurveId}/>
                                 : <TradesTable coinSymbol={token.symbol}
-                                               packageId={packageId}
+                                               bondingCurveId={token.bondingCurveId}
                                                network={suiContext.network || "mainnet"}/>}
 
                         </div>

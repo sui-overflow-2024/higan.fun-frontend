@@ -3,15 +3,8 @@ import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
 import {useContext, useEffect, useState} from "react";
-import {
-    getCoinPath,
-    getCoinPathFunc,
-    getFunctionPathFromCoinType,
-    getValueWithDecimals,
-    truncateDecimals
-} from "@/lib/utils";
+import {getCoinTypePath, getManagerFuncPath, getValueWithDecimals, truncateDecimals} from "@/lib/utils";
 import {AppConfigContext} from "@/components/Contexts";
-import Image from "next/image";
 import {CoinFromRestAPI, CoinStatus} from "@/lib/types";
 import {useCurrentAccount, useSuiClientQuery} from "@mysten/dapp-kit";
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
@@ -20,6 +13,7 @@ import {useForm} from "react-hook-form";
 import {customSuiHooks} from "@/lib/sui";
 import {useTransactionExecution} from "@/hooks/useTransactionexecution";
 import {mutate} from "swr";
+import {AppConfig} from "@/lib/config";
 
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
@@ -123,8 +117,8 @@ const getExactCoinByAmount = (
     }
 };
 
-const generateBuyPtb = (coin: CoinFromRestAPI, userCoins: CoinStruct[], amountToBuy: number): TransactionBlock => {
-    console.log("Attempting to buy ", amountToBuy, "of", coin.symbol, "packageId", coin.packageId, "storeId", coin.storeId, "module", coin.module, "decimals", coin.decimals)
+const generateBuyPtb = (appConfig: AppConfig, coin: CoinFromRestAPI, amountToBuy: number) => {
+    console.log("Attempting to buy ", amountToBuy, "of", coin.symbol, "packageId", coin.packageId, "bondingCurveId", coin.bondingCurveId, "module", coin.module, "decimals", coin.decimals)
     if (amountToBuy <= 0) {
         throw new Error("Attempt to buy 0 or less tokens")
     }
@@ -135,81 +129,71 @@ const generateBuyPtb = (coin: CoinFromRestAPI, userCoins: CoinStruct[], amountTo
     //txb.gas() for the coin because you purchase the custom coin w/ Sui
     console.log("Splitting coins", txb.gas)
     const splitCoin = txb.moveCall({
-        target: getCoinPathFunc(coin, "get_coin_buy_price"),
+        target: getManagerFuncPath(appConfig, "get_coin_buy_price"),
         arguments: [
-            txb.object(coin.storeId),
+            txb.object(coin.bondingCurveId),
             txb.pure(amountToBuy),
         ],
+        typeArguments: [getCoinTypePath(coin)]
     })
     const [payment] = txb.splitCoins(txb.gas, [txb.object(splitCoin)]);
 
     // txb.transferObjects([payment], "0x7176223a57d720111be2c805139be7192fc5522597e6210ae35d4b2199949501")
     txb.moveCall({
-        target: getCoinPathFunc(coin, "buy_coins"),
+        target: getManagerFuncPath(appConfig, "buy_coins"),
         arguments: [
-            txb.object(coin.storeId),
+            txb.object(coin.bondingCurveId),
             txb.object(payment),
             txb.pure(amountToBuy),
         ],
+        typeArguments: [getCoinTypePath(coin)]
     });
     return txb
 }
 
-const generateSellPtb = (coin: CoinFromRestAPI, userCoins: CoinStruct[], amountToSell: number): TransactionBlock => {
-    console.log("Attempting to sell ", amountToSell, "of", coin.symbol, "packageId", coin.packageId, "storeId", coin.storeId, "module", coin.module, "decimals", coin.decimals)
+const generateSellPtb = (appConfig: AppConfig, coin: CoinFromRestAPI, userCoins: CoinStruct[], amountToSell: number): TransactionBlock => {
+    console.log("Attempting to sell ", amountToSell, "of", coin.symbol, "packageId", coin.packageId, "bondingCurveId", coin.bondingCurveId, "module", coin.module, "decimals", coin.decimals)
     if (amountToSell <= 0) {
         throw new Error("Attempt to buy 0 or less tokens")
     }
 
     const txb = new TransactionBlock();
-    const exactCoinByAmount = getExactCoinByAmount(getCoinPath(coin), userCoins, BigInt(amountToSell), txb)
-    //Amount here already has multiplication for decimals applied (see TokenAmountInput)
-    //txb.gas() for the coin because you purchase the custom coin w/ Sui
+    const exactCoinByAmount = getExactCoinByAmount(getCoinTypePath(coin), userCoins, BigInt(amountToSell), txb)
 
-    console.log("Splitting coins", txb.gas)
-    // const splitCoin = txb.moveCall({
-    //     target: getCoinPathFunc(coin, "get_coin_sell_price"),
-    //     arguments: [
-    //         txb.object(coin.storeId),
-    //         txb.pure(amountToSell),
-    //     ],
-    // })
-    // const [coinToSendToSell] = txb.splitCoins(getCoinPath(coin), [txb.object(splitCoin)]);
-
-    //Amount here already has multiplication for decimals applied (see TokenAmountInput)
-    //txb.gas() for the coin because you purchase the custom coin w/ Sui
-    const coinPath = getCoinPath(coin)
-    console.log("Coin path is", coinPath)
     txb.moveCall({
-        target: getCoinPathFunc(coin, "sell_coins"),
+        target: getManagerFuncPath(appConfig, "sell_coins"),
         arguments: [
-            txb.object(coin.storeId),
+            txb.object(coin.bondingCurveId),
             txb.object(exactCoinByAmount),
         ],
+        typeArguments: [getCoinTypePath(coin)]
     });
     return txb;
 }
 
-export const getBuyCoinPriceTxb = (coinType: string, storeId: string, amount: number): TransactionBlock => {
+export const getBuyCoinPriceTxb = (appConfig: AppConfig, coinType: string, bondingCurveId: string, amount: number): TransactionBlock => {
+    console.log("getBuyCoinPriceTxb", appConfig, coinType, bondingCurveId, amount)
     const txb = new TransactionBlock()
     txb.moveCall({
-        target: getFunctionPathFromCoinType(coinType, "get_coin_buy_price") as `${string}::${string}::${string}`,
+        target: getManagerFuncPath(appConfig, "get_coin_buy_price") as `${string}::${string}::${string}`,
         arguments: [
-            txb.object(storeId),
+            txb.object(bondingCurveId),
             txb.pure(amount),
         ],
+        typeArguments: [coinType]
     })
     return txb
 }
-export const getSellCoinPriceTxb = (coinType: string, storeId: string, amount: number): TransactionBlock => {
-    console.log("getSellCoinPriceTxb", coinType, storeId, amount)
+export const getSellCoinPriceTxb = (appConfig: AppConfig, coinType: string, bondingCurveId: string, amount: number): TransactionBlock => {
+    console.log("getSellCoinPriceTxb", appConfig, coinType, bondingCurveId, amount)
     const txb = new TransactionBlock()
     txb.moveCall({
-        target: getFunctionPathFromCoinType(coinType, "get_coin_sell_price") as `${string}::${string}::${string}`,
+        target: getManagerFuncPath(appConfig, "get_coin_sell_price") as `${string}::${string}::${string}`,
         arguments: [
-            txb.object(storeId),
+            txb.object(bondingCurveId),
             txb.pure(amount),
         ],
+        typeArguments: [coinType]
     })
     return txb
 }
@@ -221,7 +205,7 @@ const PriceCalculator: React.FC<{
     amount: number,
     mode: "buy" | "sell",
     coinType: string,
-    storeId: string,
+    bondingCurveId: string,
     userBalance: number
 }> = ({
           suiClient,
@@ -229,7 +213,7 @@ const PriceCalculator: React.FC<{
           amount,
           mode,
           coinType,
-          storeId,
+          bondingCurveId,
           userBalance,
       }) => {
 
@@ -244,12 +228,13 @@ const PriceCalculator: React.FC<{
                     console.log("amount is not a number")
                     return
                 }
-                console.log("fetching price for", suiClient, coinType, storeId, amount, mode)
+                console.log("fetching price for", suiClient, coinType, bondingCurveId, amount, mode)
                 const price = await customSuiHooks.getCurrentCoinPriceInSui({
+                    appConfig,
                     suiClient,
                     sender: sender || appConfig.fallbackDevInspectAddress,
                     coinType,
-                    storeId,
+                    bondingCurveId: bondingCurveId,
                     amount,
                     mode
                 })
@@ -260,7 +245,7 @@ const PriceCalculator: React.FC<{
             setIsLoading(false)
         }
         fetchPrice()
-    }, [suiClient, sender, coinType, storeId, amount, mode])
+    }, [suiClient, sender, coinType, bondingCurveId, amount, mode])
 
     if (priceError) return (<div>Error fetching price {priceError.message}</div>)
 
@@ -281,7 +266,6 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
     const appConfig = useContext(AppConfigContext)
     const currentAccount = useCurrentAccount()
     const executeTranscation = useTransactionExecution()
-
     const [mode, setMode] = useState<"buy" | "sell">("buy")
     const [userBalance, setUserBalance] = useState(0)
     const [baseTokenCoins, setBaseTokenCoins] = useState<CoinStruct[]>([])
@@ -296,7 +280,7 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
     const amount = watch("amount") * multiplier
 
     const {data: storeRaw, refetch: refetchStore} = useSuiClientQuery("getObject", {
-        id: token?.storeId || "",
+        id: token?.bondingCurveId || "",
         options: {
             showDisplay: true,
             showContent: true,
@@ -309,10 +293,10 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
             if (!currentAccount?.address) return
             if (!suiClient) return
 
-            console.log("fetching balance for", currentAccount?.address, "token", token.coinType)
+            console.log("fetching balance for", currentAccount?.address, "token", getCoinTypePath(token))
             const balance = await suiClient.getBalance({
                 owner: currentAccount?.address || "",
-                coinType: getCoinPath(token),
+                coinType: getCoinTypePath(token),
             })
             console.log("balance", balance)
             setUserBalance(parseInt(balance.totalBalance || "0"))
@@ -321,7 +305,7 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
             console.log()
             const coins = await getAllUserCoins({
                 suiClient: suiClient,
-                type: getCoinPath(token),
+                type: getCoinTypePath(token),
                 address: currentAccount?.address || "",
             });
             console.log("coins", coins)
@@ -333,8 +317,8 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
     const submit = async (data: { amount: number }) => {
         console.log(`${mode}ing ${data.amount} of the token now`)
         const txb = mode === "buy"
-            ? generateBuyPtb(token, [], amount)
-            : generateSellPtb(token, baseTokenCoins, amount);
+            ? generateBuyPtb(appConfig, token, amount)
+            : generateSellPtb(appConfig, token, baseTokenCoins, amount);
 
         await executeTranscation(txb)
         // TODO you can refresh trades and your own balance here
@@ -409,8 +393,8 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
                                     </div>
                                     <div
                                         className="rounded-full border-2 border-white inline-flex items-center justify-center">
-                                        <Image
-                                            src={token.iconUrl}
+                                        <img
+                                            src={token.iconUrl || "./public/garfield.png"}
                                             alt={token.symbol}
                                             width={48}
                                             height={48}
@@ -428,9 +412,9 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
                         <div className={"flex justify-center"}>
                             <div className={"space-y-2"}>
                                 <div className={"text-center"}>
-                                    <PriceCalculator coinType={token.coinType} amount={amount}
+                                    <PriceCalculator coinType={getCoinTypePath(token)} amount={amount}
                                                      sender={currentAccount?.address || ""} mode={mode}
-                                                     storeId={token.storeId}
+                                                     bondingCurveId={token.bondingCurveId}
                                                      userBalance={userBalance}
                                                      suiClient={suiClient}/>
                                 </div>

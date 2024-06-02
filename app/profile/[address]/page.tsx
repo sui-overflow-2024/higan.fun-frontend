@@ -11,7 +11,6 @@ import {CoinFromRestAPI} from "@/lib/types";
 import {useToast} from "@/components/ui/use-toast";
 import {ExternalLink} from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 import useSWR from "swr";
 import {CoinGetAllKey, coinRestApi} from "@/lib/rest";
@@ -39,9 +38,9 @@ const CoinsHeldRow: FC<CoinHeldRowProps> = ({address, coinBalance, coinFromRestA
     useEffect(() => {
         const fetchCurrentPrice = async () => {
             if (!coinFromRestApi) return
-            const path = coinFromRestApi ? `${coinFromRestApi.packageId}::${coinFromRestApi.storeId}` : coinBalance.coinType.split("::").slice(0, 2).join("::")
+            const path = coinFromRestApi ? `${coinFromRestApi.packageId}::${coinFromRestApi.bondingCurveId}` : coinBalance.coinType.split("::").slice(0, 2).join("::")
             const price = await suiClient.devInspectTransactionBlock({
-                transactionBlock: getSellCoinPriceTxb(coinBalance.coinType, coinFromRestApi?.storeId || "", parseInt(coinBalance.totalBalance)),
+                transactionBlock: getSellCoinPriceTxb(appConfig, coinBalance.coinType, coinFromRestApi?.bondingCurveId || "", parseInt(coinBalance.totalBalance)),
                 sender: address || appConfig.fallbackDevInspectAddress,
             })
             setSellPrice(extractPriceFromDevInspect(price))
@@ -117,6 +116,7 @@ const CoinsHeld: FC<{ profileAddress: string }> = ({profileAddress}) => {
 }
 
 const CoinsCreatedRow: FC<{ token: CoinFromRestAPI }> = ({token}) => {
+    const appConfig = useContext(AppConfigContext);
     const client = useSuiClient()
     const {
         data: tokenMetrics,
@@ -124,6 +124,7 @@ const CoinsCreatedRow: FC<{ token: CoinFromRestAPI }> = ({token}) => {
         isLoading: isLoadingTokenPrice
     } = useSWR<TokenMetric, any, TokenMetricKey>(
         {
+            appConfig,
             client,
             sender: "0xbd81e46b4f6c750606445c10eccd486340ac168c9b34e4c4ab587fac447529f5",
             coin: token,
@@ -134,15 +135,20 @@ const CoinsCreatedRow: FC<{ token: CoinFromRestAPI }> = ({token}) => {
 
     return <div className="grid grid-cols-12 items-center  p-2 bg-gray-800 rounded-sm">
         <div className={"col-span-1"}>
-            <img
-                src={token.iconUrl || "./public/garfield.png"}
-                alt={token.name}
-                width={40}
-                height={40}
-            />
+            <Link href={`/coin/${token.packageId}`} className={"hover:underline"}>
+                <img
+                    src={token.iconUrl || "./public/garfield.png"}
+                    alt={token.name}
+                    width={40}
+                    height={40}
+                />
+            </Link>
         </div>
         {/*<div className={"col-span-4"}>{token.name} ({token.symbol})</div>*/}
-        <div className={"col-span-1"}>{token.symbol}</div>
+        <div className={"col-span-1"}>
+            <Link href={`/coin/${token.packageId}`} className={"hover:underline"}>
+                {token.symbol}
+            </Link></div>
 
         <div className={"col-span-3 flex-col text-center"}>
             <div className={"text-xs text-muted-foreground"}>Cur. Supply</div>

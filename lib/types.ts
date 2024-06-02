@@ -1,24 +1,21 @@
 export type CoinFromRestAPI = {
     packageId: string,
     module: string,
-    storeId: string,
+    bondingCurveId: string,
     creator: string,
     decimals: number,
     name: string,
     symbol: string,
     description: string,
     iconUrl: string,
-    // signature: string, //later
-    website: string,
+    websiteUrl: string,
     twitterUrl: string,
     discordUrl: string,
     telegramUrl: string,
     whitepaperUrl: string,
-    coinType: string,
     suiReserve: number,
     target: number,
     status: number,
-    // tradingVolume: number,
     createdAt: Date,
     updatedAt: Date
 }

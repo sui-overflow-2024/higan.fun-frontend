@@ -1,83 +1,36 @@
 import {type ClassValue, clsx} from "clsx"
 import {twMerge} from "tailwind-merge"
-import {CoinFromRestAPI, TradeFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI} from "@/lib/types";
 import type {DevInspectResults} from "@mysten/sui.js/client";
 import {bcs} from "@mysten/sui.js/bcs";
-import {faker} from "@faker-js/faker";
+
+import {AppConfig} from "@/lib/config";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
-
-function generateRandomHex(bytes: number): string {
-    const buffer = new Uint8Array(bytes);
-    // Populate the buffer with random values
-    crypto.getRandomValues(buffer);
-    // Convert the buffer to a hexadecimal string
-    return Array.from(buffer, byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
-const toInitCap = (str: string[]): string => {
+export const toInitCap = (str: string[]): string => {
     return str.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
 }
-const toSnakeCase = (str: string): string => {
+export const toSnakeCase = (str: string): string => {
     return str.replace(/\s+/g, '_').toLowerCase();
 }
-const toSnakeCaseUpper = (str: string): string => {
+export const toSnakeCaseUpper = (str: string): string => {
     return toSnakeCase(str).toUpperCase()
 }
 
-//
-export const generateFakeToken = (): CoinFromRestAPI => {
-    // Capitalize the first letter of each word
 
-    const logos = ["./dai.svg", "./usdc.svg", "./usdt.svg", "./sui-sea.svg",];
-    const randLogo = logos[Math.floor(Math.random() * logos.length)];
-
-    // const packageId = generateRandomHex(16);
-    const packageId = "0xa512bbe7d3f75b0b91310057bbbac67aa4f3e1eda49c345fd00c3cfa7fd47c5b";
-    const name = faker.lorem.words({min: 2, max: 5}).split(' ')
-    const coinType = `${packageId}::${toSnakeCase(name.join(' '))}::${toSnakeCaseUpper(name.join(' '))}`
-    return {
-        status: getRandomNumber(0, 3),
-        target: 5_000_000_000,
-        coinType,
-        creator: "0xb2720b42e26a7fc1eb555ecd154ef3dc2446f80c1f186af901cd38b842e52044",
-        decimals: 3,
-        discordUrl: "https://docs.sui.io/sui-api-ref#suix_resolvenameservicenames",
-        module: toSnakeCase(name.join(' ')),
-        storeId: "0x8cb5bc618d9943730a9404ad11143b9588dcd2033033cb6ded0c1bf87c4ceab3",
-        telegramUrl: "https://sui.io/community-events-hub",
-        twitterUrl: "https://x.com/dog_rates",
-        websiteUrl: "https://github.com/ad0ll/we-hate-the-ui",
-        whitepaperUrl: "https://githubnext.com/projects/copilot-workspace",
-        packageId: generateRandomHex(16),
-        name: toInitCap(faker.lorem.words({min: 2, max: 5}).split(' ')),
-        symbol: faker.string.alpha({
-            casing: 'upper',
-            length: {min: 2, max: 5},
-            exclude: ["P"] //fuck this letter
-        }),
-        iconUrl: randLogo,
-        description: faker.lorem.sentence({min: 5, max: 60}),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        suiReserve: getRandomNumber(500_000_000, 100_000_000_000) // 0.5 - 100 SUI
-
-    }
-}
-
-export function getRandomNumber(min: number, max: number): number {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-export const getCoinPath = (token: CoinFromRestAPI): string => {
+export const getCoinTypePath = (token: CoinFromRestAPI): string => {
     return `${token.packageId}::${token.module}::${token.module.toUpperCase()}`
 }
 
 export const getCoinPathFunc = (token: CoinFromRestAPI, func: string): `${string}::${string}::${string}` => {
     return `${token.packageId}::${token.module}::${func}`
+}
+
+export const getManagerFuncPath = (appConfig: AppConfig, func: string): `${string}::${string}::${string}` => {
+    return `${appConfig.managerContractPackageId}::${appConfig.managerContractModuleName}::${func}`
 }
 
 export const getValueWithDecimals = (value: number, decimals: number, fixed ?: number): string => {
@@ -119,22 +72,6 @@ export const addressToBackgroundColor = (address: string) => {
     return `hsl(${hash % 360}, 50%, 50%)`;
 };
 
-export const generateTrades = (count: number): TradeFromRestAPI[] => {
-    const activities = ['buy', 'sell'];
-    const activity = activities[Math.floor(Math.random() * activities.length)];
-    return Array.from({length: count}, () => ({
-        id: faker.number.int(),
-        account: faker.finance.ethereumAddress(),
-        activity: activity as "buy" | "sell",
-        suiAmount: faker.number.float({min: 1, max: 80, fractionDigits: 2}),
-        coinAmount: faker.number.float({min: 1, max: 80, fractionDigits: 2}),
-        date: faker.date.recent().toLocaleDateString(),
-        transactionId: faker.finance.ethereumAddress(),
-        isBuy: activity === 'buy',
-        createdAt: faker.date.recent(),
-        coinPrice: faker.number.float({min: 1, max: 80, fractionDigits: 2}),
-    }));
-};
 
 export const largeNumberToFixedWithSymbol = (num: number, decimals: number = 2): string => {
     // Handle negative numbers

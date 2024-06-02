@@ -15,12 +15,12 @@ import {
     DialogTitle,
     DialogTrigger
 } from "@/components/ui/dialog";
-import {getRandomNumber} from "@/lib/utils";
+import {getRandomNumber} from "@/lib/generators";
 import {Textarea} from "@/components/ui/textarea";
 import {CoinGetPostsKey, coinRestApi, ThreadPostRequest} from "@/lib/rest";
 import {AppConfigContext} from "@/components/Contexts";
 import {formatDistanceToNow} from "date-fns";
-import useSWR, {mutate} from "swr";
+import useSWR, {KeyedMutator} from "swr";
 
 const SafeMarkdown = ({text}: { text: string }) => {
     const md = new MarkdownIt();
@@ -41,7 +41,8 @@ const Post: FC<{ id: number, creator: string, authorId: string, text: string, cr
             <div className={"flex gap-2 text-xs"}>
                 <CreatorAddressChip address={authorId} variant={"small"}
                                     isCreator={creator !== "" && creator === authorId}/>
-                <p className={"text-muted-foreground"}>{formatDistanceToNow(new Date(createdAt), {addSuffix: true})}</p> <p className={"text-muted-foreground"}>#{id.toString()}</p>
+                <p className={"text-muted-foreground"}>{formatDistanceToNow(new Date(createdAt), {addSuffix: true})}</p>
+                <p className={"text-muted-foreground"}>#{id.toString()}</p>
             </div>
             <SafeMarkdown text={text}/>
         </div>
@@ -49,7 +50,11 @@ const Post: FC<{ id: number, creator: string, authorId: string, text: string, cr
 
 
 }
-const NewPostTextbox: FC<{ creator: string, packageId: string }> = ({creator, packageId}) => {
+const NewPostTextbox: FC<{
+    creator: string,
+    bondingCurveId: string,
+    refetchPosts: KeyedMutator<PostFromRestAPI[]>
+}> = ({creator, bondingCurveId, refetchPosts}) => {
     const account = useCurrentAccount()
     const appConfig = useContext(AppConfigContext)
     const {register, handleSubmit, watch, reset} = useForm<{ text: string }>({
@@ -73,7 +78,7 @@ const NewPostTextbox: FC<{ creator: string, packageId: string }> = ({creator, pa
                     console.log("signature", signature)
                     const postData: ThreadPostRequest = {
                         signature: signature.signature,
-                        coinId: packageId,
+                        coinId: bondingCurveId,
                         text: data.text,
                         author: account.address
                     }
@@ -81,7 +86,7 @@ const NewPostTextbox: FC<{ creator: string, packageId: string }> = ({creator, pa
                     const thread = await coinRestApi.postThread({appConfig, post: postData})
                     console.log("threadResponse", thread)
                     reset({text: ""});
-                    await mutate({appConfig, packageId, path: "getThreads"})
+                    await refetchPosts()
                 },
             },
         );
@@ -114,18 +119,21 @@ const NewPostTextbox: FC<{ creator: string, packageId: string }> = ({creator, pa
     </form>
 }
 
-export const CoinThread: FC<{ packageId: string, creator: string }> = ({
-                                                                           creator,
-                                                                           packageId,
-                                                                       }) => {
+export const CoinThread: FC<{ bondingCurveId: string, creator: string }> = ({
+                                                                                creator,
+                                                                                bondingCurveId,
+                                                                            }) => {
     const appConfig = useContext(AppConfigContext);
 
-    const {data: posts, error: postsError} = useSWR<PostFromRestAPI[], any, CoinGetPostsKey>({
+    const {
+        data: posts,
+        error: postsError,
+        mutate: refetchPosts
+    } = useSWR<PostFromRestAPI[], any, CoinGetPostsKey>({
         appConfig,
-        packageId,
+        bondingCurveId,
         path: "getPosts"
     }, coinRestApi.getPosts, {refreshInterval: 5000});
-    console.log(posts)
     if (!posts) {
         return <div>Loading posts...</div>
     }
@@ -135,7 +143,7 @@ export const CoinThread: FC<{ packageId: string, creator: string }> = ({
     return (
         <div className={"space-y-3"}>
             <div className={"flex justify-center"}>
-                <NewPostTextbox creator={creator} packageId={packageId}/>
+                <NewPostTextbox creator={creator} bondingCurveId={bondingCurveId} refetchPosts={refetchPosts}/>
             </div>
             {posts.map((post) => (
                 <Post key={post.id} creator={creator} {...post}/>

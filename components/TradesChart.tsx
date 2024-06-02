@@ -1,5 +1,4 @@
 import React, {useContext, useEffect, useRef} from 'react';
-import {getValueWithDecimals} from "@/lib/utils";
 import {ColorType, createChart, IChartApi, ISeriesApi, PriceScaleMode} from 'lightweight-charts';
 import {TradeFromRestAPI} from '@/lib/types';
 import useSWR from "swr";
@@ -9,7 +8,7 @@ import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 
 type TradesChartProps = {
     // trades: TradeFromRestAPI[],
-    packageId: string;
+    bondingCurveId: string;
     // coinSymbol: string;
     // network: string;
 };
@@ -46,7 +45,7 @@ const chartStyle: any = {
     areaBottomColor: 'rgba(41, 98, 255, 0.28)',
 }
 // Component for the trades list
-const TradesChart: React.FC<TradesChartProps> = ({packageId}) => {
+const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const chartRef = useRef<IChartApi>();
     const seriesRef = useRef<ISeriesApi<"Line">>();
@@ -56,7 +55,7 @@ const TradesChart: React.FC<TradesChartProps> = ({packageId}) => {
 
     const {data: trades, error: fetchTradesError} = useSWR<TradeFromRestAPI[], any, CoinGetTradesKey>({
         appConfig,
-        packageId,
+        bondingCurveId: bondingCurveId,
         path: "getTrades"
     }, coinRestApi.getTrades, {refreshInterval: 5000});
 
@@ -64,8 +63,8 @@ const TradesChart: React.FC<TradesChartProps> = ({packageId}) => {
         if (!chartContainerRef.current) {
             return;
         }
-        if(!trades) return;
-        if(currentSuiPrice === 0) return;
+        if (!trades) return;
+        if (currentSuiPrice === 0) return;
 
         chartRef.current = createChart(chartContainerRef.current, {
             layout: {

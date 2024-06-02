@@ -8,18 +8,18 @@ import useSWR from "swr";
 import {TradeFromRestAPI} from "@/lib/types";
 
 type TradesListProps = {
-    packageId: string;
+    bondingCurveId: string;
     coinSymbol: string;
     network: string;
 };
 
 
 // Component for the trades list
-const TradesList: React.FC<TradesListProps> = ({packageId, coinSymbol, network}) => {
+const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, network}) => {
     const appConfig = useContext(AppConfigContext)
     const {data: trades, error: fetchTradesError} = useSWR<TradeFromRestAPI[], any, CoinGetTradesKey>({
         appConfig,
-        packageId,
+        bondingCurveId,
         path: "getTrades"
     }, coinRestApi.getTrades, {refreshInterval: 5000});
 

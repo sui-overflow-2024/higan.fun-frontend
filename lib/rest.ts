@@ -1,9 +1,9 @@
-import {AppConfig} from "@/components/Contexts";
 import {Post} from "@/lib/prisma/client";
-import {PostFromRestAPI, CoinFromRestAPI, TopCoinFromRestAPI, TradeFromRestAPI, HoldersFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI, HoldersFromRestAPI, PostFromRestAPI, TopCoinFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {Fetcher} from "swr";
 import {CreateCoinFormData} from "@/components/CreateCoinForm";
 import axios from "axios";
+import {AppConfig} from "@/lib/config";
 
 export type ThreadPostRequest = {
     coinId: string,
@@ -11,19 +11,19 @@ export type ThreadPostRequest = {
     signature: string,
     author: string,
 }
-export type CoinGetAllKey = {appConfig: AppConfig, packageIds?: string[], creator?: string, path: "getAll"}
-export type CoinGetPostsKey = { appConfig: AppConfig, packageId: string, path: "getPosts" }
+export type CoinGetAllKey = { appConfig: AppConfig, packageIds?: string[], creator?: string, path: "getAll" }
+export type CoinGetPostsKey = { appConfig: AppConfig, bondingCurveId: string, path: "getPosts" }
 export type CoinGetTopKey = { appConfig: AppConfig, path: "getTop" }
-export type CoinGetTradesKey = { appConfig: AppConfig, packageId: string, path: "getTrades" }
-export type CoinGetHoldersByKey = { appConfig: AppConfig, packageId: string, path: "getHolders" }
-export type CoinGetByIdKey = { appConfig: AppConfig, packageId: string, path: "getById" }
+export type CoinGetTradesKey = { appConfig: AppConfig, bondingCurveId: string, path: "getTrades" }
+export type CoinGetHoldersByKey = { appConfig: AppConfig, bondingCurveId: string, path: "getHolders" }
+export type CoinGetByPackageIdKey = { appConfig: AppConfig, packageId: string, path: "getById" }
 export type CoinSearchKey = { appConfig: AppConfig, term: string, sort: string, order: string }
 
 type CoinRestApi = {
     getAll: Fetcher<CoinFromRestAPI[], CoinGetAllKey>,
     search: Fetcher<CoinFromRestAPI[], CoinSearchKey>,
     getTop: Fetcher<TopCoinFromRestAPI, CoinGetTopKey>,
-    getById: Fetcher<CoinFromRestAPI, CoinGetByIdKey>,
+    getByPackageId: Fetcher<CoinFromRestAPI, CoinGetByPackageIdKey>,
     getTrades: Fetcher<TradeFromRestAPI[], CoinGetTradesKey>,
     getHolders: Fetcher<HoldersFromRestAPI[], CoinGetHoldersByKey>,
     postCoin: Fetcher<CoinFromRestAPI, { appConfig: AppConfig, token: CreateCoinFormData }>
@@ -33,16 +33,16 @@ type CoinRestApi = {
 }
 
 export const coinRestApi: CoinRestApi = {
-    getAll: async ({appConfig, packageIds, creator }) => {
-        const params: {packageIds?: string[], creator?: string} = {};
-        if (packageIds && packageIds.length > 0){
+    getAll: async ({appConfig, packageIds, creator}) => {
+        const params: { packageIds?: string[], creator?: string } = {};
+        if (packageIds && packageIds.length > 0) {
             params['packageIds'] = packageIds;
         }
 
         if (creator) {
             params['creator'] = creator;
         }
-        const res = await appConfig.axios.get<CoinFromRestAPI[]>('/coins', { params });
+        const res = await appConfig.axios.get<CoinFromRestAPI[]>('/coins', {params});
         console.log("Retrieved the following coin from the REST API", res.data);
         return res.data;
     },
@@ -56,25 +56,25 @@ export const coinRestApi: CoinRestApi = {
         console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
-    getById: async ({appConfig, packageId}) => {
+    getByPackageId: async ({appConfig, packageId}) => {
         const res = await appConfig.axios.get<CoinFromRestAPI>(`/coins/${packageId}`)
         console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
-    getTrades: async ({appConfig, packageId}): Promise<TradeFromRestAPI[]> => {
-        const res = await appConfig.axios.get<TradeFromRestAPI[]>(`/coins/${packageId}/trades`)
+    getTrades: async ({appConfig, bondingCurveId}): Promise<TradeFromRestAPI[]> => {
+        const res = await appConfig.axios.get<TradeFromRestAPI[]>(`/coins/${bondingCurveId}/trades`)
         console.log("Retrieved the following trades from the REST API", res.data)
         return res.data
     },
-    getPosts: async ({appConfig, packageId}): Promise<PostFromRestAPI[]> => {
-        console.log(`Getting posts for the following coin from the REST API /coin/${packageId}/posts`)
-        const res = await appConfig.axios.get<PostFromRestAPI[]>(`/coin/${packageId}/posts`)
+    getPosts: async ({appConfig, bondingCurveId}): Promise<PostFromRestAPI[]> => {
+        console.log(`Getting posts for the following coin from the REST API /coin/${bondingCurveId}/posts`)
+        const res = await appConfig.axios.get<PostFromRestAPI[]>(`/coin/${bondingCurveId}/posts`)
         console.log("Retrieved the following posts from the REST API", res.data)
         return res.data
     },
-    getHolders: async ({appConfig, packageId}): Promise<HoldersFromRestAPI[]> => {
-        console.log(`Getting posts for the following coin from the REST API /coin/${packageId}/holders`)
-        const res = await appConfig.axios.get<HoldersFromRestAPI[]>(`/coin/${packageId}/holders`)
+    getHolders: async ({appConfig, bondingCurveId}): Promise<HoldersFromRestAPI[]> => {
+        console.log(`Getting posts for the following coin from the REST API /coin/${bondingCurveId}/holders`)
+        const res = await appConfig.axios.get<HoldersFromRestAPI[]>(`/coin/${bondingCurveId}/holders`)
         console.log("Retrieved the following posts from the REST API", res.data)
         return res.data
     },
