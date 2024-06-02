@@ -10,7 +10,7 @@ import {suiToUsdLocaleString} from "@/lib/utils";
 export const TokenCard = ({token}: { token: CoinFromRestAPI }) => {
     const currentSuiPrice = useContext(CurrentSuiPriceContext)
     return (
-        <Link href={`/coin/${token.packageId}`}>
+        <Link href={`/coin/${token.bondingCurveId}`}>
             <Card className="p-4  flex flex-col hover:bg-card-hover hover:border-card-hover-border">
                 <div className="flex space-x-4 items-center">
                     <img

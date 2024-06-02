@@ -273,7 +273,7 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
         amount: number
     }>({
         defaultValues: {
-            amount: 0
+            amount: 1
         }
     });
     const multiplier = (token?.decimals || 0) > 0 ? Math.pow(10, token?.decimals || 0) : 1

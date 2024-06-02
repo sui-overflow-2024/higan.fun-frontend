@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 409 472" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
+    <g transform="matrix(1,0,0,1,-1385.28,0)">
+        <g id="higan-fun-logo" transform="matrix(0.265644,0,0,0.2303,1385.28,0)">
+            <rect x="0" y="0" width="1536" height="2048" style="fill:none;"/>
+            <clipPath id="_clip1">
+                <rect x="0" y="0" width="1536" height="2048"/>
+            </clipPath>
+            <g clip-path="url(#_clip1)">
+                <g transform="matrix(2.70574,0,0,3.29485,-627.253,-2397.08)">
+                    <path d="M679.464,847.676L539.639,728.302L415.464,840.004L283.788,756.004L285.648,893.75L797.308,893.75L799.464,756.004L679.464,847.676Z" style="fill:rgb(246,216,111);"/>
+                </g>
+                <g transform="matrix(64.7041,0,0,93.6442,-103131,-55949.8)">
+                    <path d="M1601.52,608.563L1601.52,610.819L1607.54,610.819L1607.54,613.027L1600.46,613.027L1600.46,615.355L1607.54,615.355L1607.54,619.915L1610.04,619.915L1610.04,615.355L1617.33,615.355L1617.33,613.027L1610.04,613.027L1610.04,610.819L1616.11,610.819L1616.11,608.563L1601.52,608.563Z" style="fill:rgb(219,60,52);"/>
+                </g>
+                <g transform="matrix(71.5033,0,0,86.6508,-114097,-51723.6)">
+                    <path d="M1617.16,604.819L1597.49,604.819L1597.49,610.219C1597.44,613.579 1596.84,616.219 1595.68,618.115L1597.56,619.771C1599.05,617.371 1599.81,614.179 1599.88,610.219L1599.88,607.123L1617.16,607.123L1617.16,604.819Z" style="fill:rgb(219,60,52);"/>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

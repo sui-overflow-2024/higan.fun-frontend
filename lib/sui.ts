@@ -21,16 +21,18 @@ export type TokenMetricKey = {
     coin?: CoinFromRestAPI,
 }
 
+export type GetOneCoinPriceKey = {
+    appConfig: AppConfig,
+    suiClient: SuiClient,
+    sender: string,
+    coinType: string,
+    bondingCurveId: string,
+    amount: number,
+    mode: "buy" | "sell"
+}
+
 type SuiSwrFetchers = {
-    getCurrentCoinPriceInSui: Fetcher<number, {
-        appConfig: AppConfig,
-        suiClient: SuiClient,
-        sender: string,
-        coinType: string,
-        bondingCurveId: string,
-        amount: number,
-        mode: "buy" | "sell"
-    }>,
+    getCurrentCoinPriceInSui: Fetcher<number, GetOneCoinPriceKey>,
 }
 
 export const customSuiHooks: SuiSwrFetchers = {
@@ -71,9 +73,10 @@ export const getTokenMetrics: Fetcher<TokenMetric, TokenMetricKey> = async ({
 
     const txb = new TransactionBlock()
     txb.moveCall({
-        target: getManagerFuncPath(appConfig, "get_coin_price") as `${string}::${string}::${string}`,
+        target: getManagerFuncPath(appConfig, "get_coin_buy_price") as `${string}::${string}::${string}`,
         arguments: [
             txb.object(coin.bondingCurveId),
+            txb.pure(Math.pow(10, coin.decimals)) // Functionally, the app handles everything in non-fractional units.
         ],
         typeArguments: [getCoinTypePath(coin)],
     });

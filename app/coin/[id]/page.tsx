@@ -13,7 +13,7 @@ import {BuySellDialog} from "@/components/BuySellDialog";
 import TradesTable from "@/components/TradesTable";
 import TradesChart from "@/components/TradesChart";
 import useSWR from "swr";
-import {CoinGetByPackageIdKey, CoinGetHoldersByKey, coinRestApi} from "@/lib/rest";
+import {CoinGetByIdKey, CoinGetHoldersByKey, coinRestApi} from "@/lib/rest";
 import {usePathname} from "next/navigation";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 import {useSuiClientContext} from "@mysten/dapp-kit";
@@ -113,8 +113,9 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, 
             </div>
             <div className={"flex-col text-center text-green-400 text-sm"}>
                 <div>Current Price:</div>
-                <div>{getValueWithDecimals(tokenPrice, 9)} SUI
-                    ({(tokenPrice * Math.pow(10, -9)) * currentSuiPrice < 0.01 ? "< $0.01" : tokenPriceUSD})
+                <div className={"space-x-1"}>
+                    <span>{getValueWithDecimals(tokenPrice, 9, 4)} SUI</span>
+                    <span>(~{suiToUsdLocaleString(tokenPrice, currentSuiPrice)})</span>
                 </div>
             </div>
             <div className="flex-col items-center space-x-2 text-sm">
@@ -190,7 +191,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
 
     const target = token.target; // Example target market cap
     const totalSupply = tokenMetrics.totalSupply;
-    const bondingCurveProgress = Math.min((tokenMetrics.suiBalance / target) * 100, 100).toFixed(2); // Example progress percentage
+    const bondingCurveProgress = Math.min((tokenMetrics.suiBalance / target) * 100, 100).toFixed(2);
     const targetUSD = getValueWithDecimals(target * currentSuiPrice, 9, 2);
     const totalSupplyWithDecimals = totalSupply * (Math.pow(10, -1 * token.decimals));
 
@@ -232,8 +233,6 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
 };
 
 
-const bondingCurveAddress = 'abcdef';
-
 const TokenHolders: React.FC<TokenHoldersProps> = ({token, tokenMetrics}) => {
     // Sort holders by balance in descending order and take the top 20
     const appConfig = useContext(AppConfigContext)
@@ -271,12 +270,12 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({token, tokenMetrics}) => {
 export default function Drilldown() {
     const appConfig = useContext(AppConfigContext)
     const [activePanel, setActivePanel] = useState<"thread" | "trades">('thread');
-    const packageId = usePathname().split('/').pop() || '';
+    const bondingCurveId = usePathname().split('/').pop() || '';
     const suiContext = useSuiClientContext()
     const currentSuiPrice = useContext(CurrentSuiPriceContext)
 
-    const {data: token, error: tokenError} = useSWR<CoinFromRestAPI, any, CoinGetByPackageIdKey>(
-        {appConfig, packageId, path: "getById"}, coinRestApi.getByPackageId)
+    const {data: token, error: tokenError} = useSWR<CoinFromRestAPI, any, CoinGetByIdKey>(
+        {appConfig, bondingCurveId, path: "getById"}, coinRestApi.getById)
 
     const {
         data: tokenMetrics,
