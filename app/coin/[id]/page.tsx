@@ -96,7 +96,7 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, 
     let tokenPriceUSD = getValueWithDecimals(tokenPrice * currentSuiPrice, 9);
 
     return (
-        <div className="p-2 flex justify-between items-center rounded-lg">
+        <div className="flex justify-between items-center rounded-lg">
             <div className="flex items-center space-x-4">
                 <img
                     src={token.iconUrl || "./public/garfield.png"}
@@ -105,15 +105,21 @@ const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, 
                     height={10}
                     className="w-10 h-10"
                 />
-                <h2 className="text-lg font-bold">{token.name} (${token.symbol})</h2>
+                <p className="text-lg font-bold">{token.name} (${token.symbol})</p>
             </div>
-            <div className="flex items-center space-x-8">
-                <span
-                    className="text-green-400 text-sm">Market Cap: {marketCap.toLocaleString()}</span>
-                <span
-                    className="text-green-400 text-sm">Current Price: {getValueWithDecimals(tokenPrice, 9)} SUI ({(tokenPrice * Math.pow(10, -9)) * currentSuiPrice < 0.01 ? "< $0.01" : tokenPriceUSD})</span>
-                <div className="flex items-center space-x-2 text-sm">
-                    <span>Created by:</span>
+            <div className={"flex-col text-center text-green-400 text-sm"}>
+                <div>Market Cap:</div>
+                <div>{marketCap.toLocaleString()}</div>
+            </div>
+            <div className={"flex-col text-center text-green-400 text-sm"}>
+                <div>Current Price:</div>
+                <div>{getValueWithDecimals(tokenPrice, 9)} SUI
+                    ({(tokenPrice * Math.pow(10, -9)) * currentSuiPrice < 0.01 ? "< $0.01" : tokenPriceUSD})
+                </div>
+            </div>
+            <div className="flex-col items-center space-x-2 text-sm">
+                <div className="flex-col text-center text-sm">
+                    <div>Created by:</div>
                     <CreatorAddressChip address={token.creator} variant={"default"} showAvatar/>
                 </div>
             </div>
@@ -201,7 +207,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
                     />
                 </div>
                 <div>
-                    <h2 className="text-xl font-bold">{token.name} ({token.symbol})</h2>
+                    <h2 className="text-xl font-bold">{token.name} (${token.symbol})</h2>
                     <ClampedDescription text={token.description}/>
                 </div>
             </div>
@@ -219,7 +225,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
                 <div>Target: ${targetUSD}</div>
             </div>
             <div className="text-gray-400 mt-2 text-sm">
-                Total Supply: {totalSupplyWithDecimals.toLocaleString()}
+                Total Supply: {totalSupplyWithDecimals.toLocaleString()} {token.symbol}
             </div>
         </div>
     );
@@ -245,19 +251,18 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({token, tokenMetrics}) => {
     return (
         <div className="p-2 rounded-lg">
             <h2 className="text-xl font-bold mb-4">Top Holders</h2>
-            <ul className="list-decimal list-inside">
+            <ol className="list-decimal list-inside">
                 {sortedHolders.map((holder, index) => (
                     <li key={holder.address} className="flex justify-between items-center">
-                        <div className="flex items-center space-x-2">
-                            <span>{index + 1}. {holder.address.slice(2, 8)}</span>
-                            {holder.address === token.creator && <span className="text-gray-400 text-sm">(dev)</span>}
-                            {holder.address === bondingCurveAddress &&
-                                <span className="text-gray-400 text-sm">🏛 (bonding curve)</span>}
+                        <div className="flex space-x-2">
+                            <span>{index + 1}.</span>
+                            <CreatorAddressChip address={holder.address} isCreator={holder.address === token.creator}
+                                                variant={"small"}/>
                         </div>
                         <span>{((holder.balance / totalSupply) * 100).toFixed(1)}%</span>
                     </li>
                 ))}
-            </ul>
+            </ol>
         </div>
     );
 };

@@ -1,12 +1,12 @@
 'use client'
 import {FC, useContext, useEffect, useState} from "react";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
-import {CoinFromRestAPI, TopCoinFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI} from "@/lib/types";
 import {TokenCard} from "@/components/TokenCard";
 import {Button} from "@/components/ui/button";
 import Link from "next/link";
 import {Input} from "@/components/ui/input";
-import {CoinGetTopKey, coinRestApi} from "@/lib/rest";
+import {coinRestApi} from "@/lib/rest";
 import useSWR from "swr";
 
 
@@ -49,12 +49,7 @@ export default function Home() {
     const [sort, setSort] = useState<"created" | "marketCap" | "tvl" | "price">("created")
     const [order, setOrder] = useState<"asc" | "desc">("desc")
     const [tokens, setTokens] = useState<CoinFromRestAPI[]>([]);
-    const currentSuiPrice = useContext(CurrentSuiPriceContext)
 
-    const {data: topTokens, error: fetchTopTokensError} = useSWR<TopCoinFromRestAPI, any, CoinGetTopKey>({
-        appConfig,
-        path: "getTop"
-    }, coinRestApi.getTop, {refreshInterval: 5000});
     useEffect(() => {
         const fetchTokens = async () => {
             const t = await coinRestApi.search({appConfig, term, sort, order})

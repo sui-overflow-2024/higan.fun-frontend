@@ -12,6 +12,7 @@ type CreatorAddressChipProps = {
     avatarImageUrl?: string;
     variant?: "small" | "default" | "large";
     isCreator?: boolean;
+    isBondingCurve?: boolean;
 }
 
 const avatarVariants = {
@@ -38,7 +39,6 @@ const avatarVariants = {
         linkClass: "flex items-center space-x-1",
         textClass: "font-mono px-2 py-1 rounded text-md hover:underline",
         text: (address: string) => address.slice(0, 6) + "..." + address.slice(-4)
-
     }
 
 }
@@ -48,6 +48,7 @@ export const CreatorAddressChip: FC<CreatorAddressChipProps> = ({
                                                                     avatarImageUrl,
                                                                     variant = "default",
                                                                     isCreator = false,
+                                                                    isBondingCurve = false
                                                                 }) => {
     const config = avatarVariants[variant]
     let avatar = <Jazzicon diameter={config.jazziconDiam} seed={jsNumberForAddress(address)}/>
@@ -56,12 +57,15 @@ export const CreatorAddressChip: FC<CreatorAddressChipProps> = ({
         avatar = <Image src={avatarImageUrl} alt={"avatar"} className={config.avatarClass}/>
 
     }
+    let suffix = ""
+    if (isCreator) suffix = "(dev)"
+    if (isBondingCurve) suffix = "(bonding curve)"
 
     return <Link href={`/profile/${address}`} className={config.linkClass}>
         {showAvatar && avatar}
         <span className={config.textClass}
               style={{backgroundColor: addressToBackgroundColor(address)}}>
-                {config.text(address)} {isCreator && "(dev)"}
+                {config.text(address)} {suffix}
             </span>
     </Link>
 }
