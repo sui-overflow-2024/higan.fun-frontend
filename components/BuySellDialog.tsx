@@ -14,6 +14,8 @@ import {customSuiHooks} from "@/lib/sui";
 import {useTransactionExecution} from "@/hooks/useTransactionexecution";
 import {mutate} from "swr";
 import {AppConfig} from "@/lib/config";
+import {useToast} from "@/components/ui/use-toast";
+import { number } from "yup";
 
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
@@ -206,7 +208,8 @@ const PriceCalculator: React.FC<{
     mode: "buy" | "sell",
     coinType: string,
     bondingCurveId: string,
-    userBalance: number
+    userBalance: number,
+    userSuiBalance: number,
 }> = ({
           suiClient,
           sender,
@@ -215,6 +218,7 @@ const PriceCalculator: React.FC<{
           coinType,
           bondingCurveId,
           userBalance,
+          userSuiBalance
       }) => {
 
     const [price, setPrice] = useState<number>(0)
@@ -250,6 +254,8 @@ const PriceCalculator: React.FC<{
     if (priceError) return (<div>Error fetching price {priceError.message}</div>)
 
     return (<div>
+        {mode === "buy" && sender && userSuiBalance < price && <div className="text-red-500 text-xs mt-1">Insufficient balance, you have {getValueWithDecimals(userSuiBalance || 0, 9, 4)} SUI</div>}
+
         <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>
         <div className={"flex space-x-2 justify-center"}>
             <img src={"..//sui-sea.svg"} alt={"Sui Logo"} width={20} height={20}/>
@@ -268,7 +274,9 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
     const executeTranscation = useTransactionExecution()
     const [mode, setMode] = useState<"buy" | "sell">("buy")
     const [userBalance, setUserBalance] = useState(0)
+    const [userSuiBalance, setUserSuiBalance] = useState(0)
     const [baseTokenCoins, setBaseTokenCoins] = useState<CoinStruct[]>([])
+    const {toast} = useToast()
     const {register, handleSubmit, watch, formState: {errors,}, reset} = useForm<{
         amount: number
     }>({
@@ -298,8 +306,12 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
                 owner: currentAccount?.address || "",
                 coinType: getCoinTypePath(token),
             })
+            const suiBalance = await suiClient.getBalance({
+                owner: currentAccount?.address || "",
+            });
+            setUserSuiBalance(parseInt(suiBalance.totalBalance || "0"));
             console.log("balance", balance)
-            setUserBalance(parseInt(balance.totalBalance || "0"))
+            setUserBalance(parseInt(balance.totalBalance))
             console.log("userBalance", userBalance)
 
             console.log()
@@ -312,10 +324,32 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
             setBaseTokenCoins(coins)
         }
         fetchBalance()
-    }, [token, currentAccount?.address, suiClient, amount, userBalance, currentAccount])
+    }, [token, currentAccount?.address, suiClient, amount, userBalance, userSuiBalance, currentAccount])
 
     const submit = async (data: { amount: number }) => {
         console.log(`${mode}ing ${data.amount} of the token now`)
+
+        const price = await customSuiHooks.getCurrentCoinPriceInSui({
+            appConfig,
+            suiClient,
+            sender: currentAccount?.address || appConfig.fallbackDevInspectAddress,
+            coinType: getCoinTypePath(token),
+            bondingCurveId: token.bondingCurveId,
+            amount,
+            mode
+        })
+
+        if (mode === "buy" && userSuiBalance < price) {
+            toast({
+                title: "Insufficient Sui balance",
+                duration: 3000,
+                variant: "destructive",
+                description: "Insufficient Sui balance",
+            });
+
+            return
+        }
+
         const txb = mode === "buy"
             ? generateBuyPtb(appConfig, token, amount)
             : generateSellPtb(appConfig, token, baseTokenCoins, amount);
@@ -416,6 +450,7 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
                                                      sender={currentAccount?.address || ""} mode={mode}
                                                      bondingCurveId={token.bondingCurveId}
                                                      userBalance={userBalance}
+                                                     userSuiBalance={userSuiBalance}
                                                      suiClient={suiClient}/>
                                 </div>
                                 {currentAccount?.address
