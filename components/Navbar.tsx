@@ -4,7 +4,7 @@ import {Button} from "@/components/ui/button";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import {usePathname} from "next/navigation";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
-import HiganFunLogo from "@/public/higan-fun-logo.svg";
+import HiganFunLogoText from "@/public/higan-fun-logo-text.svg";
 import Image from "next/image";
 
 function NetworkSelector() {
@@ -41,7 +41,9 @@ export default function Navbar() {
             <div className="container mx-auto">
                 <div className="flex items-center h-16">
                     <div className="flex items-center gap-2">
-                        <Image width={24} height={24} src={HiganFunLogo} alt={"logo"} className={"w-8 h-8"}/>
+                        <Link href="/" className={"flex items-center"}>
+                            <Image width={24} height={24} src={HiganFunLogoText} alt={"logo"} className={"w-36 h-8"}/>
+                        </Link>
                         <Link href="/">
                             <Button
                                 className={pathname === "/" ? "text-primary underline" : "text-white"}

@@ -1,10 +1,5 @@
 "use client";
 import React, {useContext, useState} from "react";
-import xLogo from "@/public/x.svg";
-import discordLogo from "@/public/discord.svg";
-import telegramLogo from "@/public/telegram.svg";
-import webLogo from "@/public/web.svg";
-import Image from "next/image";
 import {useForm} from 'react-hook-form';
 import {useToast} from "@/components/ui/use-toast";
 import {ConnectButton, useAccounts, useSuiClientQuery} from "@mysten/dapp-kit";
@@ -205,23 +200,26 @@ const CreateCoinForm = () => {
                         />
                     )}
                 </div>
-                <div className=" flex gap-5 items-center">
-                    <label htmlFor="website" className="block text-[#48d7ff]">
-                        Website URL
-                    </label>
-                    <Image src={webLogo} alt="web" className=" size-6 "/>
+                <div>
+                    <div className={"flex-col"}>
+                        <label htmlFor="website" className="block text-[#48d7ff]">
+                            Website URL
+                        </label>
+                        {/*<Image src={webLogo} alt="web" className=" size-6 "/>*/}
+                    </div>
                     <Input
+                        // Icon={webLogo}
                         type="text"
                         {...register("websiteUrl")}
                         placeholder="Website"
                     />
                     <ErrorSpan name="websiteUrl"/>
                 </div>
-                <div className=" flex gap-5 items-center">
+                <div>
                     <label htmlFor="twitterUrl" className="block text-[#48d7ff]">
                         X URL
                     </label>
-                    <Image src={xLogo} alt="X" className=" size-6 "/>
+                    {/*<Image src={xLogo} alt="X" className=" size-6 "/>*/}
                     <Input
                         type="text"
                         {...register("twitterUrl")}
@@ -229,11 +227,11 @@ const CreateCoinForm = () => {
                     />
                     <ErrorSpan name="twitterUrl"/>
                 </div>
-                <div className=" flex gap-5 items-center">
+                <div>
                     <label htmlFor="telegramUrl" className="block text-[#48d7ff]">
                         Telegram URL
                     </label>
-                    <Image src={telegramLogo} alt="telegram" className="bg-sea color-sea size-6 "/>
+                    {/*<Image src={telegramLogo} alt="telegram" className="bg-sea color-sea size-6 "/>*/}
                     <Input
                         type="text"
                         {...register("telegramUrl")}
@@ -242,11 +240,11 @@ const CreateCoinForm = () => {
                     <ErrorSpan name="telegramUrl"/>
                 </div>
 
-                <div className=" flex gap-5 items-center">
+                <div>
                     <label htmlFor="discordUrl" className="block text-[#48d7ff]">
                         Discord Server URL
                     </label>
-                    <Image src={discordLogo} alt="discord" className=" size-6 "/>
+                    {/*<Image src={discordLogo} alt="discord" className=" size-6 "/>*/}
                     <Input
                         type="text"
                         {...register("discordUrl")}

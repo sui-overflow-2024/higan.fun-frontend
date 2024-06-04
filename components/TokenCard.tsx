@@ -29,7 +29,7 @@ export const TokenCard = ({token}: { token: CoinFromRestAPI }) => {
                             Market Cap: {suiToUsdLocaleString(token.suiReserve, currentSuiPrice)}
                         </p>
                         <p className="text-sm flex items-centerhttps://rpc.ankr.com/sui_testnet space-x-1.5">
-                            <span className="muted-sm">Created by:</span>
+                            <span className="muted-sm line-clamp-1">Created by:</span>
                             <CreatorAddressChip address={token.creator} variant={"small"} showAvatar/>
                         </p>
                         <div className="h-18">

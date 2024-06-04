@@ -62,7 +62,7 @@ export default function RootLayout({
                             </QueryClientProvider>
                             <Toaster/>
                         </CurrentSuiPriceProvider>
-                    </AppConfigContext.Provider> : "How dis happen? Refresh the page to force loading as client."}
+                    </AppConfigContext.Provider> : <></>}
             </ThemeProvider>
         </StrictMode>
         </body>
