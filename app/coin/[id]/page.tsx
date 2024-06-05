@@ -80,7 +80,7 @@ const ClampedDescription = ({text}: { text: string }) => {
 
 const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, token}) => {
     const currentSuiPrice = useContextSelector(CurrentSuiPriceContext, v => v);
-    
+
     if (!tokenMetrics) return
     let {tokenPrice} = tokenMetrics;
     let marketCap = suiToUsdLocaleString(tokenMetrics?.suiBalance || 0, currentSuiPrice);
@@ -308,7 +308,9 @@ export default function Drilldown() {
     );
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
-    if (!token) return (<div>Loading token...</div>)
+
+    // probably token metrics should be part of the token
+    if (!token || !tokenMetrics) return (<div>Loading token...</div>)
 
 
     return (
@@ -342,7 +344,7 @@ export default function Drilldown() {
 
 
                     <aside className="space-y-4">
-                        <BuySellDialog token={token} suiClient={suiContext.client}/>
+                        <BuySellDialog token={token} tokenMetrics={tokenMetrics} suiClient={suiContext.client}/>
                         <CoinDetails tokenMetrics={tokenMetrics} token={token}/>
                         <TokenHolders token={token} tokenMetrics={tokenMetrics}/>
                     </aside>

@@ -10,9 +10,9 @@ import {ConnectButton, useCurrentAccount} from "@mysten/dapp-kit";
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
 import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 import {useForm} from "react-hook-form";
-import {customSuiHooks} from "@/lib/sui";
+import {customSuiHooks, TokenMetric} from "@/lib/sui";
 import {useTransactionExecution} from "@/hooks/useTransactionexecution";
-import {mutate} from "swr";
+import useSWR, {mutate} from "swr";
 import {useToast} from "@/components/ui/use-toast";
 import {useContextSelector} from "use-context-selector";
 
@@ -200,104 +200,23 @@ export const getSellCoinPriceTxb = (managerContractPackageId: string, managerCon
 }
 
 
-const PriceCalculator: React.FC<{
-    suiClient: SuiClient,
-    sender: string,
-    amount: number,
-    mode: "buy" | "sell",
-    coinType: string,
-    bondingCurveId: string,
-    userBalance: number,
-    userSuiBalance: number,
-}> = ({
-          suiClient,
-          sender,
-          amount,
-          mode,
-          coinType,
-          bondingCurveId,
-          userSuiBalance
-      }) => {
-
-    const [price, setPrice] = useState<number>(0)
-    const [priceError, setPriceError] = useState<Error | null>(null)
-    const [isLoading, setIsLoading] = useState<boolean>(true)
-    const {
-        managerContractPackageId,
-        managerContractModuleName,
-        fallbackDevInspectAddress
-    } = useContextSelector(AppConfigContext, (v) => ({
-        fallbackDevInspectAddress: v.fallbackDevInspectAddress,
-        managerContractPackageId: v.managerContractPackageId,
-        managerContractModuleName: v.managerContractModuleName
-    }));
-
-    useEffect(() => {
-        const fetchPrice = async () => {
-            try {
-                if (isNaN(amount)) {
-                    console.log("amount is not a number")
-                    return
-                }
-                console.log("fetching price for", suiClient, coinType, bondingCurveId, amount, mode)
-                const price = await customSuiHooks.getCurrentCoinPriceInSui({
-                    managerContractPackageId,
-                    managerContractModuleName,
-                    suiClient,
-                    sender: sender || fallbackDevInspectAddress,
-                    coinType,
-                    bondingCurveId: bondingCurveId,
-                    amount,
-                    mode
-                })
-                setPrice(price)
-            } catch (e: any) {
-                setPriceError(e)
-            }
-            setIsLoading(false)
-        }
-        fetchPrice()
-    }, [suiClient, sender, coinType, bondingCurveId, amount, mode, managerContractPackageId, managerContractModuleName, fallbackDevInspectAddress])
-
-    if (priceError) return (<div>Error fetching price {priceError.message}</div>)
-
-    return (<div>
-        {mode === "buy" && sender && userSuiBalance < price &&
-            <div className="text-red-500 text-xs mt-1">Insufficient balance, you
-                have {getValueWithDecimals(userSuiBalance || 0, 9, 4)} SUI</div>}
-
-        <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>
-        <div className={"flex space-x-2 justify-center"}>
-            <img src={"..//sui-sea.svg"} alt={"Sui Logo"} width={20} height={20}/>
-            <div className={"text-xl"}>
-                {isLoading ? "Loading..." : `${getValueWithDecimals(price || 0, 9, 4)} SUI`}
-            </div>
-        </div>
-    </div>)
-}
-
 export const BuySellDialog: React.FC<{
     token: CoinFromRestAPI,
+    tokenMetrics: TokenMetric,
     suiClient: SuiClient
-}> = ({token, suiClient}) => {
-    const {
-        axios,
-        fallbackDevInspectAddress,
-        managerContractPackageId,
-        managerContractModuleName
-    } = useContextSelector(AppConfigContext, (v) => ({
-        axios: v.axios,
-        fallbackDevInspectAddress: v.fallbackDevInspectAddress,
-        managerContractPackageId: v.managerContractPackageId,
-        managerContractModuleName: v.managerContractModuleName,
-    }));
-
+}> = ({token, tokenMetrics, suiClient}) => {
+    const axios = useContextSelector(AppConfigContext, (v) => v.axios);
+    const fallbackDevInspectAddress = useContextSelector(AppConfigContext, (v) => v.fallbackDevInspectAddress);
+    const managerContractPackageId = useContextSelector(AppConfigContext, (v) => v.managerContractPackageId);
+    const managerContractModuleName = useContextSelector(AppConfigContext, (v) => v.managerContractModuleName);
+    const socket = useContextSelector(AppConfigContext, (v) => v.socket);
     const currentAccount = useCurrentAccount()
     const executeTranscation = useTransactionExecution()
     const [mode, setMode] = useState<"buy" | "sell">("buy")
     const [userBalance, setUserBalance] = useState(0)
     const [userSuiBalance, setUserSuiBalance] = useState(0)
     const [baseTokenCoins, setBaseTokenCoins] = useState<CoinStruct[]>([])
+    const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const {toast} = useToast()
     const {register, handleSubmit, watch, formState: {errors,}, reset} = useForm<{
         amount: number
@@ -309,7 +228,84 @@ export const BuySellDialog: React.FC<{
     const multiplier = (token?.decimals || 0) > 0 ? Math.pow(10, token?.decimals || 0) : 1
     const amount = watch("amount") * multiplier
 
-    
+    useEffect(() => {
+        const fetchBalance = async () => {
+            if (!token) return
+            if (!currentAccount?.address) return
+            if (!suiClient) return
+
+            console.log("fetching balance for", currentAccount?.address, "token", getCoinTypePath(token))
+            const balance = await suiClient.getBalance({
+                owner: currentAccount.address,
+                coinType: getCoinTypePath(token),
+            })
+            const suiBalance = await suiClient.getBalance({
+                owner: currentAccount.address,
+            });
+            setUserSuiBalance(parseInt(suiBalance.totalBalance || "0"));
+            console.log("balance", balance)
+            setUserBalance(parseInt(balance.totalBalance))
+            console.log("userBalance", userBalance)
+
+            const coins = await getAllUserCoins({
+                suiClient: suiClient,
+                type: getCoinTypePath(token),
+                address: currentAccount.address,
+            });
+            console.log("coins", coins)
+            setBaseTokenCoins(coins)
+        }
+        fetchBalance()
+    }, [token, currentAccount?.address, suiClient, amount, userBalance, userSuiBalance, currentAccount])
+
+    const {data: coinPrice, isLoading: isLoadingCoinPrice, error, mutate: refetchCoinPrice} = useSWR({
+        managerContractPackageId,
+        managerContractModuleName,
+        suiClient,
+        sender: currentAccount?.address || fallbackDevInspectAddress,
+        coinType: getCoinTypePath(token),
+        bondingCurveId: token.bondingCurveId,
+        amount,
+        mode
+    }, customSuiHooks.getCurrentCoinPriceInSui, {refreshInterval: 5000})
+
+    useEffect(() => {
+        socket.on('tradeCreated', async (data) => {
+            if (data.coin.bondingCurveId === token.bondingCurveId) {
+                console.log("trade impacting this coin created, refetching the coin price")
+                await refetchCoinPrice()
+            }
+        });
+    }, [refetchCoinPrice, socket, token.bondingCurveId]);
+
+    // Set error message on specific state updates
+    useEffect(() => {
+        if (!coinPrice) return
+
+        if (mode === "sell" && userBalance < amount) {
+            setErrorMessage("You don't have enough tokens to sell");
+            return
+        }
+
+        if (mode == "sell" && tokenMetrics.totalSupply < amount) {
+            setErrorMessage("Not enough liquidity");
+            return
+        }
+
+        if (mode === "buy" && currentAccount && userSuiBalance < coinPrice) {
+            setErrorMessage("Not enough balance to buy");
+            return
+        }
+
+        if (isNaN(amount)) {
+            setErrorMessage("Amount must be higher than 0")
+            return
+        }
+
+        setErrorMessage(null)
+    }, [tokenMetrics.totalSupply, mode, userBalance, userSuiBalance, amount, coinPrice, currentAccount])
+
+
     const submit = async (data: { amount: number }) => {
         console.log(`${mode}ing ${data.amount} of the token now`)
 
@@ -405,7 +401,6 @@ export const BuySellDialog: React.FC<{
                                             backgroundColor: "hsl(210, 88%, 15%)",
                                             width: "100%",
                                         }}
-                                        {...register("amount")}
                                     />
                                     <div className={"text-2xl text-muted-foreground"}>
                                         {token.symbol}
@@ -431,23 +426,28 @@ export const BuySellDialog: React.FC<{
                         <div className={"flex justify-center"}>
                             <div className={"space-y-2"}>
                                 <div className={"text-center"}>
-                                    <PriceCalculator coinType={getCoinTypePath(token)} amount={amount}
-                                                     sender={currentAccount?.address || ""} mode={mode}
-                                                     bondingCurveId={token.bondingCurveId}
-                                                     userBalance={userBalance}
-                                                     userSuiBalance={userSuiBalance}
-                                                     suiClient={suiClient}/>
+                                    {errorMessage && <div className="text-red-500 text-ms mt-1">{errorMessage}</div>}
+                                    {!errorMessage && <div>
+                                        <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>
+                                        <div className={"flex space-x-2 justify-center"}>
+                                            <img src={"..//sui-sea.svg"} alt={"Sui Logo"} width={20} height={20}/>
+                                            <div className={"text-xl"}>
+                                                {isLoadingCoinPrice ? "Fetching price..." : `${getValueWithDecimals(coinPrice || 0, 9, 4)} SUI`}
+                                            </div>
+                                        </div>
+                                    </div>}
                                 </div>
                                 {currentAccount?.address
                                     ? (<Button
-                                        disabled={token.status !== CoinStatus.OPEN}
+                                        disabled={token.status !== CoinStatus.OPEN || errorMessage !== null}
+                                        //  disabled={token.status !== CoinStatus.OPEN || buttonTradeDisableStatus}
                                         className={"w-56"}
                                         type={"submit"}>
                                         {mode === "buy" ? "Buy" : "Sell"}
+
                                     </Button>)
                                     : <ConnectButton connectText={`Connect wallet to buy ${token.symbol}`}/>
                                 }
-
                             </div>
                         </div>
                     </div>
