@@ -29,7 +29,7 @@ export type CreateCoinFormData = {
 const schema = yup.object().shape({
     name: yup.string().required('Name is required.').matches(/^[A-Za-z0-9 ]+$/i, 'Name cannot contain numbers.'),
     symbol: yup.string().required('Ticker is required.'),
-    description: yup.string().optional().max(1000, 'Description cannot be more than 400 characters.').default(""),
+    description: yup.string().optional().max(1000, 'Description cannot be more than 1000 characters.').default(""),
     target: yup.number().required('Target is required.').min(1_000_000_000),
     iconUrl: yup.string().required('Icon URL is required.'), //Not technically required, but in the right spirit
     websiteUrl: yup.string().optional().default(""),

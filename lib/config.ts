@@ -33,7 +33,7 @@ export const defaultAppConfig: AppConfig = {
     managerContractPackageId: process.env.NEXT_PUBLIC_MANAGER_CONTRACT_PACKAGE_ID || "",
     managerContractModuleName: process.env.NEXT_PUBLIC_MANAGER_CONTRACT_MODULE_NAME || "manager_contract",
     managerContractConfigId: process.env.NEXT_PUBLIC_MANAGER_CONTRACT_CONFIG_ID || "",
-    socket: io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:3000"),
+    socket: io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || process.env.NEXT_PUBLIC_REST_API_URL || "http://localhost:3000"),
     shortInterval: 5000,
     mediumInterval: 10000,
     longInterval: 30000
