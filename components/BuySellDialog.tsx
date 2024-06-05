@@ -15,6 +15,8 @@ import {useTransactionExecution} from "@/hooks/useTransactionexecution";
 import {mutate} from "swr";
 import {AppConfig} from "@/lib/config";
 import {useToast} from "@/components/ui/use-toast";
+import useSWR from "swr";
+
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
 const getAllUserCoins = async ({
@@ -273,7 +275,6 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, tokenMetrics: Tok
     const [coinPriceInSui, setCoinPriceInSui] = useState<number>(0)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [disableTradeButton, setDisableTradeButton] = useState<boolean>(false)
-    const [isLoadingCoinPrice, setLoadingCoinPrice] = useState<boolean>(false)
     const {toast} = useToast()
     const {register, handleSubmit, watch, formState: {errors,}, reset} = useForm<{
         amount: number
@@ -322,40 +323,33 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, tokenMetrics: Tok
         }
         fetchBalance()
     }, [token, currentAccount?.address, suiClient, amount, userBalance, userSuiBalance, currentAccount])
+    const {data: coinPrice, isLoading: isLoadingCoinPrice, error} = useSWR({
+        appConfig,
+        suiClient,
+        sender: currentAccount?.address || appConfig.fallbackDevInspectAddress,
+        coinType: getCoinTypePath(token),
+        bondingCurveId: token.bondingCurveId,
+        amount,
+        mode
+    }, customSuiHooks.getCurrentCoinPriceInSui, {refreshInterval: 5000})
 
     useEffect(() => {
-        if (mode === "sell" && userBalance < amount){
+        if (!coinPrice) return
+
+        if (mode === "sell" && userBalance < amount) {
             setErrorMessage("You don't have enough tokens to sell");
             return
         }
 
-        if(mode == "sell" && tokenMetrics.totalSupply < amount){
+        if (mode == "sell" && tokenMetrics.totalSupply < amount) {
             setErrorMessage("Not enough liquidity");
             return
         }
 
-        const fetchCoinPriceInSui = async () => {
-            const price = await customSuiHooks.getCurrentCoinPriceInSui({
-                appConfig,
-                suiClient,
-                sender: currentAccount?.address || appConfig.fallbackDevInspectAddress,
-                coinType: getCoinTypePath(token),
-                bondingCurveId: token.bondingCurveId,
-                amount,
-                mode
-            })
-
-            if (mode==="buy" && currentAccount && userSuiBalance < price) {
-                setErrorMessage("Not enough balance to buy");
-                return
-            }
-
-            setErrorMessage(null)
-            setCoinPriceInSui(price)
-            setLoadingCoinPrice(false)
+        if (mode === "buy" && currentAccount && userSuiBalance < coinPrice) {
+            setErrorMessage("Not enough balance to buy");
+            return
         }
-        fetchCoinPriceInSui();
-        setLoadingCoinPrice(true)
 
         if (isNaN(amount)) {
             setErrorMessage("Amount must be higher than 0")
@@ -363,7 +357,49 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, tokenMetrics: Tok
         }
 
         setErrorMessage(null)
-    }, [amount, appConfig, currentAccount, mode, suiClient, token, tokenMetrics.totalSupply, userBalance, userSuiBalance])
+    }, [tokenMetrics.totalSupply, mode, userBalance, userSuiBalance, amount])
+
+    // useEffect(() => {
+    //     if (mode === "sell" && userBalance < amount){
+    //         setErrorMessage("You don't have enough tokens to sell");
+    //         return
+    //     }
+
+    //     if(mode == "sell" && tokenMetrics.totalSupply < amount){
+    //         setErrorMessage("Not enough liquidity");
+    //         return
+    //     }
+
+    //     const fetchCoinPriceInSui = async () => {
+    //         const price = await customSuiHooks.getCurrentCoinPriceInSui({
+    //             appConfig,
+    //             suiClient,
+    //             sender: currentAccount?.address || appConfig.fallbackDevInspectAddress,
+    //             coinType: getCoinTypePath(token),
+    //             bondingCurveId: token.bondingCurveId,
+    //             amount,
+    //             mode
+    //         })
+
+    //         if (mode==="buy" && currentAccount && userSuiBalance < price) {
+    //             setErrorMessage("Not enough balance to buy");
+    //             return
+    //         }
+
+    //         setErrorMessage(null)
+    //         setCoinPriceInSui(price)
+    //         setLoadingCoinPrice(false)
+    //     }
+    //     fetchCoinPriceInSui();
+    //     setLoadingCoinPrice(true)
+
+    //     if (isNaN(amount)) {
+    //         setErrorMessage("Amount must be higher than 0")
+    //         return
+    //     }
+
+    //     setErrorMessage(null)
+    // }, [amount, appConfig, currentAccount, mode, suiClient, token, tokenMetrics.totalSupply, userBalance, userSuiBalance])
 
     const submit = async (data: { amount: number }) => {
         console.log(`${mode}ing ${data.amount} of the token now`)
@@ -492,7 +528,7 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, tokenMetrics: Tok
                                                      userSuiBalance={userSuiBalance}
                                                      suiClient={suiClient}
                                                      totalSupply={tokenMetrics.totalSupply}
-                                                     coinPriceInSui={coinPriceInSui}
+                                                     coinPriceInSui={coinPrice}
                                                      isLoading={isLoadingCoinPrice}
                                                      />}
                                 </div>
