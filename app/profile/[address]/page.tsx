@@ -1,7 +1,7 @@
 'use client'
 import {Button} from "@/components/ui/button";
-import {useCurrentAccount, useSuiClient, useSuiClientContext, useSuiClientQuery} from "@mysten/dapp-kit";
-import {FC, useContext, useEffect, useState} from "react";
+import {useSuiClient, useSuiClientContext, useSuiClientQuery} from "@mysten/dapp-kit";
+import {FC, useEffect, useState} from "react";
 import type {CoinBalance} from "@mysten/sui.js/client";
 import {copyTextToClipboard, extractPriceFromDevInspect, getValueWithDecimals, suiToUsdLocaleString} from "@/lib/utils";
 import Jazzicon, {jsNumberForAddress} from "react-jazzicon";
@@ -15,6 +15,7 @@ import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 import useSWR from "swr";
 import {CoinGetAllKey, CoinGetTvlKey, coinRestApi, GetTvlResponse} from "@/lib/rest";
 import {getTokenMetrics, TokenMetric, TokenMetricKey} from "@/lib/sui";
+import {useContextSelector} from "use-context-selector";
 
 interface CoinHeldRowProps {
     address: string;
@@ -27,15 +28,27 @@ const CoinsHeldRow: FC<CoinHeldRowProps> = ({address, coinBalance, coinFromRestA
 
     const ctx = useSuiClientContext();
     const suiClient = useSuiClient()
-    const appConfig = useContext(AppConfigContext)
+    const {
+        axios,
+        fallbackDevInspectAddress,
+        managerContractPackageId,
+        managerContractModuleName
+    } = useContextSelector(AppConfigContext, (v) => ({
+        axios: v.axios,
+        fallbackDevInspectAddress: v.fallbackDevInspectAddress,
+        managerContractPackageId: v.managerContractPackageId,
+        managerContractModuleName: v.managerContractModuleName
+    }));
+
     const [sellPrice, setSellPrice] = useState<number>(0)
-    const currentSuiPrice = useContext(CurrentSuiPriceContext)
+    const currentSuiPrice = useContextSelector(CurrentSuiPriceContext, v => v);
+
     const {data: metadata, isLoading, isError, error} = useSuiClientQuery('getCoinMetadata', {
         coinType: coinBalance.coinType,
     })
 
     const {data: tvl, error: errorTvl} = useSWR<GetTvlResponse, any, CoinGetTvlKey>({
-        appConfig,
+        axios,
         path: "getTvl24h",
         bondingCurveId: coinFromRestApi?.bondingCurveId,
     }, coinRestApi.getTvl24h)
@@ -44,14 +57,14 @@ const CoinsHeldRow: FC<CoinHeldRowProps> = ({address, coinBalance, coinFromRestA
             if (!coinFromRestApi) return
             const path = coinFromRestApi ? `${coinFromRestApi.packageId}::${coinFromRestApi.bondingCurveId}` : coinBalance.coinType.split("::").slice(0, 2).join("::")
             const price = await suiClient.devInspectTransactionBlock({
-                transactionBlock: getSellCoinPriceTxb(appConfig, coinBalance.coinType, coinFromRestApi?.bondingCurveId || "", parseInt(coinBalance.totalBalance)),
-                sender: address || appConfig.fallbackDevInspectAddress,
+                transactionBlock: getSellCoinPriceTxb(managerContractPackageId, managerContractModuleName, coinBalance.coinType, coinFromRestApi?.bondingCurveId || "", parseInt(coinBalance.totalBalance)),
+                sender: address || fallbackDevInspectAddress,
             })
             setSellPrice(extractPriceFromDevInspect(price))
         }
 
         fetchCurrentPrice()
-    }, [address, appConfig.fallbackDevInspectAddress, coinBalance.coinType, coinBalance.totalBalance, coinFromRestApi, suiClient])
+    }, [address, coinBalance.coinType, coinBalance.totalBalance, coinFromRestApi, fallbackDevInspectAddress, managerContractModuleName, managerContractPackageId, suiClient])
     console.log("tvl", tvl)
     // For now just hide missing metadata
     if (!metadata) return <></>
@@ -105,17 +118,14 @@ const CoinsHeld: FC<{ profileAddress: string }> = ({profileAddress}) => {
     const {data: coins, isLoading, isError, error} = useSuiClientQuery('getAllBalances', {
         owner: profileAddress,
     })
-    const appConfig = useContext(AppConfigContext)
-
+    const axios = useContextSelector(AppConfigContext, (v) => v.axios);
     const {data: coinsFromRestApi, error: errorFromRestApi} = useSWR<CoinFromRestAPI[], any, CoinGetAllKey>({
-        appConfig,
+        axios,
         packageIds: coins?.map(coin => coin.coinType.split("::")[0]) || [],
         path: "getAll",
     }, coinRestApi.getAll)
 
 
-    console.log("Coins from REST API", coinsFromRestApi)
-    console.log("Coins from Sui", coins)
     if (!coins || !coinsFromRestApi) return <>Loading coins</>
     if (isError) {
         return <div>Error: {((error || errorFromRestApi) as Error).message}</div>
@@ -135,9 +145,19 @@ const CoinsHeld: FC<{ profileAddress: string }> = ({profileAddress}) => {
 }
 
 const CoinsCreatedRow: FC<{ token: CoinFromRestAPI }> = ({token}) => {
-    const appConfig = useContext(AppConfigContext);
-    const {socket} = appConfig
-    const currentSuiPrice = useContext(CurrentSuiPriceContext)
+    const {
+        managerContractPackageId,
+        managerContractModuleName,
+        socket,
+        longInterval
+    } = useContextSelector(AppConfigContext, (v) => ({
+        socket: v.socket,
+        longInterval: v.longInterval,
+        managerContractPackageId: v.managerContractPackageId,
+        managerContractModuleName: v.managerContractModuleName,
+    }));
+
+    const currentSuiPrice = useContextSelector(CurrentSuiPriceContext, v => v);
     const client = useSuiClient()
     const {
         data: tokenMetrics,
@@ -146,21 +166,20 @@ const CoinsCreatedRow: FC<{ token: CoinFromRestAPI }> = ({token}) => {
         mutate: refetchTokenMetrics
     } = useSWR<TokenMetric, any, TokenMetricKey>(
         {
-            appConfig,
+            managerContractPackageId,
+            managerContractModuleName,
             client,
             sender: "0xbd81e46b4f6c750606445c10eccd486340ac168c9b34e4c4ab587fac447529f5",
             coin: token,
             path: "tokenMetrics",
-        }, getTokenMetrics, {refreshInterval: appConfig.longInterval});
+        }, getTokenMetrics, {refreshInterval: longInterval});
 
     useEffect(() => {
             socket.on('tradeCreated', async (data) => {
                 await refetchTokenMetrics()
             });
             return () => {
-                socket.off('connect');
-                socket.off('postCreated');
-                socket.off('disconnect');
+                socket.off('tradeCreated');
             };
         }, [refetchTokenMetrics, socket]
     );
@@ -225,10 +244,10 @@ const CoinsCreatedRow: FC<{ token: CoinFromRestAPI }> = ({token}) => {
 }
 const CoinsCreated: FC<{ profileAddress: string }> = ({profileAddress}) => {
 
-    const appConfig = useContext(AppConfigContext)
-    const account = useCurrentAccount()
+    const axios = useContextSelector(AppConfigContext, (v) => v.axios);
+
     const {data: coinsFromRestApi, error: errorFromRestApi} = useSWR<CoinFromRestAPI[], any, CoinGetAllKey>({
-        appConfig,
+        axios,
         creator: profileAddress,
         path: "getAll",
     }, coinRestApi.getAll)

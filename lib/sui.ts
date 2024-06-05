@@ -6,15 +6,14 @@ import {getCoinTypePath, getManagerFuncPath} from "@/lib/utils";
 import {CoinFromRestAPI} from "@/lib/types";
 import {TransactionBlock} from "@mysten/sui.js/transactions";
 
-import {AppConfig} from "@/lib/config";
-
 export type TokenMetric = {
     tokenPrice: number,
     suiBalance: number,
     totalSupply: number,
 }
 export type TokenMetricKey = {
-    appConfig: AppConfig,
+    managerContractPackageId: string,
+    managerContractModuleName: string,
     path: "tokenMetrics",
     client: SuiClient,
     sender: string,
@@ -22,7 +21,8 @@ export type TokenMetricKey = {
 }
 
 export type GetOneCoinPriceKey = {
-    appConfig: AppConfig,
+    managerContractPackageId: string,
+    managerContractModuleName: string,
     suiClient: SuiClient,
     sender: string,
     coinType: string,
@@ -37,7 +37,8 @@ type SuiSwrFetchers = {
 
 export const customSuiHooks: SuiSwrFetchers = {
     getCurrentCoinPriceInSui: async ({
-                                         appConfig,
+                                         managerContractPackageId,
+                                         managerContractModuleName,
                                          suiClient,
                                          sender,
                                          coinType,
@@ -46,7 +47,7 @@ export const customSuiHooks: SuiSwrFetchers = {
                                          mode,
                                      }) => {
         console.log(`get coin ${mode} price for type ${coinType}`, sender)
-        const txb = mode === "buy" ? getBuyCoinPriceTxb(appConfig, coinType, bondingCurveId, amount) : getSellCoinPriceTxb(appConfig, coinType, bondingCurveId, amount)
+        const txb = mode === "buy" ? getBuyCoinPriceTxb(managerContractPackageId, managerContractModuleName, coinType, bondingCurveId, amount) : getSellCoinPriceTxb(managerContractPackageId, managerContractModuleName, coinType, bondingCurveId, amount)
         txb.setSenderIfNotSet(sender)
 
         const res = await suiClient.devInspectTransactionBlock({
@@ -61,7 +62,8 @@ export const customSuiHooks: SuiSwrFetchers = {
 }
 
 export const getTokenMetrics: Fetcher<TokenMetric, TokenMetricKey> = async ({
-                                                                                appConfig,
+                                                                                managerContractPackageId,
+                                                                                managerContractModuleName,
                                                                                 client,
                                                                                 sender,
                                                                                 coin
@@ -73,7 +75,7 @@ export const getTokenMetrics: Fetcher<TokenMetric, TokenMetricKey> = async ({
 
     const txb = new TransactionBlock()
     txb.moveCall({
-        target: getManagerFuncPath(appConfig, "get_coin_buy_price") as `${string}::${string}::${string}`,
+        target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "get_coin_buy_price") as `${string}::${string}::${string}`,
         arguments: [
             txb.object(coin.bondingCurveId),
             txb.pure(Math.pow(10, coin.decimals)) // Functionally, the app handles everything in non-fractional units.
@@ -81,14 +83,14 @@ export const getTokenMetrics: Fetcher<TokenMetric, TokenMetricKey> = async ({
         typeArguments: [getCoinTypePath(coin)],
     });
     txb.moveCall({
-        target: getManagerFuncPath(appConfig, "get_sui_balance") as `${string}::${string}::${string}`,
+        target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "get_sui_balance") as `${string}::${string}::${string}`,
         arguments: [
             txb.object(coin.bondingCurveId),
         ],
         typeArguments: [getCoinTypePath(coin)],
     });
     txb.moveCall({
-        target: getManagerFuncPath(appConfig, "get_coin_total_supply") as `${string}::${string}::${string}`,
+        target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "get_coin_total_supply") as `${string}::${string}::${string}`,
         arguments: [
             txb.object(coin.bondingCurveId),
         ],

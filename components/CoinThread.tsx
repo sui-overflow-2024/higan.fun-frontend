@@ -1,5 +1,5 @@
 'use client'
-import React, {FC, useContext, useEffect} from 'react';
+import React, {FC, useEffect} from 'react';
 import MarkdownIt from 'markdown-it';
 import DOMPurify from 'dompurify';
 import {PostFromRestAPI} from "@/lib/types";
@@ -21,6 +21,7 @@ import {CoinGetPostsKey, coinRestApi, ThreadPostRequest} from "@/lib/rest";
 import {AppConfigContext} from "@/components/Contexts";
 import {formatDistanceToNow} from "date-fns";
 import useSWR, {KeyedMutator} from "swr";
+import {useContextSelector} from "use-context-selector";
 
 const SafeMarkdown = ({text}: { text: string }) => {
     const md = new MarkdownIt();
@@ -54,9 +55,9 @@ const NewPostTextbox: FC<{
     creator: string,
     bondingCurveId: string,
     refetchPosts: KeyedMutator<PostFromRestAPI[]>
-}> = ({creator, bondingCurveId, refetchPosts}) => {
+}> = ({creator, bondingCurveId}) => {
     const account = useCurrentAccount()
-    const appConfig = useContext(AppConfigContext)
+    const axios = useContextSelector(AppConfigContext, (v) => v.axios);
     const {register, handleSubmit, watch, reset} = useForm<{ text: string }>({
         defaultValues: {
             text: ""
@@ -83,7 +84,7 @@ const NewPostTextbox: FC<{
                         author: account.address
                     }
                     console.log("postData", postData)
-                    const thread = await coinRestApi.postThread({appConfig, post: postData})
+                    const thread = await coinRestApi.postThread({axios, post: postData})
                     console.log("threadResponse", thread)
                     reset({text: ""});
                     // await refetchPosts()
@@ -123,18 +124,20 @@ export const CoinThread: FC<{ bondingCurveId: string, creator: string }> = ({
                                                                                 creator,
                                                                                 bondingCurveId,
                                                                             }) => {
-    const appConfig = useContext(AppConfigContext);
-    const {socket} = appConfig
-
+    const {axios, socket, longInterval} = useContextSelector(AppConfigContext, (v) => ({
+        axios: v.axios,
+        socket: v.socket,
+        longInterval: v.longInterval
+    }));
     const {
         data: posts,
         error: postsError,
         mutate: refetchPosts
     } = useSWR<PostFromRestAPI[], any, CoinGetPostsKey>({
-        appConfig,
+        axios,
         bondingCurveId,
         path: "getPosts"
-    }, coinRestApi.getPosts, {refreshInterval: 30000});
+    }, coinRestApi.getPosts, {refreshInterval: longInterval});
 
     useEffect(() => {
             console.log('posts in ws', posts)
@@ -159,7 +162,7 @@ export const CoinThread: FC<{ bondingCurveId: string, creator: string }> = ({
                 socket.off('postCreated');
                 socket.off('disconnect');
             };
-        }, [posts, refetchPosts]
+        }, [posts, refetchPosts, socket]
     );
 
     if (!posts) {

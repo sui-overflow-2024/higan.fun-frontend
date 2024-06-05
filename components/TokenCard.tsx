@@ -1,14 +1,15 @@
-'use client';
 import {CoinFromRestAPI} from "@/lib/types";
 import {Card} from "@/components/ui/card";
 import Link from "next/link";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
-import {useContext} from "react";
+import {memo} from "react";
 import {CurrentSuiPriceContext} from "@/components/Contexts";
 import {suiToUsdLocaleString} from "@/lib/utils";
+import {useContextSelector} from "use-context-selector";
 
-export const TokenCard = ({token}: { token: CoinFromRestAPI }) => {
-    const currentSuiPrice = useContext(CurrentSuiPriceContext)
+const TokenCardComponent = ({token}: { token: CoinFromRestAPI }) => {
+
+    const currentSuiPrice = useContextSelector(CurrentSuiPriceContext, v => v);
     return (
         <Link href={`/coin/${token.bondingCurveId}`}>
             <Card className="p-4  flex flex-col hover:bg-card-hover hover:border-card-hover-border">
@@ -43,3 +44,5 @@ export const TokenCard = ({token}: { token: CoinFromRestAPI }) => {
         </Link>
     );
 };
+
+export const TokenCard = memo(TokenCardComponent)

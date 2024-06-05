@@ -2,8 +2,7 @@ import {Post} from "@/lib/prisma/client";
 import {CoinFromRestAPI, HoldersFromRestAPI, PostFromRestAPI, TopCoinFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {Fetcher} from "swr";
 import {CreateCoinFormData} from "@/components/CreateCoinForm";
-import axios from "axios";
-import {AppConfig} from "@/lib/config";
+import axios, {Axios} from "axios";
 
 export type ThreadPostRequest = {
     coinId: string,
@@ -12,21 +11,21 @@ export type ThreadPostRequest = {
     author: string,
 }
 export type CoinGetAllKey = {
-    appConfig: AppConfig,
+    axios: Axios,
     packageIds?: string[],
     creator?: string,
     limit?: number,
     order?: "asc" | "desc",
     path: "getAll"
 }
-export type CoinGetPostsKey = { appConfig: AppConfig, bondingCurveId: string, path: "getPosts" }
-export type CoinGetTopKey = { appConfig: AppConfig, path: "getTop" }
-export type CoinGetTradesKey = { appConfig: AppConfig, bondingCurveId: string, path: "getTrades" }
-export type CoinGetHoldersByKey = { appConfig: AppConfig, bondingCurveId: string, path: "getHolders" }
-export type CoinGetByIdKey = { appConfig: AppConfig, bondingCurveId: string, path: "getById" }
-export type CoinSearchKey = { appConfig: AppConfig, term: string, sort: string, order: string }
-export type CoinGetTvlKey = { appConfig: AppConfig, bondingCurveId: string, path: "getTvl24h" }
-export type TradesKey = { appConfig: AppConfig, limit?: number, order?: "asc" | "desc", path: "getTrades" }
+export type CoinGetPostsKey = { axios: Axios, bondingCurveId: string, path: "getPosts" }
+export type CoinGetTopKey = { axios: Axios, path: "getTop" }
+export type CoinGetTradesKey = { axios: Axios, bondingCurveId: string, path: "getTrades" }
+export type CoinGetHoldersByKey = { axios: Axios, bondingCurveId: string, path: "getHolders" }
+export type CoinGetByIdKey = { axios: Axios, bondingCurveId: string, path: "getById" }
+export type CoinSearchKey = { axios: Axios, term: string, sort: string, order: string }
+export type CoinGetTvlKey = { axios: Axios, bondingCurveId: string, path: "getTvl24h" }
+export type TradesKey = { axios: Axios, limit?: number, order?: "asc" | "desc", path: "getTrades" }
 //TODO, prisma lets you do custom fields, let's clean this up and build it into get /:id later
 export type GetTvlResponse = { bondingCurveId: string, tvl: number }
 type CoinRestApi = {
@@ -37,15 +36,15 @@ type CoinRestApi = {
     getCoinTrades: Fetcher<TradeFromRestAPI[], CoinGetTradesKey>,
     getTrades: Fetcher<TradeFromRestAPI[], TradesKey>,
     getHolders: Fetcher<HoldersFromRestAPI[], CoinGetHoldersByKey>,
-    postCoin: Fetcher<CoinFromRestAPI, { appConfig: AppConfig, token: CreateCoinFormData }>
-    postThread: Fetcher<Post, { appConfig: AppConfig, post: ThreadPostRequest }>
+    postCoin: Fetcher<CoinFromRestAPI, { axios: Axios, token: CreateCoinFormData }>
+    postThread: Fetcher<Post, { axios: Axios, post: ThreadPostRequest }>
     getPosts: Fetcher<PostFromRestAPI[], CoinGetPostsKey>,
     getTvl24h: Fetcher<GetTvlResponse, CoinGetTvlKey>,
     getSuiPrice: Fetcher<number, string>,
 }
 
 export const coinRestApi: CoinRestApi = {
-    getAll: async ({appConfig, packageIds, creator, limit = 0, order = "desc"}) => {
+    getAll: async ({axios, packageIds, creator, limit = 0, order = "desc"}) => {
         const params: {
             packageIds?: string[],
             creator?: string,
@@ -59,61 +58,61 @@ export const coinRestApi: CoinRestApi = {
         if (creator) {
             params['creator'] = creator;
         }
-        const res = await appConfig.axios.get<CoinFromRestAPI[]>('/coins', {params});
+        const res = await axios.get<CoinFromRestAPI[]>('/coins', {params});
         // console.log("Retrieved the following coin from the REST API", res.data);
         return res.data;
     },
-    search: async ({appConfig, term, sort, order}): Promise<CoinFromRestAPI[]> => {
-        const res = await appConfig.axios.get<CoinFromRestAPI[]>(`/coins/search?term=${term}&order=${order}&sort=${sort}`)
+    search: async ({axios, term, sort, order}): Promise<CoinFromRestAPI[]> => {
+        const res = await axios.get<CoinFromRestAPI[]>(`/coins/search?term=${term}&order=${order}&sort=${sort}`)
         // console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
-    getTop: async ({appConfig}): Promise<TopCoinFromRestAPI> => {
-        const res = await appConfig.axios.get<TopCoinFromRestAPI>(`/coins/top`)
+    getTop: async ({axios}): Promise<TopCoinFromRestAPI> => {
+        const res = await axios.get<TopCoinFromRestAPI>(`/coins/top`)
         // console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
-    getById: async ({appConfig, bondingCurveId}) => {
-        const res = await appConfig.axios.get<CoinFromRestAPI>(`/coins/${bondingCurveId}`)
+    getById: async ({axios, bondingCurveId}) => {
+        const res = await axios.get<CoinFromRestAPI>(`/coins/${bondingCurveId}`)
         // console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
-    getCoinTrades: async ({appConfig, bondingCurveId}): Promise<TradeFromRestAPI[]> => {
-        const res = await appConfig.axios.get<TradeFromRestAPI[]>(`/coins/${bondingCurveId}/trades`)
+    getCoinTrades: async ({axios, bondingCurveId}): Promise<TradeFromRestAPI[]> => {
+        const res = await axios.get<TradeFromRestAPI[]>(`/coins/${bondingCurveId}/trades`)
         console.log("Retrieved the following trades.ts from the REST API", res.data)
         return res.data
     },
-    getTrades: async ({appConfig, limit = 0, order = "desc", path = "getTrades"}): Promise<TradeFromRestAPI[]> => {
-        const res = await appConfig.axios.get<TradeFromRestAPI[]>(`/trades`, {params: {limit, order}});
+    getTrades: async ({axios, limit = 0, order = "desc", path = "getTrades"}): Promise<TradeFromRestAPI[]> => {
+        const res = await axios.get<TradeFromRestAPI[]>(`/trades`, {params: {limit, order}});
         return res.data;
     },
-    getPosts: async ({appConfig, bondingCurveId}): Promise<PostFromRestAPI[]> => {
+    getPosts: async ({axios, bondingCurveId}): Promise<PostFromRestAPI[]> => {
         console.log(`Getting posts for the following coin from the REST API /coin/${bondingCurveId}/posts`)
-        const res = await appConfig.axios.get<PostFromRestAPI[]>(`/coins/${bondingCurveId}/posts`)
+        const res = await axios.get<PostFromRestAPI[]>(`/coins/${bondingCurveId}/posts`)
         // console.log("Retrieved the following posts from the REST API", res.data)
         return res.data
     },
-    getTvl24h: async ({appConfig, bondingCurveId}): Promise<GetTvlResponse> => {
+    getTvl24h: async ({axios, bondingCurveId}): Promise<GetTvlResponse> => {
         console.log(`Getting tvl for the following coin from the REST API /coin/${bondingCurveId}/posts`)
-        const res = await appConfig.axios.get(`/coins/${bondingCurveId}/tvl24h`)
+        const res = await axios.get(`/coins/${bondingCurveId}/tvl24h`)
         // console.log("Retrieved the following tvl from the REST API", res.data)
         return res.data
     },
-    getHolders: async ({appConfig, bondingCurveId}): Promise<HoldersFromRestAPI[]> => {
+    getHolders: async ({axios, bondingCurveId}): Promise<HoldersFromRestAPI[]> => {
         console.log(`Getting holders for the following coin from the REST API /coins/${bondingCurveId}/holders`)
-        const res = await appConfig.axios.get<HoldersFromRestAPI[]>(`/coins/${bondingCurveId}/holders`)
+        const res = await axios.get<HoldersFromRestAPI[]>(`/coins/${bondingCurveId}/holders`)
         // console.log("Retrieved the following holders from the REST API", res.data)
         return res.data
     },
-    postCoin: async ({appConfig, token}) => {
+    postCoin: async ({axios, token}) => {
         console.log("Posting the following coin to the REST API", token)
-        const res = await appConfig.axios.post<CoinFromRestAPI>(`/coins`, token)
+        const res = await axios.post<CoinFromRestAPI>(`/coins`, token)
         console.log("Posted the following coin to the REST API", res.data)
         return res.data
     },
-    postThread: async ({appConfig, post}) => {
+    postThread: async ({axios, post}) => {
         console.log("Posting the following post to the REST API", post)
-        const res = await appConfig.axios.post<Post>(`/post`, post)
+        const res = await axios.post<Post>(`/post`, post)
         console.log("Posted the following thread to the REST API", res.data)
         return res.data
     },

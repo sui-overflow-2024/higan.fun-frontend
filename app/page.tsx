@@ -1,6 +1,6 @@
 'use client'
-import {FC, useContext, useEffect, useState} from "react";
-import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
+import {FC, useEffect, useState} from "react";
+import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI} from "@/lib/types";
 import {TokenCard} from "@/components/TokenCard";
 import {Button} from "@/components/ui/button";
@@ -8,15 +8,18 @@ import Link from "next/link";
 import {Input} from "@/components/ui/input";
 import {coinRestApi} from "@/lib/rest";
 import useSWR from "swr";
+import {useContextSelector} from "use-context-selector";
 
 
 const TopTokens: FC = () => {
-    const appConfig = useContext(AppConfigContext)
-    const currentSuiPrice = useContext(CurrentSuiPriceContext)
+    const {axios, shortInterval} = useContextSelector(AppConfigContext, (v) => ({
+        axios: v.axios,
+        shortInterval: v.shortInterval
+    }));
     const {data: topTokens, error: fetchTopTokensError} = useSWR({
-        appConfig,
+        axios,
         path: "getTop"
-    }, coinRestApi.getTop, {refreshInterval: 5000});
+    }, coinRestApi.getTop, {refreshInterval: shortInterval});
 
     if (fetchTopTokensError) {
         return <div>Error loading top tokens {fetchTopTokensError}</div>
@@ -44,21 +47,21 @@ const TopTokens: FC = () => {
     );
 };
 export default function Home() {
-    const appConfig = useContext(AppConfigContext)
     const [term, setTerm] = useState("");
     const [sort, setSort] = useState<"created" | "marketCap" | "tvl" | "price">("created")
     const [order, setOrder] = useState<"asc" | "desc">("desc")
     const [tokens, setTokens] = useState<CoinFromRestAPI[]>([]);
+    const axios = useContextSelector(AppConfigContext, (v) => v.axios);
 
     useEffect(() => {
         const fetchTokens = async () => {
-            const t = await coinRestApi.search({appConfig, term, sort, order})
+            const t = await coinRestApi.search({axios, term, sort, order})
             console.log("Fetched tokens", t)
             setTokens(t);
         }
 
         fetchTokens()
-    }, [term, sort, order, appConfig])
+    }, [term, sort, order, axios])
 
 
     return (

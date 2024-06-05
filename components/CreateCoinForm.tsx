@@ -1,5 +1,5 @@
 "use client";
-import React, {useContext, useState} from "react";
+import React, {useState} from "react";
 import {useForm} from 'react-hook-form';
 import {useToast} from "@/components/ui/use-toast";
 import {ConnectButton, useAccounts, useSuiClientQuery} from "@mysten/dapp-kit";
@@ -11,6 +11,7 @@ import {useTransactionExecution} from "@/hooks/useTransactionexecution";
 import {AppConfigContext} from "@/components/Contexts";
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
+import {useContextSelector} from "use-context-selector";
 
 
 export type CreateCoinFormData = {
@@ -41,7 +42,10 @@ const schema = yup.object().shape({
 
 const CreateCoinForm = () => {
         const isDevMode = process.env.NODE_ENV === "development";
-        const appConfig = useContext(AppConfigContext);
+        const managerContractPackageId = useContextSelector(AppConfigContext, v => v.managerContractPackageId);
+        const managerContractModuleName = useContextSelector(AppConfigContext, v => v.managerContractModuleName);
+        const managerContractConfigId = useContextSelector(AppConfigContext, v => v.managerContractConfigId);
+
         const [account] = useAccounts()
         const {toast} = useToast()
         const [fatalError, setFatalError] = useState<string | null>(null);
@@ -92,9 +96,9 @@ const CreateCoinForm = () => {
                 //TODO get from config
                 const [payment] = txb.splitCoins(txb.gas, [txb.pure(5_000_000_000)]);
                 txb.moveCall({
-                    target: `${appConfig.managerContractPackageId}::manager_contract::prepare_to_list`,
+                    target: `${managerContractPackageId}::${managerContractModuleName}::prepare_to_list`,
                     arguments: [
-                        txb.object(appConfig.managerContractConfigId),
+                        txb.object(managerContractConfigId),
                         txb.object(payment),
                         txb.pure.string(data.name),
                         txb.pure.string(data.symbol),

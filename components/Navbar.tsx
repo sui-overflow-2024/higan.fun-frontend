@@ -6,10 +6,11 @@ import {usePathname} from "next/navigation";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import HiganFunLogoText from "@/public/higan-fun-logo-text.svg";
 import Image from "next/image";
-import {useContext, useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {coinRestApi} from "@/lib/rest";
+import {useContextSelector} from 'use-context-selector'; // Import the useContextSelector hook
 
 function NetworkSelector() {
     const ctx = useSuiClientContext();
@@ -70,9 +71,9 @@ const NewCoinNotification = ({coin}: { coin?: CoinFromRestAPI }) => {
 
 export default function Navbar() {
     const account = useCurrentAccount();
-    const pathname = usePathname()
-    const appConfig = useContext(AppConfigContext);
-    const {socket} = appConfig
+    const pathname = usePathname();
+    const socket = useContextSelector(AppConfigContext, (context) => context.socket); // Use useContextSelector to subscribe only to the socket property
+    const axios = useContextSelector(AppConfigContext, (context) => context.axios); // Use useContextSelector to subscribe only to the socket property
 
     const [mostRecentTrade, setMostRecentTrade] = useState<{
         trade: TradeFromRestAPI,
@@ -110,9 +111,9 @@ export default function Navbar() {
 
     useEffect(() => {
         const initialFetch = async () => {
-            const mostRecentCoin = await coinRestApi.getAll({appConfig, limit: 1, order: "desc", path: "getAll"});
+            const mostRecentCoin = await coinRestApi.getAll({axios, limit: 1, order: "desc", path: "getAll"});
             const mostRecentTrade = await coinRestApi.getTrades({
-                appConfig,
+                axios: axios,
                 limit: 1,
                 order: "desc",
                 path: "getTrades"
@@ -122,7 +123,7 @@ export default function Navbar() {
         }
         initialFetch()
         //TODO on initial load we should fetch the most recent coin and trade from the REST API
-    }, []);
+    }, [axios]);
 
     console.log("mostRecentCoin", mostRecentCoin)
 

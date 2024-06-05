@@ -1,5 +1,4 @@
-'use client';
-import React, {FC} from "react";
+import React, {FC, memo} from "react";
 import Link from "next/link";
 import Jazzicon, {jsNumberForAddress} from "react-jazzicon";
 import {addressToBackgroundColor} from "@/lib/utils";
@@ -40,16 +39,16 @@ const avatarVariants = {
         textClass: "font-mono px-2 py-1 rounded text-md hover:underline",
         text: (address: string) => address.slice(0, 6) + "..." + address.slice(-4)
     }
-
 }
-export const CreatorAddressChip: FC<CreatorAddressChipProps> = ({
-                                                                    address,
-                                                                    showAvatar,
-                                                                    avatarImageUrl,
-                                                                    variant = "default",
-                                                                    isCreator = false,
-                                                                    isBondingCurve = false
-                                                                }) => {
+
+const CreatorAddressChipComponent: FC<CreatorAddressChipProps> = ({
+                                                                      address,
+                                                                      showAvatar,
+                                                                      avatarImageUrl,
+                                                                      variant = "default",
+                                                                      isCreator = false,
+                                                                      isBondingCurve = false
+                                                                  }) => {
     const config = avatarVariants[variant]
     //TODO Support user avatars
     let avatar = <Jazzicon diameter={config.jazziconDiam} seed={jsNumberForAddress(address)}/>
@@ -70,3 +69,4 @@ export const CreatorAddressChip: FC<CreatorAddressChipProps> = ({
             </span>
     </Link>
 }
+export const CreatorAddressChip = memo(CreatorAddressChipComponent)

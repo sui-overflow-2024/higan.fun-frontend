@@ -1,4 +1,4 @@
-import React, {useContext, useEffect} from 'react';
+import React, {useEffect} from 'react';
 import {formatDistanceToNow} from "date-fns";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import {getValueWithDecimals} from "@/lib/utils";
@@ -6,6 +6,7 @@ import {CoinGetTradesKey, coinRestApi} from "@/lib/rest";
 import {AppConfigContext} from "@/components/Contexts";
 import useSWR from "swr";
 import {TradeFromRestAPI} from "@/lib/types";
+import {useContextSelector} from "use-context-selector";
 
 type TradesListProps = {
     bondingCurveId: string;
@@ -16,14 +17,17 @@ type TradesListProps = {
 
 // Component for the trades.ts list
 const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, network}) => {
-    const appConfig = useContext(AppConfigContext)
-    const {socket, longInterval} = appConfig;
+    const {axios, socket, longInterval} = useContextSelector(AppConfigContext, (v) => ({
+        axios: v.axios,
+        socket: v.socket,
+        longInterval: v.longInterval
+    }));
     const {
         data: trades,
         error: fetchTradesError,
         mutate: refetchTrades
     } = useSWR<TradeFromRestAPI[], any, CoinGetTradesKey>({
-        appConfig,
+        axios,
         bondingCurveId,
         path: "getTrades"
     }, coinRestApi.getCoinTrades, {refreshInterval: longInterval});
@@ -36,7 +40,7 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
             });
 
             return () => {
-                socket.off('postCreated');
+                socket.off('tradeCreated');
             };
         }, [refetchTrades, socket, trades]
     );

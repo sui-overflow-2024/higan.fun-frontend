@@ -4,8 +4,6 @@ import {CoinFromRestAPI} from "@/lib/types";
 import type {DevInspectResults} from "@mysten/sui.js/client";
 import {bcs} from "@mysten/sui.js/bcs";
 
-import {AppConfig} from "@/lib/config";
-
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
@@ -29,8 +27,8 @@ export const getCoinPathFunc = (token: CoinFromRestAPI, func: string): `${string
     return `${token.packageId}::${token.module}::${func}`
 }
 
-export const getManagerFuncPath = (appConfig: AppConfig, func: string): `${string}::${string}::${string}` => {
-    return `${appConfig.managerContractPackageId}::${appConfig.managerContractModuleName}::${func}`
+export const getManagerFuncPath = (managerContractPackageId: string, managerContractModuleName: string, func: string): `${string}::${string}::${string}` => {
+    return `${managerContractPackageId}::${managerContractModuleName}::${func}`
 }
 
 export const getValueWithDecimals = (value: number, decimals: number, fixed ?: number): string => {

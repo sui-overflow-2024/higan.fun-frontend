@@ -1,9 +1,10 @@
-import React, {useContext, useEffect, useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {ColorType, createChart, IChartApi, ISeriesApi, PriceScaleMode} from 'lightweight-charts';
 import {TradeFromRestAPI} from '@/lib/types';
 import useSWR from "swr";
 import {CoinGetTradesKey, coinRestApi} from "@/lib/rest";
 import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
+import {useContextSelector} from "use-context-selector";
 
 
 type TradesChartProps = {
@@ -50,18 +51,24 @@ const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
     const chartRef = useRef<IChartApi>();
     const seriesRef = useRef<ISeriesApi<"Line">>();
     const previousTradesRef = useRef<TradeFromRestAPI[]>([]);
-    const appConfig = useContext(AppConfigContext)
-    const currentSuiPrice = useContext(CurrentSuiPriceContext);
-    const {socket, longInterval} = appConfig;
+    const currentSuiPrice = useContextSelector(CurrentSuiPriceContext, v => v);
+    const {axios, socket, longInterval} = useContextSelector(AppConfigContext, (v) => ({
+        axios: v.axios,
+        socket: v.socket,
+        longInterval: v.longInterval
+    }));
+
+    const {socket} = appConfig;
+
     const {
         data: trades,
         error: fetchTradesError,
         mutate: refetchTrades
     } = useSWR<TradeFromRestAPI[], any, CoinGetTradesKey>({
-        appConfig,
+        axios,
         bondingCurveId: bondingCurveId,
         path: "getTrades"
-    }, coinRestApi.getCoinTrades, {refreshInterval: longInterval});
+    }, coinRestApi.getCoinTrades);
 
     useEffect(() => {
             socket.on('tradeCreated', async (data) => {
@@ -75,6 +82,7 @@ const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
             };
         }, [refetchTrades, socket, trades]
     );
+    
     useEffect(() => {
         if (!chartContainerRef.current) {
             return;

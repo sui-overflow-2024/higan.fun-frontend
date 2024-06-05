@@ -1,6 +1,6 @@
-'use client'
 import * as React from "react";
-import {createContext, FC, PropsWithChildren} from "react";
+import {FC, PropsWithChildren} from "react";
+import {createContext, useContextSelector} from "use-context-selector";
 import useSWR from "swr";
 import {coinRestApi} from "@/lib/rest";
 import {AppConfig, defaultAppConfig} from "@/lib/config";
@@ -14,11 +14,11 @@ export const AppConfigContext = createContext<AppConfig>(defaultAppConfig);
 // Several components of the app use this context to display prices in USD
 export const CurrentSuiPriceContext = createContext<number>(0)
 export const CurrentSuiPriceProvider: FC<PropsWithChildren> = ({children}) => {
-
+    const longInterval = useContextSelector(AppConfigContext, (v) => v.longInterval)
     const {
         data: currentSuiPrice,
         error: fetchCurrentSuiPriceError
-    } = useSWR("getSuiPrice", coinRestApi.getSuiPrice, {refreshInterval: 5000})
+    } = useSWR("getSuiPrice", coinRestApi.getSuiPrice, {refreshInterval: longInterval})
 
     return (<CurrentSuiPriceContext.Provider value={currentSuiPrice || 0}>
         {children}

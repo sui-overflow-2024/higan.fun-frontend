@@ -7,7 +7,7 @@ import {StrictMode, useEffect, useState} from "react";
 import {SuiClientProvider, WalletProvider} from '@mysten/dapp-kit';
 import {getFullnodeUrl} from '@mysten/sui.js/client';
 import {PrismaClient} from "@/lib/prisma/client";
-import {AppConfigContext, CurrentSuiPriceProvider, ThemeProvider} from "@/components/Contexts";
+import {AppConfigContext, CurrentSuiPriceProvider} from "@/components/Contexts";
 import {Toaster} from "@/components/ui/toaster";
 import "./globals.css";
 import {defaultAppConfig} from "@/lib/config";
@@ -33,37 +33,33 @@ export default function RootLayout({
         setIsClient(true)
     }, [])
 
-    const prismaClient = new PrismaClient({
-        datasourceUrl: "../we-hate-the-ui-backend/prisma/dev.db"
-    })
-
     return (
         <html lang="en">
         <body className={inter.className}>
 
         <StrictMode>
-            <ThemeProvider
-                attribute="class"
-                defaultTheme="dark"
-                enableSystem
-                disableTransitionOnChange
-            >
-                {isClient ?
+            {/*<ThemeProvider*/}
+            {/*    attribute="class"*/}
+            {/*    defaultTheme="dark"*/}
+            {/*    enableSystem*/}
+            {/*    disableTransitionOnChange*/}
+            {/*>*/}
+            {isClient ?
 
-                    <AppConfigContext.Provider value={defaultAppConfig}>
+                <AppConfigContext.Provider value={defaultAppConfig}>
+                    <QueryClientProvider client={queryClient}>
                         <CurrentSuiPriceProvider>
-                            <QueryClientProvider client={queryClient}>
-                                <SuiClientProvider networks={networks} defaultNetwork="testnet">
-                                    <WalletProvider>
-                                        <Navbar/>
-                                        {children}
-                                    </WalletProvider>
-                                </SuiClientProvider>
-                            </QueryClientProvider>
+                            <SuiClientProvider networks={networks} defaultNetwork="testnet">
+                                <WalletProvider>
+                                    <Navbar/>
+                                    {children}
+                                </WalletProvider>
+                            </SuiClientProvider>
                             <Toaster/>
                         </CurrentSuiPriceProvider>
-                    </AppConfigContext.Provider> : <></>}
-            </ThemeProvider>
+                    </QueryClientProvider>
+                </AppConfigContext.Provider> : <></>}
+            {/*</ThemeProvider>*/}
         </StrictMode>
         </body>
         </html>

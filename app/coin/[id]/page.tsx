@@ -2,7 +2,7 @@
 import {CoinFromRestAPI, HoldersFromRestAPI} from "@/lib/types";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
-import {Dispatch, SetStateAction, useContext, useEffect, useRef, useState} from "react";
+import {Dispatch, SetStateAction, useEffect, useRef, useState} from "react";
 import twitterLogo from '@/public/x.svg';
 import discordLogo from '@/public/discord.svg';
 import telegramLogo from '@/public/telegram.svg';
@@ -19,25 +19,17 @@ import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 import {useSuiClientContext} from "@mysten/dapp-kit";
 import {CoinThread} from "@/components/CoinThread";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
-import type {SuiClient} from '@mysten/sui.js/client';
 import {getValueWithDecimals, suiToUsdLocaleString} from "@/lib/utils";
 import {getTokenMetrics, TokenMetric, TokenMetricKey} from "@/lib/sui";
+import {useContextSelector} from "use-context-selector";
 
 type CoinMetadataProps = {
-    tokenMetrics?: TokenMetric,
-    client: SuiClient,
     token: CoinFromRestAPI;
-    marketCap: string;
-    currentSuiPrice: number;
+    tokenMetrics?: TokenMetric,
 };
 type CoinDetailsProps = {
     token: CoinFromRestAPI;
     tokenMetrics?: TokenMetric,
-    marketCap: string;
-};
-type Holder = {
-    address: string;
-    balance: number;
 };
 
 type TokenHoldersProps = {
@@ -86,9 +78,12 @@ const ClampedDescription = ({text}: { text: string }) => {
     );
 };
 
-const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, token, marketCap, currentSuiPrice}) => {
+const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, token}) => {
+    const currentSuiPrice = useContextSelector(CurrentSuiPriceContext, v => v);
+    
     if (!tokenMetrics) return
     let {tokenPrice} = tokenMetrics;
+    let marketCap = suiToUsdLocaleString(tokenMetrics?.suiBalance || 0, currentSuiPrice);
 
 
     return (
@@ -179,9 +174,9 @@ const SocialLinks: React.FC<{ token: CoinFromRestAPI }> = ({token}) => {
 };
 
 
-const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap}) => {
+const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics}) => {
 
-    const currentSuiPrice = useContext(CurrentSuiPriceContext);
+    const currentSuiPrice = useContextSelector(CurrentSuiPriceContext, v => v);
     if (!tokenMetrics) return (<div>Loading...</div>)
 
 
@@ -190,6 +185,7 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
     const bondingCurveProgress = Math.min((tokenMetrics.suiBalance / target) * 100, 100).toFixed(2);
     const targetUSD = getValueWithDecimals(target * currentSuiPrice, 9, 2);
     const totalSupplyWithDecimals = totalSupply * (Math.pow(10, -1 * token.decimals));
+    let marketCap = suiToUsdLocaleString(tokenMetrics?.suiBalance || 0, currentSuiPrice);
 
     return (
         <div className="p-4 rounded-lg">
@@ -231,10 +227,11 @@ const CoinDetails: React.FC<CoinDetailsProps> = ({token, tokenMetrics, marketCap
 
 const TokenHolders: React.FC<TokenHoldersProps> = ({token, tokenMetrics}) => {
     // Sort holders by balance in descending order and take the top 20
-    const appConfig = useContext(AppConfigContext)
+    const axios = useContextSelector(AppConfigContext, (v) => v.axios);
+
     const totalSupply = tokenMetrics?.totalSupply || 0;
     const {data: holders, error: holdersError} = useSWR<HoldersFromRestAPI[], any, CoinGetHoldersByKey>(
-        {appConfig, bondingCurveId: token.bondingCurveId, path: "getHolders"}, coinRestApi.getHolders)
+        {axios, bondingCurveId: token.bondingCurveId, path: "getHolders"}, coinRestApi.getHolders)
 
 
     if (!tokenMetrics) return (<div>Loading token metrics...</div>)
@@ -264,15 +261,25 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({token, tokenMetrics}) => {
 
 
 export default function Drilldown() {
-    const appConfig = useContext(AppConfigContext)
-    const {socket} = appConfig;
+    const {
+        axios,
+        managerContractPackageId,
+        managerContractModuleName,
+        socket,
+        longInterval
+    } = useContextSelector(AppConfigContext, (v) => ({
+        axios: v.axios,
+        socket: v.socket,
+        longInterval: v.longInterval,
+        managerContractPackageId: v.managerContractPackageId,
+        managerContractModuleName: v.managerContractModuleName,
+    }));
     const [activePanel, setActivePanel] = useState<"thread" | "trades">('thread');
     const bondingCurveId = usePathname().split('/').pop() || '';
     const suiContext = useSuiClientContext()
-    const currentSuiPrice = useContext(CurrentSuiPriceContext)
 
     const {data: token, error: tokenError} = useSWR<CoinFromRestAPI, any, CoinGetByIdKey>(
-        {appConfig, bondingCurveId, path: "getById"}, coinRestApi.getById)
+        {axios, bondingCurveId, path: "getById"}, coinRestApi.getById)
 
     const {
         data: tokenMetrics,
@@ -281,12 +288,13 @@ export default function Drilldown() {
         mutate: refetchTokenMetrics
     } = useSWR<TokenMetric, any, TokenMetricKey>(
         {
-            appConfig,
+            managerContractPackageId,
+            managerContractModuleName,
             client: suiContext.client,
             sender: "0xbd81e46b4f6c750606445c10eccd486340ac168c9b34e4c4ab587fac447529f5",
             coin: token,
             path: "tokenMetrics",
-        }, getTokenMetrics, {refreshInterval: appConfig.longInterval});
+        }, getTokenMetrics, {refreshInterval: longInterval});
     useEffect(() => {
             socket.on('tradeCreated', async (data) => {
                 await refetchTokenMetrics()
@@ -302,18 +310,14 @@ export default function Drilldown() {
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
     if (!token) return (<div>Loading token...</div>)
 
-    let marketCap = suiToUsdLocaleString(tokenMetrics?.suiBalance || 0, currentSuiPrice);
 
     return (
-        // <div className="bg-gray-700 p-4 min-h-[300px] flex items-center justify-center">
-        // <main className="bg-background flex min-h-screen flex-col items-center justify-between p-24">
         <div className="min-h-screen bg-gray-900 p-4 text-white">
             <div className="container mx-auto">
 
                 <main className="grid grid-cols-3 gap-8 mt-4">
                     <section className="col-span-2 space-y-4">
-                        <CoinMetadataHeader tokenMetrics={tokenMetrics} client={suiContext.client} token={token}
-                                            marketCap={marketCap} currentSuiPrice={currentSuiPrice}/>
+                        <CoinMetadataHeader tokenMetrics={tokenMetrics} token={token}/>
                         <div className="bg-gray-700 min-h-[300px]">
                             <TradesChart bondingCurveId={token.bondingCurveId}/>
                         </div>
@@ -339,12 +343,11 @@ export default function Drilldown() {
 
                     <aside className="space-y-4">
                         <BuySellDialog token={token} suiClient={suiContext.client}/>
-                        <CoinDetails tokenMetrics={tokenMetrics} token={token} marketCap={marketCap}/>
+                        <CoinDetails tokenMetrics={tokenMetrics} token={token}/>
                         <TokenHolders token={token} tokenMetrics={tokenMetrics}/>
                     </aside>
                 </main>
             </div>
         </div>
-        // </main>
     );
 }

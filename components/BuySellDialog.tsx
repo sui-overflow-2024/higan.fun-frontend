@@ -2,19 +2,19 @@
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
-import {useContext, useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import {getCoinTypePath, getManagerFuncPath, getValueWithDecimals, truncateDecimals} from "@/lib/utils";
 import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI, CoinStatus} from "@/lib/types";
-import {ConnectButton, useCurrentAccount, useSuiClientQuery} from "@mysten/dapp-kit";
+import {ConnectButton, useCurrentAccount} from "@mysten/dapp-kit";
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
 import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 import {useForm} from "react-hook-form";
 import {customSuiHooks} from "@/lib/sui";
 import {useTransactionExecution} from "@/hooks/useTransactionexecution";
 import {mutate} from "swr";
-import {AppConfig} from "@/lib/config";
 import {useToast} from "@/components/ui/use-toast";
+import {useContextSelector} from "use-context-selector";
 
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
@@ -118,7 +118,7 @@ const getExactCoinByAmount = (
     }
 };
 
-const generateBuyPtb = (appConfig: AppConfig, coin: CoinFromRestAPI, amountToBuy: number) => {
+const generateBuyPtb = (managerContractPackageId: string, managerContractModuleName: string, coin: CoinFromRestAPI, amountToBuy: number) => {
     console.log("Attempting to buy ", amountToBuy, "of", coin.symbol, "packageId", coin.packageId, "bondingCurveId", coin.bondingCurveId, "module", coin.module, "decimals", coin.decimals)
     if (amountToBuy <= 0) {
         throw new Error("Attempt to buy 0 or less tokens")
@@ -130,7 +130,7 @@ const generateBuyPtb = (appConfig: AppConfig, coin: CoinFromRestAPI, amountToBuy
     //txb.gas() for the coin because you purchase the custom coin w/ Sui
     console.log("Splitting coins", txb.gas)
     const splitCoin = txb.moveCall({
-        target: getManagerFuncPath(appConfig, "get_coin_buy_price"),
+        target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "get_coin_buy_price"),
         arguments: [
             txb.object(coin.bondingCurveId),
             txb.pure(amountToBuy),
@@ -141,7 +141,7 @@ const generateBuyPtb = (appConfig: AppConfig, coin: CoinFromRestAPI, amountToBuy
 
     // txb.transferObjects([payment], "0x7176223a57d720111be2c805139be7192fc5522597e6210ae35d4b2199949501")
     txb.moveCall({
-        target: getManagerFuncPath(appConfig, "buy_coins"),
+        target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "buy_coins"),
         arguments: [
             txb.object(coin.bondingCurveId),
             txb.object(payment),
@@ -152,7 +152,7 @@ const generateBuyPtb = (appConfig: AppConfig, coin: CoinFromRestAPI, amountToBuy
     return txb
 }
 
-const generateSellPtb = (appConfig: AppConfig, coin: CoinFromRestAPI, userCoins: CoinStruct[], amountToSell: number): TransactionBlock => {
+const generateSellPtb = (managerContractPackageId: string, managerContractModuleName: string, coin: CoinFromRestAPI, userCoins: CoinStruct[], amountToSell: number): TransactionBlock => {
     console.log("Attempting to sell ", amountToSell, "of", coin.symbol, "packageId", coin.packageId, "bondingCurveId", coin.bondingCurveId, "module", coin.module, "decimals", coin.decimals)
     if (amountToSell <= 0) {
         throw new Error("Attempt to buy 0 or less tokens")
@@ -162,7 +162,7 @@ const generateSellPtb = (appConfig: AppConfig, coin: CoinFromRestAPI, userCoins:
     const exactCoinByAmount = getExactCoinByAmount(getCoinTypePath(coin), userCoins, BigInt(amountToSell), txb)
 
     txb.moveCall({
-        target: getManagerFuncPath(appConfig, "sell_coins"),
+        target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "sell_coins"),
         arguments: [
             txb.object(coin.bondingCurveId),
             txb.object(exactCoinByAmount),
@@ -172,11 +172,11 @@ const generateSellPtb = (appConfig: AppConfig, coin: CoinFromRestAPI, userCoins:
     return txb;
 }
 
-export const getBuyCoinPriceTxb = (appConfig: AppConfig, coinType: string, bondingCurveId: string, amount: number): TransactionBlock => {
-    console.log("getBuyCoinPriceTxb", appConfig, coinType, bondingCurveId, amount)
+export const getBuyCoinPriceTxb = (managerContractPackageId: string, managerContractModuleName: string, coinType: string, bondingCurveId: string, amount: number): TransactionBlock => {
+    console.log("getBuyCoinPriceTxb", managerContractPackageId, managerContractModuleName, coinType, bondingCurveId, amount)
     const txb = new TransactionBlock()
     txb.moveCall({
-        target: getManagerFuncPath(appConfig, "get_coin_buy_price") as `${string}::${string}::${string}`,
+        target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "get_coin_buy_price") as `${string}::${string}::${string}`,
         arguments: [
             txb.object(bondingCurveId),
             txb.pure(amount),
@@ -185,11 +185,11 @@ export const getBuyCoinPriceTxb = (appConfig: AppConfig, coinType: string, bondi
     })
     return txb
 }
-export const getSellCoinPriceTxb = (appConfig: AppConfig, coinType: string, bondingCurveId: string, amount: number): TransactionBlock => {
-    console.log("getSellCoinPriceTxb", appConfig, coinType, bondingCurveId, amount)
+export const getSellCoinPriceTxb = (managerContractPackageId: string, managerContractModuleName: string, coinType: string, bondingCurveId: string, amount: number): TransactionBlock => {
+    console.log("getSellCoinPriceTxb", managerContractPackageId, managerContractModuleName, coinType, bondingCurveId, amount)
     const txb = new TransactionBlock()
     txb.moveCall({
-        target: getManagerFuncPath(appConfig, "get_coin_sell_price") as `${string}::${string}::${string}`,
+        target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "get_coin_sell_price") as `${string}::${string}::${string}`,
         arguments: [
             txb.object(bondingCurveId),
             txb.pure(amount),
@@ -216,14 +216,22 @@ const PriceCalculator: React.FC<{
           mode,
           coinType,
           bondingCurveId,
-          userBalance,
           userSuiBalance
       }) => {
 
     const [price, setPrice] = useState<number>(0)
     const [priceError, setPriceError] = useState<Error | null>(null)
     const [isLoading, setIsLoading] = useState<boolean>(true)
-    const appConfig = useContext(AppConfigContext)
+    const {
+        managerContractPackageId,
+        managerContractModuleName,
+        fallbackDevInspectAddress
+    } = useContextSelector(AppConfigContext, (v) => ({
+        fallbackDevInspectAddress: v.fallbackDevInspectAddress,
+        managerContractPackageId: v.managerContractPackageId,
+        managerContractModuleName: v.managerContractModuleName
+    }));
+
     useEffect(() => {
         const fetchPrice = async () => {
             try {
@@ -233,9 +241,10 @@ const PriceCalculator: React.FC<{
                 }
                 console.log("fetching price for", suiClient, coinType, bondingCurveId, amount, mode)
                 const price = await customSuiHooks.getCurrentCoinPriceInSui({
-                    appConfig,
+                    managerContractPackageId,
+                    managerContractModuleName,
                     suiClient,
-                    sender: sender || appConfig.fallbackDevInspectAddress,
+                    sender: sender || fallbackDevInspectAddress,
                     coinType,
                     bondingCurveId: bondingCurveId,
                     amount,
@@ -248,7 +257,7 @@ const PriceCalculator: React.FC<{
             setIsLoading(false)
         }
         fetchPrice()
-    }, [suiClient, sender, coinType, bondingCurveId, amount, mode])
+    }, [suiClient, sender, coinType, bondingCurveId, amount, mode, managerContractPackageId, managerContractModuleName, fallbackDevInspectAddress])
 
     if (priceError) return (<div>Error fetching price {priceError.message}</div>)
 
@@ -271,7 +280,18 @@ export const BuySellDialog: React.FC<{
     token: CoinFromRestAPI,
     suiClient: SuiClient
 }> = ({token, suiClient}) => {
-    const appConfig = useContext(AppConfigContext)
+    const {
+        axios,
+        fallbackDevInspectAddress,
+        managerContractPackageId,
+        managerContractModuleName
+    } = useContextSelector(AppConfigContext, (v) => ({
+        axios: v.axios,
+        fallbackDevInspectAddress: v.fallbackDevInspectAddress,
+        managerContractPackageId: v.managerContractPackageId,
+        managerContractModuleName: v.managerContractModuleName,
+    }));
+
     const currentAccount = useCurrentAccount()
     const executeTranscation = useTransactionExecution()
     const [mode, setMode] = useState<"buy" | "sell">("buy")
@@ -289,53 +309,15 @@ export const BuySellDialog: React.FC<{
     const multiplier = (token?.decimals || 0) > 0 ? Math.pow(10, token?.decimals || 0) : 1
     const amount = watch("amount") * multiplier
 
-    const {data: storeRaw, refetch: refetchStore} = useSuiClientQuery("getObject", {
-        id: token?.bondingCurveId || "",
-        options: {
-            showDisplay: true,
-            showContent: true,
-        }
-    })
-
-    useEffect(() => {
-        const fetchBalance = async () => {
-            if (!token) return
-            if (!currentAccount?.address) return
-            if (!suiClient) return
-
-            console.log("fetching balance for", currentAccount?.address, "token", getCoinTypePath(token))
-            const balance = await suiClient.getBalance({
-                owner: currentAccount?.address || "",
-                coinType: getCoinTypePath(token),
-            })
-            const suiBalance = await suiClient.getBalance({
-                owner: currentAccount?.address || "",
-            });
-            setUserSuiBalance(parseInt(suiBalance.totalBalance || "0"));
-            console.log("balance", balance)
-            setUserBalance(parseInt(balance.totalBalance))
-            console.log("userBalance", userBalance)
-
-            console.log()
-            const coins = await getAllUserCoins({
-                suiClient: suiClient,
-                type: getCoinTypePath(token),
-                address: currentAccount?.address || "",
-            });
-            console.log("coins", coins)
-            setBaseTokenCoins(coins)
-        }
-        fetchBalance()
-    }, [token, currentAccount?.address, suiClient, amount, userBalance, userSuiBalance, currentAccount])
-
-
+    
     const submit = async (data: { amount: number }) => {
         console.log(`${mode}ing ${data.amount} of the token now`)
 
         const price = await customSuiHooks.getCurrentCoinPriceInSui({
-            appConfig,
+            managerContractPackageId,
+            managerContractModuleName,
             suiClient,
-            sender: currentAccount?.address || appConfig.fallbackDevInspectAddress,
+            sender: currentAccount?.address || fallbackDevInspectAddress,
             coinType: getCoinTypePath(token),
             bondingCurveId: token.bondingCurveId,
             amount,
@@ -354,8 +336,8 @@ export const BuySellDialog: React.FC<{
         }
 
         const txb = mode === "buy"
-            ? generateBuyPtb(appConfig, token, amount)
-            : generateSellPtb(appConfig, token, baseTokenCoins, amount);
+            ? generateBuyPtb(managerContractPackageId, managerContractModuleName, token, amount)
+            : generateSellPtb(managerContractPackageId, managerContractModuleName, token, baseTokenCoins, amount);
 
         await executeTranscation(txb)
         // TODO you can refresh trades.ts and your own balance here
@@ -366,9 +348,9 @@ export const BuySellDialog: React.FC<{
             coin: token,
             path: "tokenMetrics",
         })
-        await mutate({appConfig, packageId: token.packageId, path: "getHolders"})
+        await mutate({axios, packageId: token.packageId, path: "getHolders"})
 
-        reset({amount: 0})
+        reset({amount: 1})
     }
     // console.log("baseTokenCoins", baseTokenCoins)
     if (!token) return (<div>Token not found</div>)
