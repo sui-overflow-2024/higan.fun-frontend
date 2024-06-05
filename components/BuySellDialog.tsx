@@ -10,12 +10,11 @@ import {ConnectButton, useCurrentAccount, useSuiClientQuery} from "@mysten/dapp-
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
 import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
 import {useForm} from "react-hook-form";
-import {customSuiHooks} from "@/lib/sui";
+import {TokenMetric, customSuiHooks} from "@/lib/sui";
 import {useTransactionExecution} from "@/hooks/useTransactionexecution";
 import {mutate} from "swr";
 import {AppConfig} from "@/lib/config";
 import {useToast} from "@/components/ui/use-toast";
-
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
 const getAllUserCoins = async ({
@@ -209,68 +208,61 @@ const PriceCalculator: React.FC<{
     bondingCurveId: string,
     userBalance: number,
     userSuiBalance: number,
+    totalSupply: number,
+    coinPriceInSui: number,
+    isLoading?: boolean
 }> = ({
-          suiClient,
-          sender,
-          amount,
           mode,
-          coinType,
-          bondingCurveId,
-          userBalance,
-          userSuiBalance
+          coinPriceInSui,
+          isLoading
       }) => {
 
     const [price, setPrice] = useState<number>(0)
     const [priceError, setPriceError] = useState<Error | null>(null)
-    const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [error, setErrorMessage] = useState<String | null>(null)
     const appConfig = useContext(AppConfigContext)
-    useEffect(() => {
-        const fetchPrice = async () => {
-            try {
-                if (isNaN(amount)) {
-                    console.log("amount is not a number")
-                    return
-                }
-                console.log("fetching price for", suiClient, coinType, bondingCurveId, amount, mode)
-                const price = await customSuiHooks.getCurrentCoinPriceInSui({
-                    appConfig,
-                    suiClient,
-                    sender: sender || appConfig.fallbackDevInspectAddress,
-                    coinType,
-                    bondingCurveId: bondingCurveId,
-                    amount,
-                    mode
-                })
-                setPrice(price)
-            } catch (e: any) {
-                setPriceError(e)
-            }
-            setIsLoading(false)
-        }
-        fetchPrice()
-    }, [suiClient, sender, coinType, bondingCurveId, amount, mode])
+    // useEffect(() => {
+    //     const fetchPrice = async () => {
+    //         try {
+    //             if (isNaN(amount)) {
+    //                 console.log("amount is not a number")
+    //                 return
+    //             }
+    //             console.log("fetching price for", suiClient, coinType, bondingCurveId, amount, mode)
+    //             const price = await customSuiHooks.getCurrentCoinPriceInSui({
+    //                 appConfig,
+    //                 suiClient,
+    //                 sender: sender || appConfig.fallbackDevInspectAddress,
+    //                 coinType,
+    //                 bondingCurveId: bondingCurveId,
+    //                 amount,
+    //                 mode
+    //             })
+    //             setPrice(price)
+    //         } catch (e: any) {
+    //             setPriceError(e)
+    //         }
+    //         setIsLoading(false)
+    //     }
+    //     fetchPrice()
+    // }, [suiClient, sender, coinType, bondingCurveId, amount, mode])
 
-    if (priceError) return (<div>Error fetching price {priceError.message}</div>)
+    // if (priceError) return (<div>Error fetching price {priceError.message}</div>)
 
     return (<div>
-        {mode === "buy" && sender && userSuiBalance < price &&
-            <div className="text-red-500 text-xs mt-1">Insufficient balance, you
-                have {getValueWithDecimals(userSuiBalance || 0, 9, 4)} SUI</div>}
-
         <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>
         <div className={"flex space-x-2 justify-center"}>
             <img src={"..//sui-sea.svg"} alt={"Sui Logo"} width={20} height={20}/>
             <div className={"text-xl"}>
-                {isLoading ? "Loading..." : `${getValueWithDecimals(price || 0, 9, 4)} SUI`}
+                {isLoading ? "Fetching price..." : `${getValueWithDecimals(coinPriceInSui || 0, 9, 4)} SUI`}
             </div>
         </div>
     </div>)
 }
 
-export const BuySellDialog: React.FC<{
-    token: CoinFromRestAPI,
-    suiClient: SuiClient
-}> = ({token, suiClient}) => {
+export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, tokenMetrics: TokenMetric, suiClient: SuiClient }> = ({token, tokenMetrics, suiClient}) => {
+
+
     const appConfig = useContext(AppConfigContext)
     const currentAccount = useCurrentAccount()
     const executeTranscation = useTransactionExecution()
@@ -278,6 +270,10 @@ export const BuySellDialog: React.FC<{
     const [userBalance, setUserBalance] = useState(0)
     const [userSuiBalance, setUserSuiBalance] = useState(0)
     const [baseTokenCoins, setBaseTokenCoins] = useState<CoinStruct[]>([])
+    const [coinPriceInSui, setCoinPriceInSui] = useState<number>(0)
+    const [errorMessage, setErrorMessage] = useState<string | null>(null)
+    const [disableTradeButton, setDisableTradeButton] = useState<boolean>(false)
+    const [isLoadingCoinPrice, setLoadingCoinPrice] = useState<boolean>(false)
     const {toast} = useToast()
     const {register, handleSubmit, watch, formState: {errors,}, reset} = useForm<{
         amount: number
@@ -316,7 +312,6 @@ export const BuySellDialog: React.FC<{
             setUserBalance(parseInt(balance.totalBalance))
             console.log("userBalance", userBalance)
 
-            console.log()
             const coins = await getAllUserCoins({
                 suiClient: suiClient,
                 type: getCoinTypePath(token),
@@ -328,6 +323,47 @@ export const BuySellDialog: React.FC<{
         fetchBalance()
     }, [token, currentAccount?.address, suiClient, amount, userBalance, userSuiBalance, currentAccount])
 
+    useEffect(() => {
+        if (mode === "sell" && userBalance < amount){
+            setErrorMessage("You don't have enough tokens to sell");
+            return
+        }
+
+        if(mode == "sell" && tokenMetrics.totalSupply < amount){
+            setErrorMessage("Not enough liquidity");
+            return
+        }
+
+        const fetchCoinPriceInSui = async () => {
+            const price = await customSuiHooks.getCurrentCoinPriceInSui({
+                appConfig,
+                suiClient,
+                sender: currentAccount?.address || appConfig.fallbackDevInspectAddress,
+                coinType: getCoinTypePath(token),
+                bondingCurveId: token.bondingCurveId,
+                amount,
+                mode
+            })
+
+            if (mode==="buy" && currentAccount && userSuiBalance < price) {
+                setErrorMessage("Not enough balance to buy");
+                return
+            }
+
+            setErrorMessage(null)
+            setCoinPriceInSui(price)
+            setLoadingCoinPrice(false)
+        }
+        fetchCoinPriceInSui();
+        setLoadingCoinPrice(true)
+
+        if (isNaN(amount)) {
+            setErrorMessage("Amount must be higher than 0")
+            return
+        }
+
+        setErrorMessage(null)
+    }, [amount, appConfig, currentAccount, mode, suiClient, token, tokenMetrics.totalSupply, userBalance, userSuiBalance])
 
     const submit = async (data: { amount: number }) => {
         console.log(`${mode}ing ${data.amount} of the token now`)
@@ -423,7 +459,6 @@ export const BuySellDialog: React.FC<{
                                             backgroundColor: "hsl(210, 88%, 15%)",
                                             width: "100%",
                                         }}
-                                        {...register("amount")}
                                     />
                                     <div className={"text-2xl text-muted-foreground"}>
                                         {token.symbol}
@@ -449,19 +484,26 @@ export const BuySellDialog: React.FC<{
                         <div className={"flex justify-center"}>
                             <div className={"space-y-2"}>
                                 <div className={"text-center"}>
-                                    <PriceCalculator coinType={getCoinTypePath(token)} amount={amount}
+                                    {errorMessage && <div className="text-red-500 text-ms mt-1">{errorMessage}</div>}
+                                    {!errorMessage && <PriceCalculator coinType={getCoinTypePath(token)} amount={amount}
                                                      sender={currentAccount?.address || ""} mode={mode}
                                                      bondingCurveId={token.bondingCurveId}
                                                      userBalance={userBalance}
                                                      userSuiBalance={userSuiBalance}
-                                                     suiClient={suiClient}/>
+                                                     suiClient={suiClient}
+                                                     totalSupply={tokenMetrics.totalSupply}
+                                                     coinPriceInSui={coinPriceInSui}
+                                                     isLoading={isLoadingCoinPrice}
+                                                     />}
                                 </div>
                                 {currentAccount?.address
                                     ? (<Button
-                                        disabled={token.status !== CoinStatus.OPEN}
+                                         disabled={token.status !== CoinStatus.OPEN || errorMessage !== null}
+                                        //  disabled={token.status !== CoinStatus.OPEN || buttonTradeDisableStatus}
                                         className={"w-56"}
                                         type={"submit"}>
                                         {mode === "buy" ? "Buy" : "Sell"}
+
                                     </Button>)
                                     : <ConnectButton connectText={`Connect wallet to buy ${token.symbol}`}/>
                                 }
