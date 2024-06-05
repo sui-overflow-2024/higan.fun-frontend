@@ -58,8 +58,6 @@ const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
         longInterval: v.longInterval
     }));
 
-    const {socket} = appConfig;
-
     const {
         data: trades,
         error: fetchTradesError,
@@ -82,7 +80,7 @@ const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
             };
         }, [refetchTrades, socket, trades]
     );
-    
+
     useEffect(() => {
         if (!chartContainerRef.current) {
             return;
