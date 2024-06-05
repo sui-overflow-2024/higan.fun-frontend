@@ -136,12 +136,14 @@ const CoinsHeld: FC<{ profileAddress: string }> = ({profileAddress}) => {
 
 const CoinsCreatedRow: FC<{ token: CoinFromRestAPI }> = ({token}) => {
     const appConfig = useContext(AppConfigContext);
+    const {socket} = appConfig
     const currentSuiPrice = useContext(CurrentSuiPriceContext)
     const client = useSuiClient()
     const {
         data: tokenMetrics,
         error: fetchTokenMetricsError,
-        isLoading: isLoadingTokenPrice
+        isLoading: isLoadingTokenPrice,
+        mutate: refetchTokenMetrics
     } = useSWR<TokenMetric, any, TokenMetricKey>(
         {
             appConfig,
@@ -149,8 +151,19 @@ const CoinsCreatedRow: FC<{ token: CoinFromRestAPI }> = ({token}) => {
             sender: "0xbd81e46b4f6c750606445c10eccd486340ac168c9b34e4c4ab587fac447529f5",
             coin: token,
             path: "tokenMetrics",
-        }, getTokenMetrics, {refreshInterval: 5000});
+        }, getTokenMetrics, {refreshInterval: appConfig.longInterval});
 
+    useEffect(() => {
+            socket.on('tradeCreated', async (data) => {
+                await refetchTokenMetrics()
+            });
+            return () => {
+                socket.off('connect');
+                socket.off('postCreated');
+                socket.off('disconnect');
+            };
+        }, [refetchTokenMetrics, socket]
+    );
 
     if (!tokenMetrics) return <></>
     console.log("console metrics", tokenMetrics);

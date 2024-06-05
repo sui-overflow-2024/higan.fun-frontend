@@ -1,5 +1,5 @@
 'use client'
-import React, {FC, useContext} from 'react';
+import React, {FC, useContext, useEffect} from 'react';
 import MarkdownIt from 'markdown-it';
 import DOMPurify from 'dompurify';
 import {PostFromRestAPI} from "@/lib/types";
@@ -86,7 +86,7 @@ const NewPostTextbox: FC<{
                     const thread = await coinRestApi.postThread({appConfig, post: postData})
                     console.log("threadResponse", thread)
                     reset({text: ""});
-                    await refetchPosts()
+                    // await refetchPosts()
                 },
             },
         );
@@ -124,6 +124,7 @@ export const CoinThread: FC<{ bondingCurveId: string, creator: string }> = ({
                                                                                 bondingCurveId,
                                                                             }) => {
     const appConfig = useContext(AppConfigContext);
+    const {socket} = appConfig
 
     const {
         data: posts,
@@ -133,13 +134,42 @@ export const CoinThread: FC<{ bondingCurveId: string, creator: string }> = ({
         appConfig,
         bondingCurveId,
         path: "getPosts"
-    }, coinRestApi.getPosts, {refreshInterval: 5000});
+    }, coinRestApi.getPosts, {refreshInterval: 30000});
+
+    useEffect(() => {
+            console.log('posts in ws', posts)
+            socket.on('connect', () => {
+                console.log('listening for new posts');
+            });
+
+
+            socket.on('postCreated', async (data) => {
+                console.log('new posts created', data)
+                const newPosts = [data, ...posts || []]
+                await refetchPosts(newPosts, false)
+            });
+
+
+            socket.on('disconnect', () => {
+                console.log('stopped listening for new posts');
+            });
+
+            return () => {
+                socket.off('connect');
+                socket.off('postCreated');
+                socket.off('disconnect');
+            };
+        }, [posts, refetchPosts]
+    );
+
     if (!posts) {
         return <div>Loading posts...</div>
     }
     if (postsError) {
         return <div>Error loading posts {postsError}</div>
     }
+
+
     return (
         <div className={"space-y-3"}>
             <div className={"flex justify-center"}>

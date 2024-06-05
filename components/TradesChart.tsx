@@ -7,7 +7,7 @@ import {AppConfigContext, CurrentSuiPriceContext} from "@/components/Contexts";
 
 
 type TradesChartProps = {
-    // trades: TradeFromRestAPI[],
+    // trades.ts: TradeFromRestAPI[],
     bondingCurveId: string;
     // coinSymbol: string;
     // network: string;
@@ -44,7 +44,7 @@ const chartStyle: any = {
     areaTopColor: '#2962FF',
     areaBottomColor: 'rgba(41, 98, 255, 0.28)',
 }
-// Component for the trades list
+// Component for the trades.ts list
 const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const chartRef = useRef<IChartApi>();
@@ -52,13 +52,29 @@ const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
     const previousTradesRef = useRef<TradeFromRestAPI[]>([]);
     const appConfig = useContext(AppConfigContext)
     const currentSuiPrice = useContext(CurrentSuiPriceContext);
-
-    const {data: trades, error: fetchTradesError} = useSWR<TradeFromRestAPI[], any, CoinGetTradesKey>({
+    const {socket, longInterval} = appConfig;
+    const {
+        data: trades,
+        error: fetchTradesError,
+        mutate: refetchTrades
+    } = useSWR<TradeFromRestAPI[], any, CoinGetTradesKey>({
         appConfig,
         bondingCurveId: bondingCurveId,
         path: "getTrades"
-    }, coinRestApi.getTrades, {refreshInterval: 5000});
+    }, coinRestApi.getCoinTrades, {refreshInterval: longInterval});
 
+    useEffect(() => {
+            socket.on('tradeCreated', async (data) => {
+                console.log('new trade created, trade chart', data)
+                const newTrades = [data.trade, ...trades || []]
+                await refetchTrades(newTrades, false)
+            });
+
+            return () => {
+                socket.off('postCreated');
+            };
+        }, [refetchTrades, socket, trades]
+    );
     useEffect(() => {
         if (!chartContainerRef.current) {
             return;

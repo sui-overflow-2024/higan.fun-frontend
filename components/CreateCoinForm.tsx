@@ -25,6 +25,7 @@ export type CreateCoinFormData = {
     telegramUrl: string;
     target: number;
 }
+
 const schema = yup.object().shape({
     name: yup.string().required('Name is required.').matches(/^[A-Za-z0-9 ]+$/i, 'Name cannot contain numbers.'),
     symbol: yup.string().required('Ticker is required.'),

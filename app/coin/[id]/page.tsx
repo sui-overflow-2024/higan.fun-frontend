@@ -87,13 +87,9 @@ const ClampedDescription = ({text}: { text: string }) => {
 };
 
 const CoinMetadataHeader: React.FC<CoinMetadataProps> = ({tokenMetrics, client, token, marketCap, currentSuiPrice}) => {
-    if (!tokenMetrics) return (<div>Loading...</div>)
+    if (!tokenMetrics) return
     let {tokenPrice} = tokenMetrics;
 
-    // if (priceError) return (<div>Error fetching token price {priceError.message}</div>)
-    // if (!tokenPrice) return (<div>Loading...</div>)
-    // console.log(tokenPrice, "tokenPrice", priceError)
-    let tokenPriceUSD = getValueWithDecimals(tokenPrice * currentSuiPrice, 9);
 
     return (
         <div className="flex justify-between items-center rounded-lg">
@@ -269,6 +265,7 @@ const TokenHolders: React.FC<TokenHoldersProps> = ({token, tokenMetrics}) => {
 
 export default function Drilldown() {
     const appConfig = useContext(AppConfigContext)
+    const {socket} = appConfig;
     const [activePanel, setActivePanel] = useState<"thread" | "trades">('thread');
     const bondingCurveId = usePathname().split('/').pop() || '';
     const suiContext = useSuiClientContext()
@@ -280,7 +277,8 @@ export default function Drilldown() {
     const {
         data: tokenMetrics,
         error: fetchTokenMetricsError,
-        isLoading: isLoadingTokenPrice
+        isLoading: isLoadingTokenPrice,
+        mutate: refetchTokenMetrics
     } = useSWR<TokenMetric, any, TokenMetricKey>(
         {
             appConfig,
@@ -288,7 +286,18 @@ export default function Drilldown() {
             sender: "0xbd81e46b4f6c750606445c10eccd486340ac168c9b34e4c4ab587fac447529f5",
             coin: token,
             path: "tokenMetrics",
-        }, getTokenMetrics, {refreshInterval: 5000});
+        }, getTokenMetrics, {refreshInterval: appConfig.longInterval});
+    useEffect(() => {
+            socket.on('tradeCreated', async (data) => {
+                await refetchTokenMetrics()
+            });
+            return () => {
+                socket.off('connect');
+                socket.off('postCreated');
+                socket.off('disconnect');
+            };
+        }, [refetchTokenMetrics, socket]
+    );
 
     if (tokenError) return (<div>Error fetching token {tokenError.message}</div>)
     if (!token) return (<div>Loading token...</div>)

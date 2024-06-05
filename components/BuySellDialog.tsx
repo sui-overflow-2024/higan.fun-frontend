@@ -15,7 +15,6 @@ import {useTransactionExecution} from "@/hooks/useTransactionexecution";
 import {mutate} from "swr";
 import {AppConfig} from "@/lib/config";
 import {useToast} from "@/components/ui/use-toast";
-import { number } from "yup";
 
 
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code
@@ -254,7 +253,9 @@ const PriceCalculator: React.FC<{
     if (priceError) return (<div>Error fetching price {priceError.message}</div>)
 
     return (<div>
-        {mode === "buy" && sender && userSuiBalance < price && <div className="text-red-500 text-xs mt-1">Insufficient balance, you have {getValueWithDecimals(userSuiBalance || 0, 9, 4)} SUI</div>}
+        {mode === "buy" && sender && userSuiBalance < price &&
+            <div className="text-red-500 text-xs mt-1">Insufficient balance, you
+                have {getValueWithDecimals(userSuiBalance || 0, 9, 4)} SUI</div>}
 
         <div>You&apos;ll {mode === "buy" ? "pay" : "receive"}</div>
         <div className={"flex space-x-2 justify-center"}>
@@ -266,9 +267,10 @@ const PriceCalculator: React.FC<{
     </div>)
 }
 
-export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiClient }> = ({token, suiClient}) => {
-
-
+export const BuySellDialog: React.FC<{
+    token: CoinFromRestAPI,
+    suiClient: SuiClient
+}> = ({token, suiClient}) => {
     const appConfig = useContext(AppConfigContext)
     const currentAccount = useCurrentAccount()
     const executeTranscation = useTransactionExecution()
@@ -326,6 +328,7 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
         fetchBalance()
     }, [token, currentAccount?.address, suiClient, amount, userBalance, userSuiBalance, currentAccount])
 
+
     const submit = async (data: { amount: number }) => {
         console.log(`${mode}ing ${data.amount} of the token now`)
 
@@ -355,7 +358,7 @@ export const BuySellDialog: React.FC<{ token: CoinFromRestAPI, suiClient: SuiCli
             : generateSellPtb(appConfig, token, baseTokenCoins, amount);
 
         await executeTranscation(txb)
-        // TODO you can refresh trades and your own balance here
+        // TODO you can refresh trades.ts and your own balance here
 
         await mutate({
             client: suiClient,

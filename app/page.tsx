@@ -67,7 +67,7 @@ export default function Home() {
                 <div className={"text-center"}>
                     <Link href={"create"}>
                         <Button
-                            className={"p-8 text-3xl hover:underline"}
+                            className={"p-8 text-3xl"}
                             variant={"default"}>
                             CLICK HERE TO LAUNCH YOUR OWN TOKEN
                         </Button>

@@ -51,6 +51,7 @@ export const CreatorAddressChip: FC<CreatorAddressChipProps> = ({
                                                                     isBondingCurve = false
                                                                 }) => {
     const config = avatarVariants[variant]
+    //TODO Support user avatars
     let avatar = <Jazzicon diameter={config.jazziconDiam} seed={jsNumberForAddress(address)}/>
 
     if (avatarImageUrl) {

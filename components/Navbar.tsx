@@ -6,6 +6,10 @@ import {usePathname} from "next/navigation";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import HiganFunLogoText from "@/public/higan-fun-logo-text.svg";
 import Image from "next/image";
+import {useContext, useEffect, useState} from "react";
+import {AppConfigContext} from "@/components/Contexts";
+import {CoinFromRestAPI, TradeFromRestAPI} from "@/lib/types";
+import {coinRestApi} from "@/lib/rest";
 
 function NetworkSelector() {
     const ctx = useSuiClientContext();
@@ -32,10 +36,96 @@ function NetworkSelector() {
     );
 }
 
+const NewTradeNotification = ({trade, coin}: { trade?: TradeFromRestAPI, coin?: CoinFromRestAPI }) => {
+    if (!coin || !trade) return <></>;
+
+    return <Link href={`/coin/${coin.bondingCurveId}`}>
+        <div
+            className={"text-xs p-2 border-2 rounded-lg flex gap-2 items-center hover:cursor-pointer hover:bg-secondary"}>
+            <CreatorAddressChip address={coin.creator || "ffffff"}
+                                showAvatar={true}
+                                variant={"small"}/>
+            <span>traded {(trade.coinAmount * Math.pow(10, -1 * coin.decimals)).toFixed(4)} of {coin.symbol}</span>
+            <img src={coin.iconUrl} alt={coin.symbol} className={"w-6 h-6"}/>
+
+        </div>
+    </Link>
+}
+
+const NewCoinNotification = ({coin}: { coin?: CoinFromRestAPI }) => {
+    if (!coin) return <></>;
+
+    return <Link href={`/coin/${coin.bondingCurveId}`}>
+        <div
+            className={"text-xs p-2 border-2 rounded-lg flex gap-2 items-center hover:cursor-pointer hover:bg-secondary"}>
+            <CreatorAddressChip address={coin.creator || "ffffff"}
+                                showAvatar={true}
+                                variant={"small"}/>
+            <span>created {coin.symbol}</span>
+            <img src={coin.iconUrl} alt={coin.symbol} className={"w-6 h-6"}/>
+        </div>
+    </Link>
+}
+
 
 export default function Navbar() {
     const account = useCurrentAccount();
     const pathname = usePathname()
+    const appConfig = useContext(AppConfigContext);
+    const {socket} = appConfig
+
+    const [mostRecentTrade, setMostRecentTrade] = useState<{
+        trade: TradeFromRestAPI,
+        coin: CoinFromRestAPI
+    } | undefined>(undefined);
+    const [mostRecentCoin, setMostRecentCoin] = useState<CoinFromRestAPI | undefined>(undefined);
+    useEffect(() => {
+        socket.on('connect', () => {
+            console.log('Connected to WebSocket server');
+        });
+
+        socket.on('coinCreated', (data) => {
+            console.log('Token created nav posts:', data);
+            setMostRecentCoin(data)
+        });
+
+        socket.on('tradeCreated', (data) => {
+            console.log('Trade made nav posts:', data);
+            setMostRecentTrade(data);
+        });
+
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from WebSocket server');
+        });
+
+        return () => {
+            socket.off('connect');
+            socket.off('coinCreated');
+            socket.off('tradeCreated');
+            socket.off('disconnect');
+        };
+    }, [socket]);
+
+
+    useEffect(() => {
+        const initialFetch = async () => {
+            const mostRecentCoin = await coinRestApi.getAll({appConfig, limit: 1, order: "desc", path: "getAll"});
+            const mostRecentTrade = await coinRestApi.getTrades({
+                appConfig,
+                limit: 1,
+                order: "desc",
+                path: "getTrades"
+            });
+            setMostRecentCoin(mostRecentCoin[0]);
+            setMostRecentTrade({trade: mostRecentTrade[0], coin: mostRecentCoin[0]});
+        }
+        initialFetch()
+        //TODO on initial load we should fetch the most recent coin and trade from the REST API
+    }, []);
+
+    console.log("mostRecentCoin", mostRecentCoin)
+
     return (
         <nav className="border-b-2 border-gray-800">
             <div className="container mx-auto">
@@ -60,14 +150,8 @@ export default function Navbar() {
                             </Button>
                         </Link>
 
-                        {process.env.NODE_ENV === 'development' &&
-                            <Link href="/debug">
-                                <Button
-                                    className={pathname === "/debug" ? "text-primary underline" : "text-white"}
-                                    variant={"link"}>
-                                    Debug
-                                </Button>
-                            </Link>}
+                        <NewTradeNotification trade={mostRecentTrade?.trade} coin={mostRecentTrade?.coin}/>
+                        <NewCoinNotification coin={mostRecentCoin}/>
                     </div>
                     <div className="ml-auto">
                         <div className="flex items-center gap-2">
