@@ -23,23 +23,13 @@ interface CoinHeldRowProps {
     coinFromRestApi: CoinFromRestAPI;
 }
 
-
 const CoinsHeldRow: FC<CoinHeldRowProps> = ({address, coinBalance, coinFromRestApi}) => {
-
     const ctx = useSuiClientContext();
     const suiClient = useSuiClient()
-    const {
-        axios,
-        fallbackDevInspectAddress,
-        managerContractPackageId,
-        managerContractModuleName
-    } = useContextSelector(AppConfigContext, (v) => ({
-        axios: v.axios,
-        fallbackDevInspectAddress: v.fallbackDevInspectAddress,
-        managerContractPackageId: v.managerContractPackageId,
-        managerContractModuleName: v.managerContractModuleName
-    }));
-
+    const axios = useContextSelector(AppConfigContext, (v) => v.axios);
+    const fallbackDevInspectAddress = useContextSelector(AppConfigContext, (v) => v.fallbackDevInspectAddress);
+    const managerContractPackageId = useContextSelector(AppConfigContext, (v) => v.managerContractPackageId);
+    const managerContractModuleName = useContextSelector(AppConfigContext, (v) => v.managerContractModuleName);
     const [sellPrice, setSellPrice] = useState<number>(0)
     const currentSuiPrice = useContextSelector(CurrentSuiPriceContext, v => v);
 
@@ -118,12 +108,14 @@ const CoinsHeld: FC<{ profileAddress: string }> = ({profileAddress}) => {
     const {data: coins, isLoading, isError, error} = useSuiClientQuery('getAllBalances', {
         owner: profileAddress,
     })
+    console.log("coins", coins, coins?.map(coin => coin.coinType.split("::")[0]) || [])
+    const packageIds = coins?.map(coin => coin.coinType.split("::")[0]) || []
     const axios = useContextSelector(AppConfigContext, (v) => v.axios);
     const {data: coinsFromRestApi, error: errorFromRestApi} = useSWR<CoinFromRestAPI[], any, CoinGetAllKey>({
         axios,
-        packageIds: coins?.map(coin => coin.coinType.split("::")[0]) || [],
+        packageIds,
         path: "getAll",
-    }, coinRestApi.getAll)
+    }, coinRestApi.getAll, {refreshInterval: 5000})
 
 
     if (!coins || !coinsFromRestApi) return <>Loading coins</>
@@ -131,6 +123,7 @@ const CoinsHeld: FC<{ profileAddress: string }> = ({profileAddress}) => {
         return <div>Error: {((error || errorFromRestApi) as Error).message}</div>
     }
 
+    console.log("coinsFromRestAPI", coinsFromRestApi)
     return (<div className="space-y-2 gap-2">
         {coins?.map((coin, index) => {
             const packageIdFromCoinType = coin.coinType.split("::")[0]
@@ -145,17 +138,10 @@ const CoinsHeld: FC<{ profileAddress: string }> = ({profileAddress}) => {
 }
 
 const CoinsCreatedRow: FC<{ token: CoinFromRestAPI }> = ({token}) => {
-    const {
-        managerContractPackageId,
-        managerContractModuleName,
-        socket,
-        longInterval
-    } = useContextSelector(AppConfigContext, (v) => ({
-        socket: v.socket,
-        longInterval: v.longInterval,
-        managerContractPackageId: v.managerContractPackageId,
-        managerContractModuleName: v.managerContractModuleName,
-    }));
+    const managerContractPackageId = useContextSelector(AppConfigContext, (v) => v.managerContractPackageId);
+    const managerContractModuleName = useContextSelector(AppConfigContext, (v) => v.managerContractModuleName);
+    const socket = useContextSelector(AppConfigContext, (v) => v.socket);
+    const longInterval = useContextSelector(AppConfigContext, (v) => v.longInterval);
 
     const currentSuiPrice = useContextSelector(CurrentSuiPriceContext, v => v);
     const client = useSuiClient()
@@ -269,7 +255,9 @@ const CoinsCreated: FC<{ profileAddress: string }> = ({profileAddress}) => {
 const ProfilePage = () => {
     const ctx = useSuiClientContext();
     let {address} = useParams()
-    address = address as string
+    if (Array.isArray(address)) {
+        address = address.join("")
+    }
     const {toast} = useToast()
     const [view, setView] = useState<'coins_held' | 'coins_created'>('coins_held')
     console.log("Loading profile for address", address)

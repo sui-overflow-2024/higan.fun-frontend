@@ -44,7 +44,7 @@ type CoinRestApi = {
 }
 
 export const coinRestApi: CoinRestApi = {
-    getAll: async ({axios, packageIds, creator, limit = 0, order = "desc"}) => {
+    getAll: async ({axios, packageIds, creator, limit = 100, order = "desc"}) => {
         const params: {
             packageIds?: string[],
             creator?: string,
@@ -58,6 +58,7 @@ export const coinRestApi: CoinRestApi = {
         if (creator) {
             params['creator'] = creator;
         }
+        console.log("packageIds", packageIds)
         const res = await axios.get<CoinFromRestAPI[]>('/coins', {params});
         // console.log("Retrieved the following coin from the REST API", res.data);
         return res.data;

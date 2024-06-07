@@ -46,10 +46,9 @@ export type PostFromRestAPI = {
 }
 
 export enum CoinStatus {
-    STARTING_UP = 0,
-    OPEN = 1,
-    CLOSE_IN_PROGRESS = 2,
-    CLOSED = 3
+    OPEN = 0,
+    CLOSE_IN_PROGRESS = 1,
+    CLOSED = 2
 }
 
 export type HoldersFromRestAPI = {

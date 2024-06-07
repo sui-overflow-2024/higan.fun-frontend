@@ -277,6 +277,7 @@ export default function Drilldown() {
     const [activePanel, setActivePanel] = useState<"thread" | "trades">('thread');
     const bondingCurveId = usePathname().split('/').pop() || '';
     const suiContext = useSuiClientContext()
+    const fallbackDevInspectAddress = useContextSelector(AppConfigContext, v => v.fallbackDevInspectAddress)
 
     const {data: token, error: tokenError} = useSWR<CoinFromRestAPI, any, CoinGetByIdKey>(
         {axios, bondingCurveId, path: "getById"}, coinRestApi.getById)
@@ -291,7 +292,7 @@ export default function Drilldown() {
             managerContractPackageId,
             managerContractModuleName,
             client: suiContext.client,
-            sender: "0xbd81e46b4f6c750606445c10eccd486340ac168c9b34e4c4ab587fac447529f5",
+            sender: fallbackDevInspectAddress,
             coin: token,
             path: "tokenMetrics",
         }, getTokenMetrics, {refreshInterval: longInterval});

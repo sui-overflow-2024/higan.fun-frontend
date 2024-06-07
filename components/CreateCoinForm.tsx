@@ -2,7 +2,7 @@
 import React, {useState} from "react";
 import {useForm} from 'react-hook-form';
 import {useToast} from "@/components/ui/use-toast";
-import {ConnectButton, useAccounts, useSuiClientQuery} from "@mysten/dapp-kit";
+import {ConnectButton, useAccounts} from "@mysten/dapp-kit";
 import {faker} from "@faker-js/faker";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
@@ -50,20 +50,7 @@ const CreateCoinForm = () => {
         const {toast} = useToast()
         const [fatalError, setFatalError] = useState<string | null>(null);
         const executeTransaction = useTransactionExecution()
-        const {data: configurator, error: fetchConfiguratorError} = useSuiClientQuery('getObject', {
-            id: "0xc2d828e8535ce4e06fe9736277af4f7635b0780a770f70c6d4c71e174d47e77b",
-            options: {
-                showContent: true,
-                showBcs: true,
-                showDisplay: true,
-                showOwner: true,
-                showType: true,
-                showPreviousTransaction: true,
-                showStorageRebate: true,
-            }
-        });
-        console.log("configurator", configurator)
-        console.log("fetchConfiguratorError", fetchConfiguratorError)
+
         const dev_name = `${faker.word.words({count: {min: 1, max: 3}}).replace(" ", "_")}`
         const {
             register,
@@ -103,6 +90,7 @@ const CreateCoinForm = () => {
                         txb.pure.string(data.name),
                         txb.pure.string(data.symbol),
                         txb.pure.string(data.description),
+                        txb.pure.u64(data.decimals),
                         txb.pure.u64(data.target),
                         txb.pure.string(data.iconUrl),
                         txb.pure.string(data.websiteUrl),

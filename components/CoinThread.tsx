@@ -124,11 +124,10 @@ export const CoinThread: FC<{ bondingCurveId: string, creator: string }> = ({
                                                                                 creator,
                                                                                 bondingCurveId,
                                                                             }) => {
-    const {axios, socket, longInterval} = useContextSelector(AppConfigContext, (v) => ({
-        axios: v.axios,
-        socket: v.socket,
-        longInterval: v.longInterval
-    }));
+    const axios = useContextSelector(AppConfigContext, (v) => v.axios);
+    const socket = useContextSelector(AppConfigContext, (v) => v.socket);
+    const longInterval = useContextSelector(AppConfigContext, (v) => v.longInterval);
+
     const {
         data: posts,
         error: postsError,

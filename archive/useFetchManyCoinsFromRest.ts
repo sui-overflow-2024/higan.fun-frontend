@@ -1,7 +1,7 @@
 'use client';
-import { useQuery, UseQueryOptions, UseQueryResult } from "@tanstack/react-query";
-import { useContext } from "react";
-import { AppConfigContext } from "@/components/Contexts";
+import {useQuery, UseQueryOptions, UseQueryResult} from "@tanstack/react-query";
+import {useContext} from "use-context-selector";
+import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI} from "@/lib/types";
 
 // Define the arguments for the useFetchManyCoinsFromRest hook
@@ -20,7 +20,7 @@ export function useFetchManyCoinsFromRest({
     const fetchCoins = async (): Promise<CoinFromRestAPI[]> => {
         try {
             const response = await appConfig.axios.get(`/coins`, {
-                params: { packageIds: packageIds?.join(",") }
+                params: {packageIds: packageIds?.join(",")}
             });
             return response.data;
         } catch (error: any) {

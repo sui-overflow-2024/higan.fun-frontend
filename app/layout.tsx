@@ -6,7 +6,6 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {StrictMode, useEffect, useState} from "react";
 import {SuiClientProvider, WalletProvider} from '@mysten/dapp-kit';
 import {getFullnodeUrl} from '@mysten/sui.js/client';
-import {PrismaClient} from "@/lib/prisma/client";
 import {AppConfigContext, CurrentSuiPriceProvider} from "@/components/Contexts";
 import {Toaster} from "@/components/ui/toaster";
 import "./globals.css";
@@ -45,12 +44,11 @@ export default function RootLayout({
             {/*    disableTransitionOnChange*/}
             {/*>*/}
             {isClient ?
-
                 <AppConfigContext.Provider value={defaultAppConfig}>
                     <QueryClientProvider client={queryClient}>
                         <CurrentSuiPriceProvider>
                             <SuiClientProvider networks={networks} defaultNetwork="testnet">
-                                <WalletProvider>
+                                <WalletProvider autoConnect={true}>
                                     <Navbar/>
                                     {children}
                                 </WalletProvider>

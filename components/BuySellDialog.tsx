@@ -242,16 +242,16 @@ export const BuySellDialog: React.FC<{
             const suiBalance = await suiClient.getBalance({
                 owner: currentAccount.address,
             });
+
             setUserSuiBalance(parseInt(suiBalance.totalBalance || "0"));
-            console.log("balance", balance)
             setUserBalance(parseInt(balance.totalBalance))
-            console.log("userBalance", userBalance)
 
             const coins = await getAllUserCoins({
                 suiClient: suiClient,
                 type: getCoinTypePath(token),
                 address: currentAccount.address,
             });
+        
             console.log("coins", coins)
             setBaseTokenCoins(coins)
         }

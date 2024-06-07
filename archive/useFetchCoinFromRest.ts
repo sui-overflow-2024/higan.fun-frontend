@@ -1,7 +1,7 @@
 'use client';
 import {useQuery, UseQueryOptions, UseQueryResult} from "@tanstack/react-query";
 import {CoinFromRestAPI} from "@/lib/types";
-import {useContext} from "react";
+import {useContext} from "use-context-selector";
 import {AppConfigContext} from "@/components/Contexts";
 
 type UseFetchCoinFromRestArgs = {

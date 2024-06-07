@@ -52,13 +52,8 @@ const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
     const seriesRef = useRef<ISeriesApi<"Line">>();
     const previousTradesRef = useRef<TradeFromRestAPI[]>([]);
     const currentSuiPrice = useContextSelector(CurrentSuiPriceContext, v => v);
-    const {axios, socket, longInterval} = useContextSelector(AppConfigContext, (v) => ({
-        axios: v.axios,
-        socket: v.socket,
-        longInterval: v.longInterval
-    }));
-
-    const {socket} = appConfig;
+    const axios = useContextSelector(AppConfigContext, v => v.axios);
+    const socket = useContextSelector(AppConfigContext, v => v.socket);
 
     const {
         data: trades,
@@ -82,7 +77,7 @@ const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
             };
         }, [refetchTrades, socket, trades]
     );
-    
+
     useEffect(() => {
         if (!chartContainerRef.current) {
             return;
