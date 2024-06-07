@@ -258,7 +258,7 @@ export const BuySellDialog: React.FC<{
         fetchBalance()
     }, [token, currentAccount?.address, suiClient, amount, userBalance, userSuiBalance, currentAccount])
 
-    const {data: coinPrice, isLoading: isLoadingCoinPrice, error, mutate: refetchCoinPrice} = useSWR({
+    const {data: coinPrice, isLoading: isLoadingCoinPrice, error: coinPriceError, mutate: refetchCoinPrice} = useSWR({
         managerContractPackageId,
         managerContractModuleName,
         suiClient,
@@ -280,7 +280,10 @@ export const BuySellDialog: React.FC<{
 
     // Set error message on specific state updates
     useEffect(() => {
-        if (!coinPrice) return
+        if(isLoadingCoinPrice){
+            setErrorMessage(null)
+            // return
+        }
 
         if (mode === "sell" && userBalance < amount) {
             setErrorMessage("You don't have enough tokens to sell");
