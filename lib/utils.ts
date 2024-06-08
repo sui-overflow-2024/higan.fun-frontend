@@ -3,6 +3,8 @@ import {twMerge} from "tailwind-merge"
 import {CoinFromRestAPI} from "@/lib/types";
 import type {DevInspectResults} from "@mysten/sui.js/client";
 import {bcs} from "@mysten/sui.js/bcs";
+import {SuiClientProviderContext} from "@mysten/dapp-kit";
+import {Dex} from "kriya-dex-sdk";
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -101,4 +103,32 @@ export async function copyTextToClipboard(text: string) {
 
 export function truncateDecimals(num: number, decimals: number): number {
     return num * Math.pow(10, -1 * decimals);
+}
+
+export function getLiquidityPoolId(
+    kriyaPackageId: string,
+    coinX: string | CoinFromRestAPI,
+    coinY: string | CoinFromRestAPI,
+): string{
+    let coinXType = typeof coinX === "string" ? coinX : getCoinTypePath(coinX)
+    let coinYType = typeof coinY === "string" ? coinY : getCoinTypePath(coinY)
+    return `${kriyaPackageId}::spot_dex::Pool<${coinXType}, ${coinYType}>`
+}
+
+
+export async function getLiquidityPool(
+    kyriaPackageId: string,
+    suiClientCtx: SuiClientProviderContext,
+    coinX: string | CoinFromRestAPI,
+    coinY: string | CoinFromRestAPI,
+){
+    const dex = new Dex(suiClientCtx.config?.url || "https://fullnode.mainnet.sui.io:443")
+    const poolId = getLiquidityPoolId(kyriaPackageId, coinX, coinY)
+
+    const txn = await dex.suiClient.getObject({
+        id: poolId,
+        options: {showContent: true},
+    });
+    console.log(`getLiquidityPool: `, txn.data)
+
 }

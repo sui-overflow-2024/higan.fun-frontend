@@ -1,11 +1,12 @@
 // Significant portions of this code is copied from kriya-dex-sdk
 // We copied it out of the package so we could modify it immediately without creating a fork
-import {Dex,} from "kriya-dex-sdk";
+import {Dex} from "kriya-dex-sdk";
 import 'react-json-pretty/themes/monikai.css';
 import {TransactionArgument, TransactionBlock} from "@mysten/sui.js/transactions";
 import {CoinStruct, SuiClient} from "@mysten/sui.js/client";
-import {WalletAccount} from "@wallet-standard/base";
 import {DexConstants} from "kriya-dex-sdk/dist/constants";
+import {SuiClientProviderContext} from "@mysten/dapp-kit";
+import type { WalletAccount } from '@mysten/wallet-standard';
 
 export type Pool = {
     objectId: string,
@@ -85,54 +86,7 @@ export const addLiquidity = async ({
         return lpObject;
     }
 };
-// Transaction failed with the following error. Dry run failed, could not automatically determine a budget: MoveAbort(MoveLocation { module: ModuleId { address: b5722117aec83525c71f84c31c1f28e29397feffa95c99cce72a150a555a63dd, name: Identifier("spot_dex") }, function: 27, instruction: 63, function_name: Some("get_amount_for_add_liquidity") }, 5) in command 2
-//
-// export const addLiquiditySingleSided = async (
-//     kriyaPackageId: string,
-//     account: WalletAccount,
-//     suiClient: SuiClient,
-//     pool: Pool,
-//     inputCoinType: string,
-//     inputCoinAmount: bigint,
-//     inputCoin: string | TransactionArgument,
-//     swapSlippageTolerance: number,
-//     txb: TransactionBlock,
-//     transferToAddress?: string
-// ): Promise<TransactionArgument | null> => {
-//     if (swapSlippageTolerance > 1 || swapSlippageTolerance < 0)
-//         swapSlippageTolerance = 0.9; // set sane default if bad value provided
-//
-//     const isXtoY = pool.tokenXType === inputCoinType;
-//     const amountToSwap = await getOptimalLpSwapAmount(inputCoinAmount, pool.objectId, isXtoY, txb, pool?.isStable)
-//
-//     const coinToSwap = txb.splitCoins(
-//         // @ts-ignore
-//         typeof (inputCoin) == 'string' ? txb.object(inputCoin) : inputCoin,
-//         [
-//             typeof (amountToSwap) == "bigint" ? txb.pure(amountToSwap) : amountToSwap
-//         ]);
-//
-//     const swappedCoin = swap(pool, inputCoinType, amountToSwap, coinToSwap, BigInt(0), txb);
-//     const coinX = isXtoY ? inputCoin : swappedCoin;
-//     const coinY = isXtoY ? swappedCoin : inputCoin;
-//     const coinXAmount = getCoinValue(pool.tokenXType, coinX, txb);
-//     const coinYAmount = getCoinValue(pool.tokenYType, coinY, txb);
-//
-//     return addLiquidity({
-//         kriyaPackageId,
-//         account,
-//         suiClient,
-//         pool,
-//         coinXAmount,
-//         coinYAmount,
-//         minAddAmountX: BigInt(0),
-//         minAddAmountY: BigInt(0),
-//         coinX,
-//         coinY,
-//         txb,
-//         transferToAddress
-//     });
-// };
+
 
 export const removeLiquidity = (
     pool: Pool,
@@ -159,8 +113,22 @@ export const removeLiquidity = (
     }
 };
 
-export const getOptimalLpSwapAmount = async (inputAmt: bigint, poolId: string, isXtoY: boolean, txb: TransactionBlock, isStable?: boolean): Promise<bigint | TransactionArgument> => {
-    const dex = new Dex("https://fullnode.mainnet.sui.io:443")
+export type GetOptimalLpSwapAmount = {
+    suiClientCtx: SuiClientProviderContext,
+    inputAmt: bigint,
+    poolId: string,
+    isXtoY: boolean,
+    isStable?: boolean
+}
+export const getOptimalLpSwapAmount = async ({
+                suiClientCtx,
+                inputAmt,
+                poolId,
+                isXtoY,
+                isStable
+}: GetOptimalLpSwapAmount): Promise<bigint> => {
+
+    const dex = new Dex(suiClientCtx.config?.url || "https://fullnode.mainnet.sui.io:443")
     const txn = await dex.suiClient.getObject({
         id: poolId,
         options: {showContent: true},
@@ -252,7 +220,6 @@ export const getCoinsGreaterThanAmount = (
     amount: bigint,
     coins: CoinStruct[]
 ): string[] => {
-
     const coinsWithBalance: string[] = [];
 
     let collectedAmount = BigInt(0);
@@ -320,7 +287,7 @@ export const getCoinValue = (coinType: string, coinObject: string | TransactionA
     return value;
 }
 
-export const swap = (
+export type KriyaSwapArgs = {
     kyriaPackageId: string,
     pool: Pool,
     inputCoinType: string,
@@ -329,7 +296,19 @@ export const swap = (
     minReceived: bigint,
     txb: TransactionBlock,
     transferToAddress?: string
-): TransactionArgument | undefined => {
+}
+
+export const swap = ({
+    kriyaPackageId,
+    pool,
+    inputCoinType,
+    inputCoinAmount,
+    inputCoin,
+    minReceived,
+    txb,
+    transferToAddress,
+
+}: KriyaSwapArgs) TransactionArgument | undefined => {
     const isXtoY = pool.tokenXType === inputCoinType;
     const inputCoinObject = typeof (inputCoin) === 'string' ? txb.object(inputCoin) : inputCoin;
     const inputTokenAmount = typeof (inputCoinAmount) === 'bigint' ? txb.pure(inputCoinAmount) : inputCoinAmount;

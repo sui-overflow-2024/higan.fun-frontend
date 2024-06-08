@@ -16,6 +16,7 @@
     "@million/lint": "1.0.0-rc.26",
     "@mysten/dapp-kit": "^0.12.15",
     "@mysten/sui.js": "^0.54.1",
+    "@mysten/wallet-standard": "^0.12.5",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-collapsible": "^1.0.3",
     "@radix-ui/react-dialog": "^1.0.5",
