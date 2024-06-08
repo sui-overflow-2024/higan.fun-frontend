@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {use, useEffect, useState} from 'react';
 import {formatDistanceToNow} from "date-fns";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import {getValueWithDecimals} from "@/lib/utils";
@@ -7,6 +7,16 @@ import {AppConfigContext} from "@/components/Contexts";
 import useSWR from "swr";
 import {TradeFromRestAPI} from "@/lib/types";
 import {useContextSelector} from "use-context-selector";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+  } from "@/components/ui/pagination"
+import { off } from 'process';
 
 type TradesListProps = {
     bondingCurveId: string;
@@ -20,7 +30,7 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
     const axios = useContextSelector(AppConfigContext, v => v.axios);
     const socket = useContextSelector(AppConfigContext, v => v.socket);
     const longInterval = useContextSelector(AppConfigContext, v => v.longInterval);
-    const {
+    let {
         data: trades,
         error: fetchTradesError,
         mutate: refetchTrades
@@ -29,6 +39,10 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
         bondingCurveId,
         path: "getTrades"
     }, coinRestApi.getCoinTrades, {refreshInterval: longInterval});
+
+    const [limit, setLimit] = useState<number>(1);
+    const [offset, setOffset] = useState<number>(0);
+    let hasNextPage = false;
 
     useEffect(() => {
             socket.on('tradeCreated', async (data) => {
@@ -43,8 +57,29 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
         }, [refetchTrades, socket, trades]
     );
 
+    useEffect(() => {
+        refetchTrades(undefined, true);
+    }, [offset]);
+
+    const handlePagePreviousClick = (e: any) => {
+        e.preventDefault();
+
+        setOffset(Math.max(0, offset - limit));
+    }
+
+    const handlePageNextClick = (e: any) => {
+        e.preventDefault();
+        if(!hasNextPage) return;
+
+        setOffset(offset + limit);
+    }
+
     if (!trades) return <div>Loading trades...</div>
     if (fetchTradesError) return <div>Failed to load trades {fetchTradesError}</div>
+    let currentPage = offset / limit + 1;
+    hasNextPage = trades.length > limit;
+    trades = trades.slice(0, limit);
+
     return (
         <div className="w-full">
             <div className="flex bg-gray-800 text-gray-200 p-2 rounded-t-lg">
@@ -87,6 +122,20 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
                     </div>
                 )
             })}
+
+            <Pagination>
+                <PaginationContent>
+                    <PaginationItem>
+                    <PaginationPrevious href="#" onClick={handlePagePreviousClick} />
+                    </PaginationItem>
+                    <PaginationItem>
+                    <PaginationLink href="#">{currentPage}</PaginationLink>
+                    </PaginationItem>
+                    <PaginationItem>
+                    <PaginationNext href="#" onClick={handlePageNextClick} />
+                </PaginationItem>
+                </PaginationContent>
+            </Pagination>
         </div>
     );
 };
