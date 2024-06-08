@@ -9,6 +9,7 @@ import {Input} from "@/components/ui/input";
 import {coinRestApi} from "@/lib/rest";
 import useSWR from "swr";
 import {useContextSelector} from "use-context-selector";
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 
 
 const TopTokens: FC = () => {
@@ -49,6 +50,7 @@ const TopTokens: FC = () => {
 export default function Home() {
     const [term, setTerm] = useState("");
     const [sort, setSort] = useState<"created" | "marketCap" | "tvl" | "price">("created")
+    const [sortDisplay, setSortDisplay] = useState<"Created" | "Market Cap" | "TVL 24h" | "price">("Created")
     const [order, setOrder] = useState<"asc" | "desc">("desc")
     const [tokens, setTokens] = useState<CoinFromRestAPI[]>([]);
     const axios = useContextSelector(AppConfigContext, (v) => v.axios);
@@ -87,42 +89,85 @@ export default function Home() {
                     ></Input>
                     <Button>Search</Button>
                 </div>
-                <div className={"flex"}>
-                    <div className={"space-x-4"}>
-                        <span className="text-2xl font-bold">Sort by:</span>
-                        <Button
-                            onClick={() => setSort("created")}
-                            variant={sort === "created" ? "default" : "outline"}
-                        >
-                            Created at
-                        </Button>
-                        <Button
-                            onClick={() => setSort("marketCap")}
-                            variant={sort === "marketCap" ? "default" : "outline"}
-                        >
-                            Market Cap
-                        </Button>
-                        <Button
-                            onClick={() => setSort("tvl")}
-                            variant={sort === "tvl" ? "default" : "outline"}
-                        >
-                            TVL last 24h
-                        </Button>
+                <div className={"flex gap-8"}>
+                    <div className={"space-x-4 flex items-center sm:text-center"}>
+                        <p className="text-xl font-bold">Sort by:</p>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className={"min-w-24"}>{sortDisplay}</Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56">
+                                <DropdownMenuItem onSelect={() => {
+                                    setSort("created")
+                                    setSortDisplay("Created")
+                                }}>
+                                    <span>Created</span>
+                                    {/*<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>*/}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => {
+                                    setSort("marketCap")
+                                    setSortDisplay("Market Cap")
+                                }}>
+                                    <span>Market Cap</span>
+                                    {/*<DropdownMenuShortcut>⌘B</DropdownMenuShortcut>*/}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => {
+                                    setSort("tvl")
+                                    setSortDisplay("TVL 24h")
+                                }}>
+                                    <span>TVL 24h</span>
+                                    {/*<DropdownMenuShortcut>⌘S</DropdownMenuShortcut>*/}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        {/*<Button*/}
+                        {/*    onClick={() => setSort("created")}*/}
+                        {/*    variant={sort === "created" ? "default" : "outline"}*/}
+                        {/*>*/}
+                        {/*    Created at*/}
+                        {/*</Button>*/}
+                        {/*<Button*/}
+                        {/*    onClick={() => setSort("marketCap")}*/}
+                        {/*    variant={sort === "marketCap" ? "default" : "outline"}*/}
+                        {/*>*/}
+                        {/*    Market Cap*/}
+                        {/*</Button>*/}
+                        {/*<Button*/}
+                        {/*    onClick={() => setSort("tvl")}*/}
+                        {/*    variant={sort === "tvl" ? "default" : "outline"}*/}
+                        {/*>*/}
+                        {/*    TVL last 24h*/}
+                        {/*</Button>*/}
                     </div>
-                    <div className={"space-x-4 ml-auto"}>
-                        <span className="text-xl font-bold">Order:</span>
-                        <Button
-                            onClick={() => setOrder("asc")}
-                            variant={order === "asc" ? "default" : "outline"}
-                        >
-                            Ascending
-                        </Button>
-                        <Button
-                            onClick={() => setOrder("desc")}
-                            variant={order === "desc" ? "default" : "outline"}
-                        >
-                            Descending
-                        </Button>
+                    <div className={"space-x-4 flex items-center"}>
+                        <p className="text-xl font-bold">Order:</p>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className={"capitalize min-w-24"}>{order}</Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56">
+                                <DropdownMenuItem onSelect={() => setOrder("asc")}>
+                                    <span>asc</span>
+                                    {/*<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>*/}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => setOrder("desc")}>
+                                    <span>desc</span>
+                                    {/*<DropdownMenuShortcut>⌘B</DropdownMenuShortcut>*/}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        {/*<Button*/}
+                        {/*    onClick={() => setOrder("asc")}*/}
+                        {/*    variant={order === "asc" ? "default" : "outline"}*/}
+                        {/*>*/}
+                        {/*    Ascending*/}
+                        {/*</Button>*/}
+                        {/*<Button*/}
+                        {/*    onClick={() => setOrder("desc")}*/}
+                        {/*    variant={order === "desc" ? "default" : "outline"}*/}
+                        {/*>*/}
+                        {/*    Descending*/}
+                        {/*</Button>*/}
                     </div>
                 </div>
 

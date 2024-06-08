@@ -33,6 +33,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "dompurify": "^3.1.4",
+    "kriya-dex-sdk": "^1.1.69",
     "lightweight-charts": "^4.1.4",
     "lucide-react": "^0.378.0",
     "markdown-it": "^14.1.0",

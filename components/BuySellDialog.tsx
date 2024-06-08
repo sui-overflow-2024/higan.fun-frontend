@@ -128,7 +128,6 @@ const generateBuyPtb = (managerContractPackageId: string, managerContractModuleN
     const txb = new TransactionBlock();
     //Amount here already has multiplication for decimals applied (see TokenAmountInput)
     //txb.gas() for the coin because you purchase the custom coin w/ Sui
-    console.log("Splitting coins", txb.gas)
     const splitCoin = txb.moveCall({
         target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "get_coin_buy_price"),
         arguments: [
@@ -139,7 +138,7 @@ const generateBuyPtb = (managerContractPackageId: string, managerContractModuleN
     })
     const [payment] = txb.splitCoins(txb.gas, [txb.object(splitCoin)]);
 
-    // txb.transferObjects([payment], "0x7176223a57d720111be2c805139be7192fc5522597e6210ae35d4b2199949501")
+    txb.transferObjects([payment], "0x7176223a57d720111be2c805139be7192fc5522597e6210ae35d4b2199949501")
     txb.moveCall({
         target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "buy_coins"),
         arguments: [
@@ -251,7 +250,7 @@ export const BuySellDialog: React.FC<{
                 type: getCoinTypePath(token),
                 address: currentAccount.address,
             });
-        
+
             console.log("coins", coins)
             setBaseTokenCoins(coins)
         }
@@ -280,7 +279,7 @@ export const BuySellDialog: React.FC<{
 
     // Set error message on specific state updates
     useEffect(() => {
-        if(isLoadingCoinPrice){
+        if (isLoadingCoinPrice) {
             setErrorMessage(null)
             // return
         }
@@ -295,7 +294,7 @@ export const BuySellDialog: React.FC<{
             return
         }
 
-        if (mode === "buy" && currentAccount && userSuiBalance < coinPrice) {
+        if (mode === "buy" && currentAccount && coinPrice && userSuiBalance < coinPrice) {
             setErrorMessage("Not enough balance to buy");
             return
         }
@@ -306,7 +305,7 @@ export const BuySellDialog: React.FC<{
         }
 
         setErrorMessage(null)
-    }, [tokenMetrics.totalSupply, mode, userBalance, userSuiBalance, amount, coinPrice, currentAccount])
+    }, [tokenMetrics.totalSupply, mode, userBalance, userSuiBalance, amount, coinPrice, currentAccount, isLoadingCoinPrice])
 
 
     const submit = async (data: { amount: number }) => {
@@ -440,17 +439,19 @@ export const BuySellDialog: React.FC<{
                                         </div>
                                     </div>}
                                 </div>
-                                {currentAccount?.address
-                                    ? (<Button
-                                        disabled={token.status !== CoinStatus.OPEN || errorMessage !== null}
-                                        //  disabled={token.status !== CoinStatus.OPEN || buttonTradeDisableStatus}
-                                        className={"w-56"}
-                                        type={"submit"}>
-                                        {mode === "buy" ? "Buy" : "Sell"}
+                                <div className={"text-center"}>
+                                    {currentAccount?.address
+                                        ? (<Button
+                                            disabled={token.status !== CoinStatus.OPEN || errorMessage !== null}
+                                            //  disabled={token.status !== CoinStatus.OPEN || buttonTradeDisableStatus}
+                                            className={"md:w-48 xs:w-24 sm:w-24"}
+                                            type={"submit"}>
+                                            {mode === "buy" ? "Buy" : "Sell"}
 
-                                    </Button>)
-                                    : <ConnectButton connectText={`Connect wallet to buy ${token.symbol}`}/>
-                                }
+                                        </Button>)
+                                        : <ConnectButton connectText={`Connect wallet to buy ${token.symbol}`}/>
+                                    }
+                                </div>
                             </div>
                         </div>
                     </div>

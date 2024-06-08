@@ -6,7 +6,7 @@ import {QueryClient, QueryClientProvider} from '@tanstack/react-query';
 import {StrictMode, useEffect, useState} from "react";
 import {SuiClientProvider, WalletProvider} from '@mysten/dapp-kit';
 import {getFullnodeUrl} from '@mysten/sui.js/client';
-import {AppConfigContext, CurrentSuiPriceProvider} from "@/components/Contexts";
+import {AppConfigContext, CurrentSuiPriceProvider, ThemeProvider} from "@/components/Contexts";
 import {Toaster} from "@/components/ui/toaster";
 import "./globals.css";
 import {defaultAppConfig} from "@/lib/config";
@@ -37,27 +37,27 @@ export default function RootLayout({
         <body className={inter.className}>
 
         <StrictMode>
-            {/*<ThemeProvider*/}
-            {/*    attribute="class"*/}
-            {/*    defaultTheme="dark"*/}
-            {/*    enableSystem*/}
-            {/*    disableTransitionOnChange*/}
-            {/*>*/}
-            {isClient ?
-                <AppConfigContext.Provider value={defaultAppConfig}>
-                    <QueryClientProvider client={queryClient}>
-                        <CurrentSuiPriceProvider>
-                            <SuiClientProvider networks={networks} defaultNetwork="testnet">
-                                <WalletProvider autoConnect={true}>
-                                    <Navbar/>
-                                    {children}
-                                </WalletProvider>
-                            </SuiClientProvider>
-                            <Toaster/>
-                        </CurrentSuiPriceProvider>
-                    </QueryClientProvider>
-                </AppConfigContext.Provider> : <></>}
-            {/*</ThemeProvider>*/}
+            <ThemeProvider
+                attribute="class"
+                defaultTheme="dark"
+                enableSystem
+                disableTransitionOnChange
+            >
+                {isClient ?
+                    <AppConfigContext.Provider value={defaultAppConfig}>
+                        <QueryClientProvider client={queryClient}>
+                            <CurrentSuiPriceProvider>
+                                <SuiClientProvider networks={networks} defaultNetwork="testnet">
+                                    <WalletProvider autoConnect={true}>
+                                        <Navbar/>
+                                        {children}
+                                    </WalletProvider>
+                                </SuiClientProvider>
+                                <Toaster/>
+                            </CurrentSuiPriceProvider>
+                        </QueryClientProvider>
+                    </AppConfigContext.Provider> : <></>}
+            </ThemeProvider>
         </StrictMode>
         </body>
         </html>

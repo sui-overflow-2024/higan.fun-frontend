@@ -68,6 +68,9 @@ dependencies:
   dompurify:
     specifier: ^3.1.4
     version: 3.1.4
+  kriya-dex-sdk:
+    specifier: ^1.1.69
+    version: 1.1.69(svelte@4.2.17)(typescript@5.4.5)
   lightweight-charts:
     specifier: ^4.1.4
     version: 4.1.4
@@ -922,6 +925,27 @@ packages:
       - babel-plugin-macros
       - immer
       - react-dom
+      - svelte
+      - typescript
+    dev: false
+
+  /@mysten/sui.js@0.50.1(svelte@4.2.17)(typescript@5.4.5):
+    resolution: {integrity: sha512-AY0wb4n6PMTRsDGygzrrTHUK/m5KwKZ4aQcN9cayiwsq2iIhfjGo7uuqMA7Y5UiqvLCoF+z7Ig14Q5qejQ/S/w==}
+    engines: {node: '>=16'}
+    dependencies:
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.8.1)
+      '@mysten/bcs': 0.11.1
+      '@noble/curves': 1.4.0
+      '@noble/hashes': 1.4.0
+      '@scure/bip32': 1.4.0
+      '@scure/bip39': 1.3.0
+      '@suchipi/femver': 1.0.0
+      bech32: 2.0.0
+      gql.tada: 1.7.5(graphql@16.8.1)(svelte@4.2.17)(typescript@5.4.5)
+      graphql: 16.8.1
+      superstruct: 1.0.4
+      tweetnacl: 1.0.3
+    transitivePeerDependencies:
       - svelte
       - typescript
     dev: false
@@ -4001,6 +4025,17 @@ packages:
   /kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
     engines: {node: '>=6'}
+    dev: false
+
+  /kriya-dex-sdk@1.1.69(svelte@4.2.17)(typescript@5.4.5):
+    resolution: {integrity: sha512-u6/YqWl1lPno+YIojg5i4K5Bd6YfTWXAfC/RV1go6XQfYJdX9OZ6Itr82ggh/JLZ2XlyBQB6ZS+WbrLii4UPPg==}
+    dependencies:
+      '@mysten/sui.js': 0.50.1(svelte@4.2.17)(typescript@5.4.5)
+      axios: 1.7.2
+    transitivePeerDependencies:
+      - debug
+      - svelte
+      - typescript
     dev: false
 
   /language-subtag-registry@0.3.23:

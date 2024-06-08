@@ -6,6 +6,8 @@ import {useToast} from "@/components/ui/use-toast";
 import {ToastAction} from "@/components/ui/toast";
 import Link from "next/link";
 import React from "react";
+import {copyTextToClipboard} from "@/lib/utils";
+import {Button} from "@/components/ui/button";
 
 export function useTransactionExecution() {
     const suiCtx = useSuiClientContext()
@@ -41,15 +43,16 @@ export function useTransactionExecution() {
                     </ToastAction>
                 )
             })
-
-
             return res;
         } catch (e: any) {
             toast({
                 title: "Failed to execute transaction",
                 duration: 3000,
                 variant: "destructive",
-                description: e.message,
+                // description: e.message,
+                action: (<Button onClick={() => copyTextToClipboard(e.message)}>
+                    Copy error
+                </Button>)
             })
         }
     };

@@ -5,6 +5,7 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 import {usePathname} from "next/navigation";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import HiganFunLogoText from "@/public/higan-fun-logo-text.svg";
+import HiganFunLogo from "@/public/higan-fun-logo.svg";
 import Image from "next/image";
 import {useEffect, useState} from "react";
 import {AppConfigContext} from "@/components/Contexts";
@@ -44,9 +45,10 @@ const NewTradeNotification = ({trade, coin}: { trade?: TradeFromRestAPI, coin?: 
         <div
             className={"text-xs p-2 border-2 rounded-lg flex gap-2 items-center hover:cursor-pointer hover:bg-secondary"}>
             <CreatorAddressChip address={coin.creator || "ffffff"}
-                                showAvatar={true}
+                                showAvatar={false}
                                 variant={"small"}/>
-            <span>traded {(trade.coinAmount * Math.pow(10, -1 * coin.decimals)).toFixed(4)} of {coin.symbol}</span>
+            <span
+                className={"line-clamp-1"}>traded {(trade.coinAmount * Math.pow(10, -1 * coin.decimals)).toFixed(4)} of {coin.symbol}</span>
             <img src={coin.iconUrl} alt={coin.symbol} className={"w-6 h-6"}/>
 
         </div>
@@ -60,9 +62,9 @@ const NewCoinNotification = ({coin}: { coin?: CoinFromRestAPI }) => {
         <div
             className={"text-xs p-2 border-2 rounded-lg flex gap-2 items-center hover:cursor-pointer hover:bg-secondary"}>
             <CreatorAddressChip address={coin.creator || "ffffff"}
-                                showAvatar={true}
+                                showAvatar={false}
                                 variant={"small"}/>
-            <span>created {coin.symbol}</span>
+            <span className={"line-clamp-1"}>created {coin.symbol}</span>
             <img src={coin.iconUrl} alt={coin.symbol} className={"w-6 h-6"}/>
         </div>
     </Link>
@@ -133,7 +135,10 @@ export default function Navbar() {
                 <div className="flex items-center h-16">
                     <div className="flex items-center gap-2">
                         <Link href="/" className={"flex items-center"}>
-                            <Image width={24} height={24} src={HiganFunLogoText} alt={"logo"} className={"w-36 h-8"}/>
+                            <Image width={24} height={24} src={HiganFunLogoText} alt="logo"
+                                   className="min-w-36 h-8 hidden md:block"/>
+                            <Image width={24} height={24} src={HiganFunLogo} alt="logo"
+                                   className="min-w-16 h-8 block md:hidden"/>
                         </Link>
                         <Link href="/">
                             <Button
