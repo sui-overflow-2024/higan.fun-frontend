@@ -30,6 +30,8 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
     const axios = useContextSelector(AppConfigContext, v => v.axios);
     const socket = useContextSelector(AppConfigContext, v => v.socket);
     const longInterval = useContextSelector(AppConfigContext, v => v.longInterval);
+    const [limit, setLimit] = useState<number>(10);
+    const [offset, setOffset] = useState<number>(0);
     let {
         data: trades,
         error: fetchTradesError,
@@ -37,11 +39,11 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
     } = useSWR<TradeFromRestAPI[], any, CoinGetTradesKey>({
         axios,
         bondingCurveId,
+        limit: limit + 1,
+        offset,
         path: "getTrades"
     }, coinRestApi.getCoinTrades, {refreshInterval: longInterval});
 
-    const [limit, setLimit] = useState<number>(1);
-    const [offset, setOffset] = useState<number>(0);
     let hasNextPage = false;
 
     useEffect(() => {
