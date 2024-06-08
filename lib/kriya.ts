@@ -6,7 +6,7 @@ import {TransactionArgument, TransactionBlock} from "@mysten/sui.js/transactions
 import {CoinStruct, SuiClient} from "@mysten/sui.js/client";
 import {DexConstants} from "kriya-dex-sdk/dist/constants";
 import {SuiClientProviderContext} from "@mysten/dapp-kit";
-import type { WalletAccount } from '@mysten/wallet-standard';
+import type {WalletAccount} from '@mysten/wallet-standard';
 
 export type Pool = {
     objectId: string,
@@ -121,13 +121,14 @@ export type GetOptimalLpSwapAmount = {
     isStable?: boolean
 }
 export const getOptimalLpSwapAmount = async ({
-                suiClientCtx,
-                inputAmt,
-                poolId,
-                isXtoY,
-                isStable
-}: GetOptimalLpSwapAmount): Promise<bigint> => {
+                                                 suiClientCtx,
+                                                 inputAmt,
+                                                 poolId,
+                                                 isXtoY,
+                                                 isStable
+                                             }: GetOptimalLpSwapAmount): Promise<bigint> => {
 
+    console.log("getOptimalLpSwapAmount", suiClientCtx, inputAmt, poolId, isXtoY, isStable)
     const dex = new Dex(suiClientCtx.config?.url || "https://fullnode.mainnet.sui.io:443")
     const txn = await dex.suiClient.getObject({
         id: poolId,
@@ -135,13 +136,16 @@ export const getOptimalLpSwapAmount = async ({
     });
     // @ts-ignore
     const tokenReserve = isXtoY ? Number(txn.data?.content.fields.token_x) : Number(txn.data?.content.fields.token_y);
-
+    console.log("tokenReserve", tokenReserve)
     if (!isStable && tokenReserve) {
+        console.log("!isStable")
         const swapAmt = (babylonianSqrt(tokenReserve * ((tokenReserve * 3992004) + (Number(inputAmt) * 3992000))) - (tokenReserve * 1998)) / 1996;
+        console.log("swapAmt", swapAmt)
         return BigInt(Math.round(swapAmt));
 
     } else {
         const swapAmtStable = calculateStableSwapAmount(Number(inputAmt), Number((txn.data?.content as any).fields.token_x), Number((txn.data?.content as any).fields.token_y), isXtoY);
+        console.log("swapAmtStable", swapAmtStable)
         return BigInt(Math.round(swapAmtStable));
     }
 
@@ -175,6 +179,50 @@ export const calculateStableSwapAmount = (totalAmount: number, tokenXReserve: nu
     }
 
     return swapAmount;
+}
+
+
+export type KriyaSwapArgs = {
+    kriyaPackageId: string,
+    pool: Pool,
+    inputCoinType: string,
+    inputCoinAmount: bigint,
+    inputCoin: string | TransactionArgument,
+    minReceived: bigint,
+    txb: TransactionBlock,
+    transferToAddress?: string
+}
+
+export const swap = ({
+                         kriyaPackageId,
+                         pool,
+                         inputCoinType,
+                         inputCoinAmount,
+                         inputCoin,
+                         minReceived,
+                         txb,
+                         transferToAddress,
+                     }: KriyaSwapArgs): TransactionArgument | undefined => {
+    const isXtoY = pool.tokenXType === inputCoinType;
+    const inputCoinObject = typeof (inputCoin) === 'string' ? txb.object(inputCoin) : inputCoin;
+    const inputTokenAmount = typeof (inputCoinAmount) === 'bigint' ? txb.pure(inputCoinAmount) : inputCoinAmount;
+    console.log("swap", kriyaPackageId, pool, inputCoinType, inputCoinAmount, inputCoin, minReceived, txb, transferToAddress, isXtoY, inputCoinObject, inputTokenAmount)
+    const txnResult = txb.moveCall({
+        target: `${kriyaPackageId}::spot_dex::${isXtoY ? DexConstants.functions.swapX : DexConstants.functions.swapY}`,
+        arguments: [
+            txb.object(pool.objectId),
+            inputCoinObject,
+            inputTokenAmount,
+            txb.pure(minReceived),
+        ],
+        typeArguments: [pool.tokenXType, pool.tokenYType],
+    });
+
+    if (Boolean(transferToAddress)) {
+        txb.transferObjects([txnResult], txb.pure(transferToAddress));
+    } else {
+        return txnResult;
+    }
 }
 
 
@@ -285,48 +333,4 @@ export const getCoinValue = (coinType: string, coinObject: string | TransactionA
         arguments: [inputCoinObject],
     });
     return value;
-}
-
-export type KriyaSwapArgs = {
-    kyriaPackageId: string,
-    pool: Pool,
-    inputCoinType: string,
-    inputCoinAmount: bigint | TransactionArgument,
-    inputCoin: string | TransactionArgument,
-    minReceived: bigint,
-    txb: TransactionBlock,
-    transferToAddress?: string
-}
-
-export const swap = ({
-    kriyaPackageId,
-    pool,
-    inputCoinType,
-    inputCoinAmount,
-    inputCoin,
-    minReceived,
-    txb,
-    transferToAddress,
-
-}: KriyaSwapArgs) TransactionArgument | undefined => {
-    const isXtoY = pool.tokenXType === inputCoinType;
-    const inputCoinObject = typeof (inputCoin) === 'string' ? txb.object(inputCoin) : inputCoin;
-    const inputTokenAmount = typeof (inputCoinAmount) === 'bigint' ? txb.pure(inputCoinAmount) : inputCoinAmount;
-
-    const txnResult = txb.moveCall({
-        target: `${kyriaPackageId}::spot_dex::${isXtoY ? DexConstants.functions.swapX : DexConstants.functions.swapY}`,
-        arguments: [
-            txb.object(pool.objectId),
-            inputCoinObject,
-            inputTokenAmount,
-            txb.pure(minReceived),
-        ],
-        typeArguments: [pool.tokenXType, pool.tokenYType],
-    });
-
-    if (Boolean(transferToAddress)) {
-        txb.transferObjects([txnResult], txb.pure(transferToAddress));
-    } else {
-        return txnResult;
-    }
 }

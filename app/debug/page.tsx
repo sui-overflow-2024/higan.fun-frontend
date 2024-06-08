@@ -7,15 +7,22 @@ import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI} from "@/lib/types";
 import JSONPretty from "react-json-pretty";
 import {useCurrentAccount, useSuiClient, useSuiClientContext} from "@mysten/dapp-kit";
-import {Dex,} from "kriya-dex-sdk";
 import {SubmitHandler, useForm} from "react-hook-form";
 import {TransactionArgument, TransactionBlock} from "@mysten/sui.js/transactions";
 import {FC, useState} from "react";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {useTransactionExecution} from "@/hooks/useTransactionexecution";
-import {addLiquidity, getOptimalLpSwapAmount, GetOptimalLpSwapAmount, Pool} from "@/lib/kriya";
-import {getLiquidityPoolId} from "@/lib/utils";
+import {
+    addLiquidity,
+    getAllUserCoins,
+    getExactCoinByAmount,
+    getOptimalLpSwapAmount,
+    GetOptimalLpSwapAmount,
+    KriyaSwapArgs,
+    Pool,
+    swap
+} from "@/lib/kriya";
 
 
 // const DemoSingleCoin: FC<{ packageId: string }> = ({packageId}) => {
@@ -307,8 +314,12 @@ const GetOptimalLpSwapAmountForm: FC = () => {
     const kriyaPackageId = useContextSelector(AppConfigContext, (v) => v.kriyaPackageId);
     const [res, setRes] = useState<any>(null)
 
-    const {register, handleSubmit, formState: {errors}} = useForm<GetOptimalLpSwapAmount & {coinX: string, coinY: string}>({
+    const {register, handleSubmit, formState: {errors}} = useForm<GetOptimalLpSwapAmount & {
+        coinX: string,
+        coinY: string
+    }>({
         defaultValues: {
+            poolId: "0x66150fe520140041937ce9394c2001f5512bc638718913a6fe802ccee9ae666e",
             coinX: `0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO`,
             coinY: `0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI`,
             inputAmt: BigInt(100_000),
@@ -318,7 +329,7 @@ const GetOptimalLpSwapAmountForm: FC = () => {
     });
     // Transaction failed with the following error. Error checking transaction input objects: MovePackageAsObject { object_id: 0x0000000000000000000000000000000000000000000000000000000000000002 }
 
-    const onSubmit: SubmitHandler<GetOptimalLpSwapAmount & {coinX: string, coinY: string}> = async (data) => {
+    const onSubmit: SubmitHandler<GetOptimalLpSwapAmount & { coinX: string, coinY: string }> = async (data) => {
         console.log("data", data)
         // Handle the form data submission
         console.log(data);
@@ -326,12 +337,12 @@ const GetOptimalLpSwapAmountForm: FC = () => {
 
         const res = await getOptimalLpSwapAmount({
             suiClientCtx,
-            poolId: getLiquidityPoolId(kriyaPackageId, data.coinX, data.coinY),
+            poolId: data.poolId,
             inputAmt: data.inputAmt,
             isXtoY: data.isXtoY,
             isStable: data.isStable,
         });
-        setRes(res)
+        setRes(res.toString())
     };
 
     return (<>
@@ -368,61 +379,91 @@ const GetOptimalLpSwapAmountForm: FC = () => {
 
 const SwapForm: FC = () => {
     const suiClientCtx = useSuiClientContext();
+    const account = useCurrentAccount();
     const kriyaPackageId = useContextSelector(AppConfigContext, (v) => v.kriyaPackageId);
     const [res, setRes] = useState<any>(null)
 
-    const {register, handleSubmit, formState: {errors}} = useForm<GetOptimalLpSwapAmount & {coinX: string, coinY: string}>({
+
+    const {register, handleSubmit, formState: {errors}} = useForm<KriyaSwapArgs>({
         defaultValues: {
-            coinX: `0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO`,
-            coinY: `0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI`,
-            inputAmt: BigInt(100_000),
-            isStable: false,
-            isXtoY: true,
+            pool: {
+                objectId: "0x66150fe520140041937ce9394c2001f5512bc638718913a6fe802ccee9ae666e",
+                tokenXType: `0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO`,
+                tokenYType: `0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI`,
+                isStable: false,
+            },
+            inputCoinAmount: BigInt(1_000),
+            minReceived: BigInt(0),
+            txb: new TransactionBlock(),
         }
     });
     // Transaction failed with the following error. Error checking transaction input objects: MovePackageAsObject { object_id: 0x0000000000000000000000000000000000000000000000000000000000000002 }
 
-    const onSubmit: SubmitHandler<GetOptimalLpSwapAmount & {coinX: string, coinY: string}> = async (data) => {
+    const onSubmit: SubmitHandler<KriyaSwapArgs> = async (data) => {
         console.log("data", data)
         // Handle the form data submission
         console.log(data);
         const txb = new TransactionBlock();
+        // const pool = await getLiquidityPoolFields(suiClientCtx, data.pool.objectId,/* data.pool.tokenXType, data.pool.tokenYType*/)
+        const allCoinX = await getAllUserCoins({
+            suiClient: suiClientCtx.client,
+            address: account?.address || "",
+            type: data.inputCoinType
+        })
+        const inputCoin = getExactCoinByAmount(data.inputCoinType, allCoinX, data.inputCoinAmount, txb)
 
-        const res = await getOptimalLpSwapAmount({
-            suiClientCtx,
-            poolId: getLiquidityPoolId(kriyaPackageId, data.coinX, data.coinY),
-            inputAmt: data.inputAmt,
-            isXtoY: data.isXtoY,
-            isStable: data.isStable,
+        swap({
+            kriyaPackageId,
+            pool: data.pool,
+            inputCoinType: data.pool.tokenXType,
+            inputCoinAmount: data.inputCoinAmount,
+            inputCoin: inputCoin,
+            minReceived: data.minReceived,
+            txb,
+            transferToAddress: account?.address || "",
+
         });
+        const res = await suiClientCtx.client.devInspectTransactionBlock({
+            transactionBlock: txb,
+            sender: account?.address || "",
+        })
         setRes(res)
     };
 
     return (<>
-            <form onSubmit={handleSubmit(onSubmit)} className={"space-y-2 w-96"}>
-                <div className={"flex gap-4"}>
-                    <div>Coin X:</div>
-                    <Input {...register('coinX', {required: true})} />
-                    {errors.coinX && <span>This field is required</span>}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div>
+                    <label>Pool Id:</label>
+                    <Input {...register('pool.tokenXType', {required: true})}/>
+                    {errors.pool?.tokenXType && <span>This field is required</span>}
                 </div>
-                <div className={"flex gap-4"}>
-                    <div>Coin Y:</div>
-                    <Input {...register('coinY', {required: true})} />
-                    {errors.coinY && <span>This field is required</span>}
+                <div>
+                    <label>Pool Token X Type:</label>
+                    <Input {...register('pool.tokenXType', {required: true})}/>
+                    {errors.pool?.tokenXType && <span>This field is required</span>}
                 </div>
-                <div className={"flex gap-4"}>
-                    <div>Is Stable?:</div>
-                    <Input type="checkbox" {...register('isStable')} />
+                <div>
+                    <label>Pool Token Y Type:</label>
+                    <Input {...register('pool.tokenYType', {required: true})}/>
+                    {errors.pool?.tokenYType && <span>This field is required</span>}
                 </div>
-                <div className={"flex gap-4"}>
-                    <div>Is X to Y?:</div>
-                    <Input type="checkbox" {...register('isXtoY')} />
+                <div>
+                    <label>Is Stable:</label>
+                    <Input type="checkbox" {...register('pool.isStable')}/>
                 </div>
-                <div className={"flex gap-4"}>
-                    <div>Is X to Y?:</div>
-                    <Input type="number" {...register('inputAmt', {required: true})} />
+                <div>
+                    <label>Input Coin Amount:</label>
+                    <Input type="number" {...register('inputCoinAmount', {required: true})}
+                    />
+                    {errors.inputCoinAmount && <span>This field is required</span>}
                 </div>
-                <Button type="submit">Get Optimal LP Swap Price</Button>
+                <div>
+                    <label>Minimum Received:</label>
+                    <Input type="number" {...register('minReceived', {required: true})}
+                    />
+                    {errors.minReceived && <span>This field is required</span>}
+                </div>
+                <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded">Submit</button>
             </form>
             <JSONPretty data={res || {}}/>
         </>
@@ -430,21 +471,6 @@ const SwapForm: FC = () => {
 };
 
 export default function DebugPage() {
-    const ctx = useSuiClientContext()
-    const account = useCurrentAccount()
-    const rpcUrl = ctx.config?.url || "";
-    const dex = new Dex(rpcUrl)
-
-
-    console.log("ctx", ctx)
-    // {
-    //     axios: Axios,
-    //         packageIds?: string[],
-    //         creator?: string,
-    //         limit?: number,
-    //         order?: "asc" | "desc",
-    //         path: "getAll"
-    // }
 
     const axios = useContextSelector(AppConfigContext, (context) => context.axios);
     const {data: allCoins, error} = useSWR<CoinFromRestAPI[], any, CoinGetAllKey>({
@@ -455,87 +481,6 @@ export default function DebugPage() {
     }, coinRestApi.getAll, {refreshInterval: 10000})
     // const {register, handleSubmit} = useForm<Parameters<Dex["addLiquidity"]>>({
 
-
-    const submitForm = (data: Parameters<Dex["addLiquidity"]>) => {
-        const addLiq = async () => {
-            const txb = dex.addLiquidity(...data)
-        }
-    }
-    // const {
-    //     register: addInitLiq,
-    //     formState: {errors: addInitLiqErrors},
-    //     handleSubmit: addInitLiqSubmit
-    // } = useForm<InitLiqForm>({
-    //     defaultValues: {
-    //         adminCapId: "",
-    //         bondingCurveId: "",
-    //         poolId: ""
-    //     }
-    // });
-    //
-    //
-    // const submitAddLiquality = async (data: InitLiqForm) => {
-    //     console.log("submitAddLiquality", data)
-    //     const txb = new TransactionBlock()
-    //     txb.moveCall()
-
-    // const getTheLiquidity = new TransactionBlock()
-    //
-    //
-    // const txb2 = new TransactionBlock()
-    // txb2.moveCall({
-    //     target: `${config.managementPackageId}::manager_contract::add_initial_liquidity`,
-    //     arguments: [
-    //         txb2.object(config.managementAdminCapId),
-    //         txb2.object(bonding_curve_id),
-    //         txb2.object(pool),
-    //     ],
-    //     typeArguments: [
-    //         `${coin.packageId}::${coin.module}::${coin.module.toUpperCase()}`,
-    //     ],
-    // });
-    //
-    // const deliciousLiquidity = await client.signAndExecuteTransactionBlock({
-    //     signer: keypair,
-    //     transactionBlock: txb2,
-    //     options: {
-    //         showBalanceChanges: true,
-    //         showEffects: true,
-    //         showEvents: true,
-    //         showInput: true,
-    //         showObjectChanges: true,
-    //     },
-    // });
-    // console.log("deliciousLiquidity", deliciousLiquidity)
-    // }
-    // const getLiquality = async () => {
-    //     const txb = new TransactionBlock()
-    //     txb.moveCall({
-    //         target: `${config.managementPackageId}::manager_contract::get_initial_liquidity`,
-    //         arguments: [
-    //             txb.object(config.managementAdminCapId),
-    //             txb.object(bonding_curve_id),
-    //             txb.object(pool),
-    //         ],
-    //         typeArguments: [
-    //             `${coin.packageId}::${coin.module}::${coin.module.toUpperCase()}`,
-    //         ],
-    //     });
-    //
-    //     const deliciousLiquidity = await client.signAndExecuteTransactionBlock({
-    //         signer: keypair,
-    //         transactionBlock: txb,
-    //         options: {
-    //             showBalanceChanges: true,
-    //             showEffects: true,
-    //             showEvents: true,
-    //             showInput: true,
-    //             showObjectChanges: true,
-    //         },
-    //     });
-    //     console.log("deliciousLiquidity", deliciousLiquidity)
-// }
-
     return (<div>
         {/*<h2 className={"text-xl"}>AppConfig</h2>*/}
         {/*<JSONPretty data={appConfig || {}}/>*/}
@@ -543,6 +488,8 @@ export default function DebugPage() {
         <AddLiqFormComponent/>
         <p className={"text-xl"}>Get Optimal Lp Swap Amount</p>
         <GetOptimalLpSwapAmountForm/>
+        <p className={"text-xl"}>Swap Form</p>
+        <SwapForm/>
         <h2 className={"text-xl"}>All Coins</h2>
         <JSONPretty data={allCoins || {}}/>
     </div>)

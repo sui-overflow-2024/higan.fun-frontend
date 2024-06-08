@@ -105,30 +105,32 @@ export function truncateDecimals(num: number, decimals: number): number {
     return num * Math.pow(10, -1 * decimals);
 }
 
-export function getLiquidityPoolId(
+export function getLiquidityPoolType(
     kriyaPackageId: string,
     coinX: string | CoinFromRestAPI,
     coinY: string | CoinFromRestAPI,
-): string{
+): string {
     let coinXType = typeof coinX === "string" ? coinX : getCoinTypePath(coinX)
     let coinYType = typeof coinY === "string" ? coinY : getCoinTypePath(coinY)
     return `${kriyaPackageId}::spot_dex::Pool<${coinXType}, ${coinYType}>`
 }
 
-
-export async function getLiquidityPool(
-    kyriaPackageId: string,
+// 0xb5722117aec83525c71f84c31c1f28e29397feffa95c99cce72a150a555a63dd::spot_dex::Pool<0x2ea97875750567259075b4f1275632d48a5a83ae1ff3ce4e01555c7d34021142::aeger::AEGER, 0x2::sui::SUI>
+// 0xb5722117aec83525c71f84c31c1f28e29397feffa95c99cce72a150a555a63dd::spot_dex::Pool<0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO, 0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI>
+export async function getLiquidityPoolFields(
     suiClientCtx: SuiClientProviderContext,
-    coinX: string | CoinFromRestAPI,
-    coinY: string | CoinFromRestAPI,
-){
+    poolId: string,
+    // coinX: string | CoinFromRestAPI,
+    // coinY: string | CoinFromRestAPI,
+) {
     const dex = new Dex(suiClientCtx.config?.url || "https://fullnode.mainnet.sui.io:443")
-    const poolId = getLiquidityPoolId(kyriaPackageId, coinX, coinY)
-
+    // const poolId = getLiquidityPoolType(kyriaPackageId, coinX, coinY)
+    console.log(`getLiquidityPoolId: `, poolId)
     const txn = await dex.suiClient.getObject({
         id: poolId,
         options: {showContent: true},
     });
-    console.log(`getLiquidityPool: `, txn.data)
+    // @ts-ignore
+    return txn.data?.content?.fields
 
 }
