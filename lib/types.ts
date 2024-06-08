@@ -1,4 +1,5 @@
 export type CoinFromRestAPI = {
+    id: number,
     packageId: string,
     module: string,
     bondingCurveId: string,

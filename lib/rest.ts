@@ -20,10 +20,10 @@ export type CoinGetAllKey = {
 }
 export type CoinGetPostsKey = { axios: Axios, bondingCurveId: string, path: "getPosts" }
 export type CoinGetTopKey = { axios: Axios, path: "getTop" }
-export type CoinGetTradesKey = { axios: Axios, bondingCurveId: string, path: "getTrades" }
+export type CoinGetTradesKey = { axios: Axios, bondingCurveId: string, offset?:number, limit?: number, path: "getTrades" }
 export type CoinGetHoldersByKey = { axios: Axios, bondingCurveId: string, path: "getHolders" }
 export type CoinGetByIdKey = { axios: Axios, bondingCurveId: string, path: "getById" }
-export type CoinSearchKey = { axios: Axios, term: string, sort: string, order: string }
+export type CoinSearchKey = { axios: Axios, term: string, sort: string, order: string, offset: number, pageSize: number}
 export type CoinGetTvlKey = { axios: Axios, bondingCurveId: string, path: "getTvl24h" }
 export type TradesKey = { axios: Axios, limit?: number, order?: "asc" | "desc", path: "getTrades" }
 //TODO, prisma lets you do custom fields, let's clean this up and build it into get /:id later
@@ -63,8 +63,8 @@ export const coinRestApi: CoinRestApi = {
         // console.log("Retrieved the following coin from the REST API", res.data);
         return res.data;
     },
-    search: async ({axios, term, sort, order}): Promise<CoinFromRestAPI[]> => {
-        const res = await axios.get<CoinFromRestAPI[]>(`/coins/search?term=${term}&order=${order}&sort=${sort}`)
+    search: async ({axios, term, sort, order, offset, pageSize}): Promise<CoinFromRestAPI[]> => {
+        const res = await axios.get<CoinFromRestAPI[]>(`/coins/search?term=${term}&order=${order}&sort=${sort}&page_size=${pageSize}&offset=${offset}`)
         // console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
@@ -78,8 +78,13 @@ export const coinRestApi: CoinRestApi = {
         // console.log("Retrieved the following coin from the REST API", res.data)
         return res.data
     },
-    getCoinTrades: async ({axios, bondingCurveId}): Promise<TradeFromRestAPI[]> => {
-        const res = await axios.get<TradeFromRestAPI[]>(`/coins/${bondingCurveId}/trades`)
+    getCoinTrades: async ({axios, bondingCurveId, limit, offset}): Promise<TradeFromRestAPI[]> => {
+        const res = await axios.get<TradeFromRestAPI[]>(`/coins/${bondingCurveId}/trades`, {
+            params: {
+                limit,
+                offset
+            }
+        })
         console.log("Retrieved the following trades.ts from the REST API", res.data)
         return res.data
     },

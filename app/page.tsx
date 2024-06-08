@@ -9,7 +9,16 @@ import {Input} from "@/components/ui/input";
 import {coinRestApi} from "@/lib/rest";
 import useSWR from "swr";
 import {useContextSelector} from "use-context-selector";
-
+import ReactPaginate from 'react-paginate';
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+  } from "@/components/ui/pagination"
 
 const TopTokens: FC = () => {
     const {axios, shortInterval} = useContextSelector(AppConfigContext, (v) => ({
@@ -51,18 +60,39 @@ export default function Home() {
     const [sort, setSort] = useState<"created" | "marketCap" | "tvl" | "price">("created")
     const [order, setOrder] = useState<"asc" | "desc">("desc")
     const [tokens, setTokens] = useState<CoinFromRestAPI[]>([]);
+    const [pageSize, setPageSize] = useState<number>(10);
+    const [isNextPage, setHasNextPage] = useState<boolean>(false);
+    const [offset, setOffset] = useState<number>(0);
+
     const axios = useContextSelector(AppConfigContext, (v) => v.axios);
 
+    const fetchTokens = async () => {
+        let t = await coinRestApi.search({axios, term, sort, order, offset: offset, pageSize: pageSize + 1})
+
+        setHasNextPage(t.length > pageSize);
+        t = t.slice(0, pageSize);
+
+        setTokens(t);
+    }
+
     useEffect(() => {
-        const fetchTokens = async () => {
-            const t = await coinRestApi.search({axios, term, sort, order})
-            console.log("Fetched tokens", t)
-            setTokens(t);
-        }
-
         fetchTokens()
-    }, [term, sort, order, axios])
+    }, [term, sort, order, axios, offset])
 
+    const handlePagePreviousClick = (e:any) => {
+        e.preventDefault();
+
+        setOffset(Math.max(0, offset - pageSize));
+    }
+
+    const handlePageNextClick = (e:any) => {
+        e.preventDefault();
+        if(!isNextPage) return;
+
+        setOffset(offset + pageSize);
+    }
+
+    let currentPage = offset / pageSize + 1;
 
     return (
         <main className="min-h-screen container">
@@ -131,6 +161,19 @@ export default function Home() {
                         <TokenCard key={index} token={token}/>
                     ))}
                 </div>
+                <Pagination>
+                    <PaginationContent>
+                        <PaginationItem>
+                        <PaginationPrevious href="#" onClick={handlePagePreviousClick} />
+                        </PaginationItem>
+                        <PaginationItem>
+                        <PaginationLink href="#">{currentPage}</PaginationLink>
+                        </PaginationItem>
+                        <PaginationItem>
+                        <PaginationNext href="#" onClick={handlePageNextClick} />
+                        </PaginationItem>
+                    </PaginationContent>
+                </Pagination>
                 {/* <TokenCard token={generateFakeToken()} /> */}
             </div>
         </main>
