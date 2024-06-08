@@ -382,6 +382,7 @@ const SwapForm: FC = () => {
     const account = useCurrentAccount();
     const kriyaPackageId = useContextSelector(AppConfigContext, (v) => v.kriyaPackageId);
     const [res, setRes] = useState<any>(null)
+    const sign = useTransactionExecution();
 
 
     const {register, handleSubmit, formState: {errors}} = useForm<KriyaSwapArgs>({
@@ -408,7 +409,7 @@ const SwapForm: FC = () => {
         const allCoinX = await getAllUserCoins({
             suiClient: suiClientCtx.client,
             address: account?.address || "",
-            type: data.inputCoinType
+            type: data.pool.tokenXType
         })
         const inputCoin = getExactCoinByAmount(data.inputCoinType, allCoinX, data.inputCoinAmount, txb)
 
@@ -428,6 +429,7 @@ const SwapForm: FC = () => {
             sender: account?.address || "",
         })
         setRes(res)
+        await sign(txb)
     };
 
     return (<>
