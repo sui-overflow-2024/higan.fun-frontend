@@ -17,6 +17,7 @@ export type AppConfig = {
     managerContractPackageId: string,
     managerContractModuleName: string,
     managerContractConfigId: string,
+    kriyaPackageId: string,
     socket: Socket<ServerToClientEvents, any>
     shortInterval: number
     mediumInterval: number
@@ -33,6 +34,7 @@ export const defaultAppConfig: AppConfig = {
     managerContractPackageId: process.env.NEXT_PUBLIC_MANAGER_CONTRACT_PACKAGE_ID || "",
     managerContractModuleName: process.env.NEXT_PUBLIC_MANAGER_CONTRACT_MODULE_NAME || "manager_contract",
     managerContractConfigId: process.env.NEXT_PUBLIC_MANAGER_CONTRACT_CONFIG_ID || "",
+    kriyaPackageId: process.env.NEXT_PUBLIC_KRIYA_CONTRACT_PACKAGE_ID || "0xb5722117aec83525c71f84c31c1f28e29397feffa95c99cce72a150a555a63dd", //Default: Testnet
     socket: io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || process.env.NEXT_PUBLIC_REST_API_URL || "http://localhost:3000"),
     shortInterval: 5000,
     mediumInterval: 10000,

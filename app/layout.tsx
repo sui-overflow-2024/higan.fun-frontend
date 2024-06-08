@@ -43,6 +43,7 @@ export default function RootLayout({
                 enableSystem
                 disableTransitionOnChange
             >
+
                 {isClient ?
                     <AppConfigContext.Provider value={defaultAppConfig}>
                         <QueryClientProvider client={queryClient}>
