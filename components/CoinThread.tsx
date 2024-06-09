@@ -140,20 +140,13 @@ export const CoinThread: FC<{ bondingCurveId: string, creator: string }> = ({
 
     useEffect(() => {
             console.log('posts in ws', posts)
-            socket.on('connect', () => {
-                console.log('listening for new posts');
-            });
 
 
             socket.on('postCreated', async (data) => {
+                if (data.coinId !== bondingCurveId) return;
                 console.log('new posts created', data)
                 const newPosts = [data, ...posts || []]
                 await refetchPosts(newPosts, false)
-            });
-
-
-            socket.on('disconnect', () => {
-                console.log('stopped listening for new posts');
             });
 
             return () => {
@@ -161,7 +154,7 @@ export const CoinThread: FC<{ bondingCurveId: string, creator: string }> = ({
                 socket.off('postCreated');
                 socket.off('disconnect');
             };
-        }, [posts, refetchPosts, socket]
+        }, [bondingCurveId, posts, refetchPosts, socket]
     );
 
     if (!posts) {

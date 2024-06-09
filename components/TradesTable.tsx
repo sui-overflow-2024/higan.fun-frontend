@@ -1,4 +1,4 @@
-import React, {use, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {formatDistanceToNow} from "date-fns";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import {getValueWithDecimals} from "@/lib/utils";
@@ -10,13 +10,11 @@ import {useContextSelector} from "use-context-selector";
 import {
     Pagination,
     PaginationContent,
-    PaginationEllipsis,
     PaginationItem,
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
-  } from "@/components/ui/pagination"
-import { off } from 'process';
+} from "@/components/ui/pagination"
 
 type TradesListProps = {
     bondingCurveId: string;
@@ -48,6 +46,7 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
 
     useEffect(() => {
             socket.on('tradeCreated', async (data) => {
+                if (data.coin.bondingCurveId !== bondingCurveId) return;
                 console.log('new trade created, trade chart', data)
                 const newTrades = [data.trade, ...trades || []]
                 await refetchTrades(newTrades, false)
@@ -56,12 +55,12 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
             return () => {
                 socket.off('tradeCreated');
             };
-        }, [refetchTrades, socket, trades]
+        }, [bondingCurveId, refetchTrades, socket, trades]
     );
 
     useEffect(() => {
         refetchTrades(undefined, true);
-    }, [offset]);
+    }, [offset, refetchTrades]);
 
     const handlePagePreviousClick = (e: any) => {
         e.preventDefault();
@@ -71,7 +70,7 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
 
     const handlePageNextClick = (e: any) => {
         e.preventDefault();
-        if(!hasNextPage) return;
+        if (!hasNextPage) return;
 
         setOffset(offset + limit);
     }
@@ -128,14 +127,14 @@ const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, netw
             <Pagination>
                 <PaginationContent>
                     <PaginationItem>
-                    <PaginationPrevious href="#" onClick={handlePagePreviousClick} />
+                        <PaginationPrevious href="#" onClick={handlePagePreviousClick}/>
                     </PaginationItem>
                     <PaginationItem>
-                    <PaginationLink href="#">{currentPage}</PaginationLink>
+                        <PaginationLink href="#">{currentPage}</PaginationLink>
                     </PaginationItem>
                     <PaginationItem>
-                    <PaginationNext href="#" onClick={handlePageNextClick} />
-                </PaginationItem>
+                        <PaginationNext href="#" onClick={handlePageNextClick}/>
+                    </PaginationItem>
                 </PaginationContent>
             </Pagination>
         </div>

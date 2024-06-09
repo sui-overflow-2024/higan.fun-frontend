@@ -67,6 +67,7 @@ const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
 
     useEffect(() => {
             socket.on('tradeCreated', async (data) => {
+                if (data.coin.bondingCurveId !== bondingCurveId) return;
                 console.log('new trade created, trade chart', data)
                 const newTrades = [data.trade, ...trades || []]
                 await refetchTrades(newTrades, false)

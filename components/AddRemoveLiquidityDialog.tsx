@@ -6,7 +6,7 @@ import {useEffect, useState} from "react";
 import {getCoinTypePath} from "@/lib/utils";
 import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI} from "@/lib/types";
-import {useCurrentAccount, useSignTransactionBlock, useSuiClientContext, useSuiClientQuery} from "@mysten/dapp-kit";
+import {SuiClientProviderContext, useCurrentAccount, useSuiClientContext, useSuiClientQuery} from "@mysten/dapp-kit";
 import {TransactionBlock,} from "@mysten/sui.js/transactions";
 import {SubmitHandler, useForm} from "react-hook-form";
 import {useToast} from "@/components/ui/use-toast";
@@ -15,6 +15,8 @@ import {addLiquidity, getAllUserCoins, getExactCoinByAmount, getOptimalLpSwapAmo
 import {SUI_COIN_TYPE} from "@/lib/config";
 import {Input} from "@/components/ui/input";
 import {useTransactionExecution} from "@/hooks/useTransactionexecution";
+import {Dex} from "kriya-dex-sdk";
+import useSWR from "swr";
 
 type AddLiqForm = {
     amountX: bigint,
@@ -24,11 +26,27 @@ type AddLiqForm = {
     txb: TransactionBlock,
     transferToAddress?: string
 }
+type FetchReservesKey = { suiClientCtx: SuiClientProviderContext, pool: Pool }
+type TokenReserveResponse = { xReserve: BigInt, yReserve: BigInt }
+
+const getTokenReserves = async ({suiClientCtx, pool}: FetchReservesKey): Promise<TokenReserveResponse> => {
+    const dex = new Dex(suiClientCtx.config?.url || "https://fullnode.mainnet.sui.io:443")
+    console.log("poolId", pool.objectId)
+    const txn = await dex.suiClient.getObject({
+        id: pool.objectId,
+        options: {showContent: true},
+    });
+    // @ts-ignore
+    const xReserve = BigInt(txn.data?.content.fields.token_x)
+    // @ts-ignore
+    const yReserve = BigInt(txn.data?.content.fields.token_y);
+    return {xReserve, yReserve}
+}
+
 const AddLiquidityForm: React.FC<{ coin: CoinFromRestAPI, pool: Pool }> = ({coin, pool}) => {
     const {toast} = useToast()
     const account = useCurrentAccount()
     const kriyaPackageId = useContextSelector(AppConfigContext, v => v.kriyaPackageId)
-    const {mutateAsync: signTransactionBlock} = useSignTransactionBlock();
     const suiClientCtx = useSuiClientContext();
     const [lastInputState, setLastInputState] = useState<"lastInputX" | "lastInputY" | null>(null)
     const {register, handleSubmit, formState: {errors}, setValue, watch} = useForm<AddLiqForm>({
@@ -56,9 +74,20 @@ const AddLiquidityForm: React.FC<{ coin: CoinFromRestAPI, pool: Pool }> = ({coin
         coinType: SUI_COIN_TYPE,
     })
 
+    const {data: poolReserves, mutate: refetchReserves} = useSWR<TokenReserveResponse, any, FetchReservesKey>({
+        suiClientCtx,
+        pool
+    }, getTokenReserves)
+
+
     useEffect(() => {
         const fetchOptimalY = async () => {
             console.log("lastInputState in post X", lastInputState)
+            console.log("poolReserves", poolReserves)
+            if (poolReserves?.xReserve === BigInt(0) || poolReserves?.yReserve === BigInt(0)) {
+                console.log("Pool is new without any existing input. Allow whatever.")
+                return
+            }
             if (lastInputState === 'lastInputY' || !memeBalance || !suiBalance) return;
             const calculatedAmountY = await getOptimalLpSwapAmount({
                 suiClientCtx,
@@ -74,6 +103,10 @@ const AddLiquidityForm: React.FC<{ coin: CoinFromRestAPI, pool: Pool }> = ({coin
 
     useEffect(() => {
         console.log("lastInputState in post Y", lastInputState)
+        if (poolReserves?.xReserve === BigInt(0) || poolReserves?.yReserve === BigInt(0)) {
+            console.log("Pool is new without any existing input. Allow whatever.")
+            return
+        }
         if (lastInputState === 'lastInputX' || !memeBalance || !suiBalance) return;
         const fetchOptimalX = async () => {
             const calculatedAmountX = await getOptimalLpSwapAmount({
@@ -155,6 +188,7 @@ const AddLiquidityForm: React.FC<{ coin: CoinFromRestAPI, pool: Pool }> = ({coin
 
         await refetchMeme()
         await refetchSui()
+        await refetchReserves()
 
         // res.errors && console.error("Error", res.errors)
         console.log("Add liquidity response", res)

@@ -281,7 +281,8 @@ export default function Drilldown() {
     const suiContext = useSuiClientContext()
     const fallbackDevInspectAddress = useContextSelector(AppConfigContext, v => v.fallbackDevInspectAddress)
 
-    const {data: token, error: tokenError} = useSWR<CoinFromRestAPI, any, CoinGetByIdKey>(
+
+    const {data: token, error: tokenError, mutate: refetchToken} = useSWR<CoinFromRestAPI, any, CoinGetByIdKey>(
         {axios, bondingCurveId, path: "getById"}, coinRestApi.getById)
 
     const {
@@ -298,6 +299,27 @@ export default function Drilldown() {
             coin: token,
             path: "tokenMetrics",
         }, getTokenMetrics, {refreshInterval: longInterval});
+
+    //TODO Refresh
+    // useEffect(() => {
+    //         console.log('posts in ws', posts)
+    //
+    //
+    //         socket.on('', async (data) => {
+    //             if (data.coinId !== bondingCurveId) return;
+    //             console.log('new posts created', data)
+    //             const newPosts = [data, ...posts || []]
+    //             await refetchPosts(newPosts, false)
+    //         });
+    //
+    //         return () => {
+    //             socket.off('connect');
+    //             socket.off('postCreated');
+    //             socket.off('disconnect');
+    //         };
+    //     }, [posts, refetchPosts, socket]
+    // );
+
     useEffect(() => {
             socket.on('tradeCreated', async (data) => {
                 await refetchTokenMetrics()
