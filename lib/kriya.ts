@@ -89,6 +89,7 @@ export const addLiquidity = async ({
 
 
 export const removeLiquidity = (
+    kriyaPackageId: string,
     pool: Pool,
     amount: bigint | TransactionArgument,
     kriyaLpToken: string | TransactionArgument,
@@ -96,7 +97,7 @@ export const removeLiquidity = (
     transferToAddress?: string
 ): Array<TransactionArgument> | undefined => {
     const txRes = txb.moveCall({
-        target: `0xb5722117aec83525c71f84c31c1f28e29397feffa95c99cce72a150a555a63dd::spot_dex::remove_liquidity`,
+        target: `${kriyaPackageId}::spot_dex::remove_liquidity`,
         typeArguments: [pool.tokenXType, pool.tokenYType],
         arguments: [
             txb.object(pool.objectId),

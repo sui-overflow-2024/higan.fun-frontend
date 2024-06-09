@@ -6,7 +6,8 @@ import {useContextSelector} from "use-context-selector";
 import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI} from "@/lib/types";
 import JSONPretty from "react-json-pretty";
-import {useCurrentAccount, useSuiClient, useSuiClientContext} from "@mysten/dapp-kit";
+import {useCurrentAccount, useSuiClient, useSuiClientContext, useSignTransactionBlock} from "@mysten/dapp-kit";
+import {Dex,} from "kriya-dex-sdk";
 import {SubmitHandler, useForm} from "react-hook-form";
 import {TransactionArgument, TransactionBlock} from "@mysten/sui.js/transactions";
 import {FC, useState} from "react";
@@ -23,6 +24,9 @@ import {
     Pool,
     swap
 } from "@/lib/kriya";
+import {getLiquidityPoolId} from "@/lib/utils";
+import { send } from 'process';
+import { sign } from 'crypto';
 
 
 // const DemoSingleCoin: FC<{ packageId: string }> = ({packageId}) => {
@@ -87,26 +91,28 @@ const AddLiqFormComponent: FC = () => {
     const account = useCurrentAccount();
     const suiClient = useSuiClient();
     const sign = useTransactionExecution();
+    const {mutateAsync: signTransactionBlock} = useSignTransactionBlock();
     const kriyaPackageId = useContextSelector(AppConfigContext, (v) => v.kriyaPackageId);
     const [res, setRes] = useState<any>(null)
     const {register, handleSubmit, formState: {errors}} = useForm<AddLiqForm>({
         defaultValues: {
             pool: {
-                objectId: "0x66150fe520140041937ce9394c2001f5512bc638718913a6fe802ccee9ae666e",
+                objectId: "0x6ca8e3c2f2d3f1bf14e4b96ee5b75b137534a83d19a3e826bab16d4f96137bd8",
                 // objectId: "0xb5722117aec83525c71f84c31c1f28e29397feffa95c99cce72a150a555a63dd::spot_dex::Pool<0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO, 0x2::sui::SUI>",
-                tokenXType: "0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO",
+                tokenXType: "0x56a8b9de60eed3ab8aa7224c87c5fe6b7845355e5ee6b13574ef2981311181e9::canonicus_capillus_amissio::CANONICUS_CAPILLUS_AMISSIO",
                 tokenYType: "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI",
                 isStable: false,
             },
             amountX: BigInt(1_000),
-            amountY: BigInt(0),
-            minAddAmountX: BigInt(0),
-            minAddAmountY: BigInt(0),
+            amountY: BigInt(100000),
+            minAddAmountX: BigInt(1000),
+            minAddAmountY: BigInt(100000),
             // coinX: "0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb",
             // coinY: "0x0000000000000000000000000000000000000000000000000000000000000002",
             transferToAddress: account?.address || ""
         }
     });
+    console.log(account?.address, "address")
     // Transaction failed with the following error. Error checking transaction input objects: MovePackageAsObject { object_id: 0x0000000000000000000000000000000000000000000000000000000000000002 }
 
     const onSubmit: SubmitHandler<AddLiqForm> = async (data) => {
@@ -114,7 +120,7 @@ const AddLiqFormComponent: FC = () => {
         // Handle the form data submission
         console.log(data);
         const txb = new TransactionBlock();
-        const lpObject = addLiquidity({
+        const lpObject = await addLiquidity({
             kriyaPackageId,
             account,
             suiClient,
@@ -126,12 +132,30 @@ const AddLiqFormComponent: FC = () => {
             txb,
             transferToAddress: account?.address || ""
         });
-        const res = await suiClient.devInspectTransactionBlock({
+
+        const signature = await signTransactionBlock({
             transactionBlock: txb,
+        });
+
+        const res = await suiClient.executeTransactionBlock({
+            transactionBlock: signature.transactionBlockBytes,
+            signature: signature.signature,
             sender: account?.address || "",
-        })
+            getEffects: true,
+            gasLimit: 100000000,
+            options: {
+                showEffects: true,
+                showObjectChanges: true,
+                JSONPretty: true,
+            },
+        });
+
+        // const res = await suiClient.executeTransactionBlock({
+        //     transactionBlock: txb,
+        //     sender: account?.address || "",
+        // })
         setRes(res)
-        await sign(txb)
+        // await sign(txb)
     };
 
     return (<>
@@ -472,6 +496,109 @@ const SwapForm: FC = () => {
     );
 };
 
+
+type RemoveLiquidityForm = {
+    pool: Pool,
+    amount: bigint,
+    kriyaLpToken: string,
+    transferToAddress?: string
+}
+const GetRemoveLiquidityForm: FC = () => {
+    const suiClient = useSuiClient();
+    const account = useCurrentAccount();
+    const sign = useTransactionExecution();
+    const suiClientCtx = useSuiClientContext();
+    const {mutateAsync: signTransactionBlock} = useSignTransactionBlock();
+    const kriyaPackageId = useContextSelector(AppConfigContext, (v) => v.kriyaPackageId);
+    const [res, setRes] = useState<any>(null)
+
+    const {register, handleSubmit, formState: {errors}} = useForm<RemoveLiquidityForm>({
+        defaultValues: {
+            pool: {
+                objectId: "0x6ca8e3c2f2d3f1bf14e4b96ee5b75b137534a83d19a3e826bab16d4f96137bd8",
+                // objectId: "0xb5722117aec83525c71f84c31c1f28e29397feffa95c99cce72a150a555a63dd::spot_dex::Pool<0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO, 0x2::sui::SUI>",
+                tokenXType: "0x56a8b9de60eed3ab8aa7224c87c5fe6b7845355e5ee6b13574ef2981311181e9::canonicus_capillus_amissio::CANONICUS_CAPILLUS_AMISSIO",
+                tokenYType: "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI",
+                isStable: false,
+            },
+            amount: BigInt(1_000),
+            kriyaLpToken: "0xbf7d26e0cbe263de17b22d919d146f5545b72f7e042c023bf9fb6cd8f2d234da",
+            transferToAddress: account?.address || ""
+        }
+    });
+    // Transaction failed with the following error. Error checking transaction input objects: MovePackageAsObject { object_id: 0x0000000000000000000000000000000000000000000000000000000000000002 }
+
+    const onSubmit: SubmitHandler<RemoveLiquidityForm> = async (data) => {
+        console.log("data", data)
+        // Handle the form data submission
+        console.log(data);
+        const txb = new TransactionBlock();
+
+        removeLiquidity(
+            kriyaPackageId,
+            data.pool,
+            BigInt(data.amount),
+            data.kriyaLpToken,
+            txb,
+            account?.address || "",
+        );
+        const signature = await signTransactionBlock({
+            transactionBlock: txb,
+        });
+
+        const res = await suiClient.executeTransactionBlock({
+            transactionBlock: signature.transactionBlockBytes,
+            signature: signature.signature,
+            sender: account?.address || "",
+            getEffects: true,
+            gasLimit: 100000000,
+            options: {
+                showEffects: true,
+                showObjectChanges: true,
+                JSONPretty: true,
+            },
+        });
+        setRes(res)
+    };
+
+    return (<>
+        <form onSubmit={handleSubmit(onSubmit)} className={"space-y-2 w-96"}>
+            <div className={"flex gap-4"}>
+                <div>Pool Object ID:</div>
+                <Input {...register('pool.objectId', {required: true})} />
+                {errors.pool?.objectId && <span>This field is required</span>}
+            </div>
+            <div className={"flex gap-4"}>
+                <div>Pool Token X Type:</div>
+                <Input {...register('pool.tokenXType', {required: true})} />
+                {errors.pool?.tokenXType && <span>This field is required</span>}
+            </div>
+            <div className={"flex gap-4"}>
+                <div>Pool Token Y Type:</div>
+                <Input {...register('pool.tokenYType', {required: true})} />
+                {errors.pool?.tokenYType && <span>This field is required</span>}
+            </div>
+            <div className={"flex gap-4"}>
+                <div>Amount:</div>
+                <Input type="number" {...register('amount', {required: true})} />
+                {errors.amount && <span>This field is required</span>}
+            </div>
+            <div className={"flex gap-4"}>
+                <div>Kriya LP TOKEN:</div>
+                <Input type="string" {...register('kriyaLpToken', {required: true})} />
+                {errors.kriyaLpToken && <span>This field is required</span>}
+            </div>
+            <div className={"flex gap-4"}>
+                <div>Transfer To Address (optional):</div>
+                <Input {...register('transferToAddress')} />
+            </div>
+            <Button type="submit">Remove Liquidity</Button>
+        </form>
+        <JSONPretty data={res || {}}/>
+    </>
+);
+};
+
 export default function DebugPage() {
 
     const axios = useContextSelector(AppConfigContext, (context) => context.axios);
@@ -494,6 +621,8 @@ export default function DebugPage() {
         <SwapForm/>
         <h2 className={"text-xl"}>All Coins</h2>
         <JSONPretty data={allCoins || {}}/>
+        <h2>Remove Liquidity</h2>
+        <GetRemoveLiquidityForm />
     </div>)
 
 }
