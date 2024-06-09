@@ -45,7 +45,7 @@ export const addLiquidity = async ({
                                    }: AddLiquidityArgs): Promise<TransactionArgument | TransactionResult> => {
 
     const [lpObject] = txb.moveCall({
-        target: `${DexConstants.packageId}::spot_dex::add_liquidity`,
+        target: `${kriyaPackageId}::spot_dex::add_liquidity`,
         typeArguments: [pool.tokenXType, pool.tokenYType],
         arguments: [
             txb.object(pool.objectId),
@@ -185,6 +185,7 @@ export const getOptimalLpSwapAmount = async ({
 
     console.log("getOptimalLpSwapAmount", suiClientCtx, inputAmt, poolId, isXtoY, isStable)
     const dex = new Dex(suiClientCtx.config?.url || "https://fullnode.mainnet.sui.io:443")
+    console.log("poolId", poolId)
     const txn = await dex.suiClient.getObject({
         id: poolId,
         options: {showContent: true},
@@ -199,6 +200,13 @@ export const getOptimalLpSwapAmount = async ({
         return BigInt(Math.round(swapAmt));
 
     } else {
+        console.log("isStable or tokenReserve")
+        console.log({
+            inputAmt: Number(inputAmt),
+            tokenXNumber: Number((txn.data?.content as any).fields.token_x),
+            tokenYNumber: Number((txn.data?.content as any).fields.token_y),
+            isXtoY
+        })
         const swapAmtStable = calculateStableSwapAmount(Number(inputAmt), Number((txn.data?.content as any).fields.token_x), Number((txn.data?.content as any).fields.token_y), isXtoY);
         console.log("swapAmtStable", swapAmtStable)
         return BigInt(Math.round(swapAmtStable));
@@ -316,7 +324,7 @@ export const getAllUserCoins = async ({
         }
         iter++;
     } while (cursor !== null);
-
+    console.log("Finished getting coins")
     return coins;
 };
 // Function from: https://www.npmjs.com/package/kriya-dex-sdk?activeTab=code

@@ -1,5 +1,5 @@
 'use client';
-import {CoinFromRestAPI, HoldersFromRestAPI, CoinStatus} from "@/lib/types";
+import {CoinFromRestAPI, CoinStatus, HoldersFromRestAPI} from "@/lib/types";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
 import {Dispatch, SetStateAction, useEffect, useRef, useState} from "react";
@@ -22,7 +22,8 @@ import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import {getValueWithDecimals, suiToUsdLocaleString} from "@/lib/utils";
 import {getTokenMetrics, TokenMetric, TokenMetricKey} from "@/lib/sui";
 import {useContextSelector} from "use-context-selector";
-import { SwapForm } from "@/components/SwapForm";
+import {SwapForm} from "@/components/SwapForm";
+import {AddRemoveLiquidityDialog} from "@/components/AddRemoveLiquidityDialog";
 
 type CoinMetadataProps = {
     token: CoinFromRestAPI;
@@ -334,6 +335,8 @@ export default function Drilldown() {
                                 <SocialLinks token={token}/>
                             </div>
                         </div>
+                        <div>
+                        </div>
                         <div className="p-2">
                             {activePanel === 'thread'
                                 ? <CoinThread creator={token.creator || ""} bondingCurveId={token.bondingCurveId}/>
@@ -342,12 +345,15 @@ export default function Drilldown() {
                                                network={suiContext.network || "mainnet"}/>}
 
                         </div>
+
                     </section>
 
 
                     <aside className="space-y-4">
-                        {showSwapForm && <SwapForm suiClient={suiContext.client} token={token} />}
-                        {!showSwapForm && <BuySellDialog token={token} tokenMetrics={tokenMetrics} suiClient={suiContext.client}/>}
+                        {showSwapForm && <SwapForm suiClient={suiContext.client} token={token}/>}
+                        {showSwapForm && <AddRemoveLiquidityDialog token={token}/>}
+                        {!showSwapForm &&
+                            <BuySellDialog token={token} tokenMetrics={tokenMetrics} suiClient={suiContext.client}/>}
                         <CoinDetails tokenMetrics={tokenMetrics} token={token}/>
                         <TokenHolders token={token} tokenMetrics={tokenMetrics}/>
                     </aside>

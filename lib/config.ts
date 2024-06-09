@@ -41,3 +41,5 @@ export const defaultAppConfig: AppConfig = {
     longInterval: 30000
 }
 
+
+export const SUI_COIN_TYPE = `0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI`
