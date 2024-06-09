@@ -17,6 +17,7 @@ export type CoinFromRestAPI = {
     suiReserve: number,
     target: number,
     status: number,
+    poolId: string,
     createdAt: Date,
     updatedAt: Date
 }
