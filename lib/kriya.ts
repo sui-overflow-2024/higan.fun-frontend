@@ -2,7 +2,7 @@
 // We copied it out of the package so we could modify it immediately without creating a fork
 import {Dex} from "kriya-dex-sdk";
 import 'react-json-pretty/themes/monikai.css';
-import {TransactionArgument, TransactionBlock} from "@mysten/sui.js/transactions";
+import {TransactionArgument, TransactionBlock, TransactionResult} from "@mysten/sui.js/transactions";
 import {CoinStruct, SuiClient} from "@mysten/sui.js/client";
 import {DexConstants} from "kriya-dex-sdk/dist/constants";
 import {SuiClientProviderContext} from "@mysten/dapp-kit";
@@ -19,12 +19,12 @@ type AddLiquidityArgs = {
     account?: WalletAccount | null,
     suiClient: SuiClient,
     pool: Pool,
-    amountX: bigint,
-    amountY: bigint,
-    minAddAmountX: bigint,
-    minAddAmountY: bigint,
-    // coinX: string | TransactionArgument,
-    // coinY: string | TransactionArgument,
+    amountX: bigint | TransactionArgument,
+    amountY: bigint | TransactionArgument,
+    minAddAmountX: bigint | TransactionArgument,
+    minAddAmountY: bigint | TransactionArgument,
+    coinX: string | TransactionArgument,
+    coinY: string | TransactionArgument,
     txb: TransactionBlock,
     transferToAddress?: string
 }
@@ -38,55 +38,109 @@ export const addLiquidity = async ({
                                        amountY,
                                        minAddAmountX = BigInt(0),
                                        minAddAmountY = BigInt(0),
-                                       // coinX,
-                                       // coinY,
+                                       coinX,
+                                       coinY,
                                        txb,
                                        transferToAddress,
-                                   }: AddLiquidityArgs): Promise<TransactionArgument | undefined> => {
-
-
-    const xCoins = await getAllUserCoins({
-        suiClient: suiClient,
-        type: pool.tokenXType,
-        address: account?.address || "",
-    });
-    const yCoins = await getAllUserCoins({
-        suiClient: suiClient,
-        type: pool.tokenYType,
-        address: account?.address || "",
-    });
-
-
-    const coinXSplit = getExactCoinByAmount(pool.tokenXType, xCoins, amountX, txb)
-    const coinYSplit = getExactCoinByAmount(pool.tokenYType, yCoins, amountY, txb)
+                                   }: AddLiquidityArgs): Promise<TransactionArgument | TransactionResult> => {
 
     const [lpObject] = txb.moveCall({
-        target: `${kriyaPackageId}::spot_dex::add_liquidity`,
+        target: `${DexConstants.packageId}::spot_dex::add_liquidity`,
         typeArguments: [pool.tokenXType, pool.tokenYType],
-        // typeArguments: ["0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO", "0x2::sui::SUI"],
         arguments: [
-            // txb.object("0x66150fe520140041937ce9394c2001f5512bc638718913a6fe802ccee9ae666e"),
             txb.object(pool.objectId),
-            // txb.object("0x056ff64eef35207d845c2b954295ae4c2bfa65f23de53a58d9c2a961e1bcf396"),
-            // typeof (coinY) == 'string' ? txb.object(coinY) : coinY,
-            txb.object(coinYSplit),
-            // txb.object("0x75f3dcade20d5acc23725c40191e03e7bdfe14a62e42d472dd8bee9006224e16"),
-            txb.object(coinXSplit),
-            // typeof (coinX) == 'string' ? txb.object(coinX) : coinX,
-            txb.pure(amountY),
-            txb.pure(amountX),
-            txb.pure(minAddAmountX),
+            typeof (coinY) == 'string' ? txb.object(coinY) : coinY,
+            typeof (coinX) == 'string' ? txb.object(coinX) : coinX,
+            typeof (amountY) == "bigint" ? txb.pure(amountY) : amountY,
+            typeof (amountX) == "bigint" ? txb.pure(amountX) : amountX,
             txb.pure(minAddAmountY),
+            txb.pure(minAddAmountX),
         ],
     });
 
     if (Boolean(transferToAddress)) {
         txb.transferObjects([lpObject], txb.pure(transferToAddress));
-    } else {
-        return lpObject;
     }
+    return lpObject;
 };
 
+export type AddLiquiditySingleSidedArgs = {
+    kriyaPackageId: string,
+    account: WalletAccount | null,
+    suiClientCtx: SuiClientProviderContext,
+    pool: Pool,
+    inputCoinType: string,
+    inputCoinAmount: bigint,
+    inputCoin: string | TransactionArgument,
+    swapSlippageTolerance: number,
+    txb: TransactionBlock,
+    transferToAddress?: string
+}
+export const addLiquiditySingleSided = async ({
+                                                  kriyaPackageId,
+                                                  account,
+                                                  suiClientCtx,
+                                                  pool,
+                                                  inputCoinType,
+                                                  inputCoinAmount,
+                                                  inputCoin,
+                                                  swapSlippageTolerance,
+                                                  txb,
+                                                  transferToAddress
+                                              }: AddLiquiditySingleSidedArgs): Promise<TransactionArgument | null> => {
+    if (swapSlippageTolerance > 1 || swapSlippageTolerance < 0)
+        swapSlippageTolerance = 0.9; // set sane default if bad value provided
+
+    const isXtoY = pool.tokenXType === inputCoinType;
+    const amountToSwap = await getOptimalLpSwapAmount({
+        suiClientCtx,
+        inputAmt: inputCoinAmount,
+        poolId: pool.objectId,
+        isXtoY,
+        isStable: pool?.isStable
+    })
+
+    const coinToSwap = txb.splitCoins(
+        // @ts-ignore
+        typeof (inputCoin) == 'string' ? txb.object(inputCoin) : inputCoin,
+        [
+            // typeof (amountToSwap) == "bigint" ? txb.pure(amountToSwap) : amountToSwap
+            amountToSwap
+        ]);
+
+
+    const swappedCoin = swap({
+        kriyaPackageId,
+        account,
+        pool,
+        inputCoinType,
+        inputCoinAmount: amountToSwap,
+        inputCoin: coinToSwap,
+        minReceived: BigInt(0),
+        txb,
+        transferToAddress
+    });
+    const coinX = isXtoY ? inputCoin : swappedCoin;
+    const coinY = isXtoY ? swappedCoin : inputCoin;
+    const coinXAmount = getCoinValue(pool.tokenXType, coinX, txb);
+    const coinYAmount = getCoinValue(pool.tokenYType, coinY, txb);
+
+
+    return addLiquidity({
+        kriyaPackageId,
+        account,
+        suiClient: suiClientCtx.client,
+        pool,
+        amountX: coinXAmount,
+        amountY: coinYAmount,
+        minAddAmountX: BigInt(0),
+        minAddAmountY: BigInt(0),
+        coinX,
+        coinY,
+        txb,
+        transferToAddress,
+    })
+}
 
 export const removeLiquidity = (
     kriyaPackageId: string,
@@ -185,6 +239,7 @@ export const calculateStableSwapAmount = (totalAmount: number, tokenXReserve: nu
 
 export type KriyaSwapArgs = {
     kriyaPackageId: string,
+    account: WalletAccount | null,
     pool: Pool,
     inputCoinType: string,
     inputCoinAmount: bigint,
@@ -196,6 +251,7 @@ export type KriyaSwapArgs = {
 
 export const swap = ({
                          kriyaPackageId,
+                         account,
                          pool,
                          inputCoinType,
                          inputCoinAmount,
@@ -203,7 +259,7 @@ export const swap = ({
                          minReceived,
                          txb,
                          transferToAddress,
-                     }: KriyaSwapArgs): TransactionArgument | undefined => {
+                     }: KriyaSwapArgs): TransactionArgument | TransactionResult => {
     const isXtoY = pool.tokenXType === inputCoinType;
     const inputCoinObject = typeof (inputCoin) === 'string' ? txb.object(inputCoin) : inputCoin;
     const inputTokenAmount = typeof (inputCoinAmount) === 'bigint' ? txb.pure(inputCoinAmount) : inputCoinAmount;
@@ -221,9 +277,8 @@ export const swap = ({
 
     if (Boolean(transferToAddress)) {
         txb.transferObjects([txnResult], txb.pure(transferToAddress));
-    } else {
-        return txnResult;
     }
+    return txnResult;
 }
 
 
