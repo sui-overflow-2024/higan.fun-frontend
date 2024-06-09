@@ -127,6 +127,9 @@ export const BuySellDialog: React.FC<{
     const multiplier = (token?.decimals || 0) > 0 ? Math.pow(10, token?.decimals || 0) : 1
     const amount = watch("amount") * multiplier
 
+    if (token.status === CoinStatus.CLOSE_IN_PROGRESS || token.status === CoinStatus.CLOSED) {
+
+    }
     useEffect(() => {
         const fetchBalance = async () => {
             if (!token) return

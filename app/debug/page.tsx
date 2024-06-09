@@ -29,35 +29,6 @@ import { send } from 'process';
 import { sign } from 'crypto';
 
 
-// const DemoSingleCoin: FC<{ packageId: string }> = ({packageId}) => {
-//     const {data, isLoading, isError, error} = useFetchCoinFromRest({packageId})
-//
-//     // useFetchManyCoinsFromRest with packageIds filter on the packageId param
-//     const {
-//         data: data2,
-//         isLoading: isLoading2,
-//         isError: isError2,
-//         error: error2
-//     } = useFetchManyCoinsFromRest({packageIds: [packageId]})
-//
-//     if (isLoading) return <div>Loading...</div>
-//     if (isError) return <div>Error: {(error as Error).message}</div>
-//
-//     return <div>
-//         <p className={"text-xl bg-white"}>Single Coin {packageId}</p>
-//         <JSONPretty data={data || {}}/>
-//         <p className={"text-xl bg-white"}>Filter many with filter on {packageId}</p>
-//         <JSONPretty data={data2 || {}}/>
-//     </div>
-// }
-
-//1. splitCoin on coin amount passed here for both coins
-//2. support addLiquidityOneSided as default, because it's easier
-//3. How to display the LP token price on the app
-//4. Support removing liquidity
-//5. How to rewire Buy/Sell dialog to allow adding and removing liqudity
-
-
 // Transaction failed with the following error. Error checking transaction input objects: MovePackageAsObject { object_id: 0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb }
 type AddLiqForm = {
     pool: Pool,
@@ -69,21 +40,6 @@ type AddLiqForm = {
     coinY: string | TransactionArgument,
     txb: TransactionBlock,
     transferToAddress?: string
-    // pool: {
-    //     objectId: string,
-    //     tokenXType: string,
-    //     tokenYType: string,
-    //     isStable?: boolean,
-    // },
-    // amountX: bigint | TransactionArgument,
-    // amountY: bigint | TransactionArgument,
-    // minAddAmountX: bigint
-    // coinX: `${string}::${string}::${string}`,
-    // coinY: `${string}::${string}::${string}`,
-    // txb: TransactionBlock,
-    // minReceived: bigint,
-    // inputCoinAmount: number,
-    // transferToAddress?: string,
 }
 
 
@@ -199,129 +155,6 @@ const AddLiqFormComponent: FC = () => {
                     <Input type="number" {...register('minAddAmountY', {required: true})} />
                     {errors.minAddAmountY && <span>This field is required</span>}
                 </div>
-                {/*<div className={"flex gap-4"}>*/}
-                {/*    <div>Coin X:</div>*/}
-                {/*    <Input {...register('coinX', {required: true})} />*/}
-                {/*    {errors.coinX && <span>This field is required</span>}*/}
-                {/*</div>*/}
-                {/*<div className={"flex gap-4"}>*/}
-                {/*    <div>Coin Y:</div>*/}
-                {/*    <Input {...register('coinY', {required: true})} />*/}
-                {/*    {errors.coinY && <span>This field is required</span>}*/}
-                {/*</div>*/}
-                <div className={"flex gap-4"}>
-                    <div>Transfer To Address (optional):</div>
-                    <Input {...register('transferToAddress')} />
-                </div>
-                <Button type="submit">Add Liquidity</Button>
-            </form>
-            <JSONPretty data={res || {}}/>
-        </>
-    );
-};
-
-const G: FC = () => {
-    const account = useCurrentAccount();
-    const suiClient = useSuiClient();
-    const sign = useTransactionExecution();
-    const kriyaPackageId = useContextSelector(AppConfigContext, (v) => v.kriyaPackageId);
-    const [res, setRes] = useState<any>(null)
-    const {register, handleSubmit, formState: {errors}} = useForm<AddLiqForm>({
-        defaultValues: {
-            pool: {
-                objectId: "0x66150fe520140041937ce9394c2001f5512bc638718913a6fe802ccee9ae666e",
-                // objectId: "0xb5722117aec83525c71f84c31c1f28e29397feffa95c99cce72a150a555a63dd::spot_dex::Pool<0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO, 0x2::sui::SUI>",
-                tokenXType: "0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO",
-                tokenYType: "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI",
-                isStable: false,
-            },
-            amountX: BigInt(1_000),
-            amountY: BigInt(0),
-            minAddAmountX: BigInt(0),
-            minAddAmountY: BigInt(0),
-            // coinX: "0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb",
-            // coinY: "0x0000000000000000000000000000000000000000000000000000000000000002",
-            transferToAddress: account?.address || ""
-        }
-    });
-    // Transaction failed with the following error. Error checking transaction input objects: MovePackageAsObject { object_id: 0x0000000000000000000000000000000000000000000000000000000000000002 }
-
-    const onSubmit: SubmitHandler<AddLiqForm> = async (data) => {
-        console.log("data", data)
-        // Handle the form data submission
-        console.log(data);
-        const txb = new TransactionBlock();
-        const lpObject = addLiquidity({
-            kriyaPackageId,
-            account,
-            suiClient,
-            pool: data.pool,
-            amountX: data.amountX,
-            amountY: data.amountY,
-            minAddAmountX: data.minAddAmountX,
-            minAddAmountY: data.minAddAmountY,
-            txb,
-            transferToAddress: account?.address || ""
-        });
-        const res = await suiClient.devInspectTransactionBlock({
-            transactionBlock: txb,
-            sender: account?.address || "",
-        })
-        setRes(res)
-        await sign(txb)
-    };
-
-    return (<>
-            <form onSubmit={handleSubmit(onSubmit)} className={"space-y-2 w-96"}>
-                <div className={"flex gap-4"}>
-                    <div>Pool Object ID:</div>
-                    <Input {...register('pool.objectId', {required: true})} />
-                    {errors.pool?.objectId && <span>This field is required</span>}
-                </div>
-                <div className={"flex gap-4"}>
-                    <div>Pool Token X Type:</div>
-                    <Input {...register('pool.tokenXType', {required: true})} />
-                    {errors.pool?.tokenXType && <span>This field is required</span>}
-                </div>
-                <div className={"flex gap-4"}>
-                    <div>Pool Token Y Type:</div>
-                    <Input {...register('pool.tokenYType', {required: true})} />
-                    {errors.pool?.tokenYType && <span>This field is required</span>}
-                </div>
-                <div className={"flex gap-4"}>
-                    <div>Is Stable:</div>
-                    <Input type="checkbox" {...register('pool.isStable')} />
-                </div>
-                <div className={"flex gap-4"}>
-                    <div>Amount X:</div>
-                    <Input type="number" {...register('amountX', {required: true})} />
-                    {errors.amountX && <span>This field is required</span>}
-                </div>
-                <div className={"flex gap-4"}>
-                    <div>Amount Y:</div>
-                    <Input type="number" {...register('amountY', {required: true})} />
-                    {errors.amountY && <span>This field is required</span>}
-                </div>
-                <div className={"flex gap-4"}>
-                    <div>Min Add Amount X:</div>
-                    <Input type="number" {...register('minAddAmountX', {required: true})} />
-                    {errors.minAddAmountX && <span>This field is required</span>}
-                </div>
-                <div className={"flex gap-4"}>
-                    <div>Min Add Amount Y:</div>
-                    <Input type="number" {...register('minAddAmountY', {required: true})} />
-                    {errors.minAddAmountY && <span>This field is required</span>}
-                </div>
-                {/*<div className={"flex gap-4"}>*/}
-                {/*    <div>Coin X:</div>*/}
-                {/*    <Input {...register('coinX', {required: true})} />*/}
-                {/*    {errors.coinX && <span>This field is required</span>}*/}
-                {/*</div>*/}
-                {/*<div className={"flex gap-4"}>*/}
-                {/*    <div>Coin Y:</div>*/}
-                {/*    <Input {...register('coinY', {required: true})} />*/}
-                {/*    {errors.coinY && <span>This field is required</span>}*/}
-                {/*</div>*/}
                 <div className={"flex gap-4"}>
                     <div>Transfer To Address (optional):</div>
                     <Input {...register('transferToAddress')} />
@@ -335,7 +168,6 @@ const G: FC = () => {
 
 const GetOptimalLpSwapAmountForm: FC = () => {
     const suiClientCtx = useSuiClientContext();
-    const kriyaPackageId = useContextSelector(AppConfigContext, (v) => v.kriyaPackageId);
     const [res, setRes] = useState<any>(null)
 
     const {register, handleSubmit, formState: {errors}} = useForm<GetOptimalLpSwapAmount & {
@@ -412,8 +244,8 @@ const SwapForm: FC = () => {
     const {register, handleSubmit, formState: {errors}} = useForm<KriyaSwapArgs>({
         defaultValues: {
             pool: {
-                objectId: "0x66150fe520140041937ce9394c2001f5512bc638718913a6fe802ccee9ae666e",
-                tokenXType: `0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO`,
+                objectId: "0x66150fe520140041937ce9394c2001f5512bc638718913a6fe802ccee9ae666e", //rest api
+                tokenXType: `0x451fe2a80e66bb4453579fe9e4859959234e2c31d9c04c377d9b4d8ff26525cb::tempus_dedico::TEMPUS_DEDICO`, //getCoinTypePath(restApiToken) packageId::module::MODULE
                 tokenYType: `0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI`,
                 isStable: false,
             },
@@ -440,10 +272,10 @@ const SwapForm: FC = () => {
         swap({
             kriyaPackageId,
             pool: data.pool,
-            inputCoinType: data.pool.tokenXType,
-            inputCoinAmount: data.inputCoinAmount,
-            inputCoin: inputCoin,
-            minReceived: data.minReceived,
+            inputCoinType: data.pool.tokenXType, //buy? SUI, sell: CustomToken
+            inputCoinAmount: data.inputCoinAmount, // Amount user puts into the form
+            inputCoin: inputCoin, // getAllUserCoins -> getExactCoinByAmount
+            minReceived: data.minReceived, // 0.97 * inputCoinAmount
             txb,
             transferToAddress: account?.address || "",
 
