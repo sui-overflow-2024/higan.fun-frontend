@@ -25,6 +25,8 @@ export const getCoinTypePath = (token: CoinFromRestAPI): string => {
     return `${token.packageId}::${token.module}::${token.module.toUpperCase()}`
 }
 
+export const suiCoinTypePath = "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI";
+
 export const getCoinPathFunc = (token: CoinFromRestAPI, func: string): `${string}::${string}::${string}` => {
     return `${token.packageId}::${token.module}::${func}`
 }

@@ -1,5 +1,5 @@
 'use client';
-import {CoinFromRestAPI, HoldersFromRestAPI} from "@/lib/types";
+import {CoinFromRestAPI, HoldersFromRestAPI, CoinStatus} from "@/lib/types";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
 import {Dispatch, SetStateAction, useEffect, useRef, useState} from "react";
@@ -22,6 +22,7 @@ import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import {getValueWithDecimals, suiToUsdLocaleString} from "@/lib/utils";
 import {getTokenMetrics, TokenMetric, TokenMetricKey} from "@/lib/sui";
 import {useContextSelector} from "use-context-selector";
+import { SwapForm } from "@/components/SwapForm";
 
 type CoinMetadataProps = {
     token: CoinFromRestAPI;
@@ -313,7 +314,7 @@ export default function Drilldown() {
     // probably token metrics should be part of the token
     if (!token || !tokenMetrics) return (<div>Loading token...</div>)
 
-
+    let showSwapForm = token.status === CoinStatus.CLOSE_IN_PROGRESS || token.status === CoinStatus.CLOSED;
     return (
         <div className="min-h-screen bg-gray-900 p-4 text-white">
             <div className="container mx-auto">
@@ -345,7 +346,8 @@ export default function Drilldown() {
 
 
                     <aside className="space-y-4">
-                        <BuySellDialog token={token} tokenMetrics={tokenMetrics} suiClient={suiContext.client}/>
+                        {showSwapForm && <SwapForm suiClient={suiContext.client} token={token} />}
+                        {!showSwapForm && <BuySellDialog token={token} tokenMetrics={tokenMetrics} suiClient={suiContext.client}/>}
                         <CoinDetails tokenMetrics={tokenMetrics} token={token}/>
                         <TokenHolders token={token} tokenMetrics={tokenMetrics}/>
                     </aside>

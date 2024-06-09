@@ -16,6 +16,7 @@ import useSWR, {mutate} from "swr";
 import {useToast} from "@/components/ui/use-toast";
 import {useContextSelector} from "use-context-selector";
 import {getAllUserCoins, getExactCoinByAmount} from "@/lib/kriya";
+import { SwapForm } from "./SwapForm";
 
 
 const generateBuyPtb = (managerContractPackageId: string, managerContractModuleName: string, coin: CoinFromRestAPI, amountToBuy: number) => {
@@ -38,7 +39,7 @@ const generateBuyPtb = (managerContractPackageId: string, managerContractModuleN
     })
     const [payment] = txb.splitCoins(txb.gas, [txb.object(splitCoin)]);
 
-    txb.transferObjects([payment], "0x7176223a57d720111be2c805139be7192fc5522597e6210ae35d4b2199949501")
+    // txb.transferObjects([payment], "0x7176223a57d720111be2c805139be7192fc5522597e6210ae35d4b2199949501")
     txb.moveCall({
         target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "buy_coins"),
         arguments: [
@@ -127,9 +128,6 @@ export const BuySellDialog: React.FC<{
     const multiplier = (token?.decimals || 0) > 0 ? Math.pow(10, token?.decimals || 0) : 1
     const amount = watch("amount") * multiplier
 
-    if (token.status === CoinStatus.CLOSE_IN_PROGRESS || token.status === CoinStatus.CLOSED) {
-
-    }
     useEffect(() => {
         const fetchBalance = async () => {
             if (!token) return
