@@ -2,7 +2,7 @@
 import {Button} from "@/components/ui/button";
 import {useSuiClient, useSuiClientContext, useSuiClientQuery} from "@mysten/dapp-kit";
 import {FC, useEffect, useState} from "react";
-import type {CoinBalance} from "@mysten/sui.js/client";
+import type {CoinBalance} from "@mysten/sui/client";
 import {copyTextToClipboard, extractPriceFromDevInspect, getValueWithDecimals, suiToUsdLocaleString} from "@/lib/utils";
 import Jazzicon, {jsNumberForAddress} from "react-jazzicon";
 import {getSellCoinPriceTxb} from "@/components/BuySellDialog";

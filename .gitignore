@@ -45,3 +45,9 @@ dev.db
 lib/prisma/client
 # Million Lint
 .million
+
+*storybook.log
+
+# Prevent committing tradingview files
+public/static/charting_library/
+public/static/datafeeds/

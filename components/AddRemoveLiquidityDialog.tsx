@@ -2,27 +2,25 @@
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {FC, useEffect, useState} from "react";
 import {getCoinTypePath} from "@/lib/utils";
 import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI} from "@/lib/types";
 import {SuiClientProviderContext, useCurrentAccount, useSuiClientContext, useSuiClientQuery} from "@mysten/dapp-kit";
-import {TransactionBlock,} from "@mysten/sui.js/transactions";
+import {TransactionBlock,} from "@mysten/sui/transactions";
 import {SubmitHandler, useForm} from "react-hook-form";
 import {useToast} from "@/components/ui/use-toast";
 import {useContextSelector} from "use-context-selector";
 import {addLiquidity, getAllUserCoins, getExactCoinByAmount, getOptimalLpSwapAmount, Pool} from "@/lib/kriya";
 import {SUI_COIN_TYPE} from "@/lib/config";
 import {Input} from "@/components/ui/input";
-import {useTransactionExecution} from "@/hooks/useTransactionexecution";
+import {useTransactionExecution} from "@/hooks/useTransactionExecution";
 import {Dex} from "kriya-dex-sdk";
 import useSWR from "swr";
 
 type AddLiqForm = {
     amountX: bigint,
     amountY: bigint,
-    // minAddAmountX: bigint,
-    // minAddAmountY: bigint,
     txb: TransactionBlock,
     transferToAddress?: string
 }
@@ -43,7 +41,7 @@ const getTokenReserves = async ({suiClientCtx, pool}: FetchReservesKey): Promise
     return {xReserve, yReserve}
 }
 
-const AddLiquidityForm: React.FC<{ coin: CoinFromRestAPI, pool: Pool }> = ({coin, pool}) => {
+const AddLiquidityForm: FC<{ coin: CoinFromRestAPI, pool: Pool }> = ({coin, pool}) => {
     const {toast} = useToast()
     const account = useCurrentAccount()
     const kriyaPackageId = useContextSelector(AppConfigContext, v => v.kriyaPackageId)
@@ -59,9 +57,7 @@ const AddLiquidityForm: React.FC<{ coin: CoinFromRestAPI, pool: Pool }> = ({coin
         }
     });
     const amountX = watch('amountX');
-    // const amountX = watch('amountX') * BigInt(Math.pow(10, coin.decimals));
     const amountY = watch('amountY'); //Coin is always SUI
-    // const amountY = watch('amountY') * BigInt(Math.pow(10, 9)); //Coin is always SUI
 
     const sign = useTransactionExecution()
     const {data: memeBalance, refetch: refetchMeme} = useSuiClientQuery("getBalance", {
@@ -99,7 +95,7 @@ const AddLiquidityForm: React.FC<{ coin: CoinFromRestAPI, pool: Pool }> = ({coin
             setValue('amountY', calculatedAmountY);
         }
         fetchOptimalY()
-    }, [amountX, lastInputState, memeBalance, pool.objectId, setValue, suiBalance, suiClientCtx]);
+    }, [amountX, lastInputState, memeBalance, pool.objectId, poolReserves, setValue, suiBalance, suiClientCtx]);
 
     useEffect(() => {
         console.log("lastInputState in post Y", lastInputState)
@@ -119,7 +115,7 @@ const AddLiquidityForm: React.FC<{ coin: CoinFromRestAPI, pool: Pool }> = ({coin
             setValue('amountX', calculatedAmountX);
         }
         fetchOptimalX()
-    }, [amountX, amountY, coin.symbol, lastInputState, memeBalance?.totalBalance, pool.objectId, setValue, suiBalance?.totalBalance, suiClientCtx]);
+    }, [amountX, amountY, coin.symbol, lastInputState, memeBalance, memeBalance.totalBalance, pool.objectId, poolReserves?.xReserve, poolReserves?.yReserve, setValue, suiBalance, suiBalance.totalBalance, suiClientCtx]);
 
 
     const onSubmit: SubmitHandler<AddLiqForm> = async (data) => {
@@ -233,7 +229,7 @@ const AddLiquidityForm: React.FC<{ coin: CoinFromRestAPI, pool: Pool }> = ({coin
     );
 }
 
-export const AddRemoveLiquidityDialog: React.FC<{
+export const AddRemoveLiquidityDialog: FC<{
     token: CoinFromRestAPI,
 }> = ({token}) => {
     const currentAccount = useCurrentAccount()

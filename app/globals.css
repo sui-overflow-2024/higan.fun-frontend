@@ -26,31 +26,37 @@
 
 @layer base {
     :root {
-    --background: 205.5 95.24% 8.24%;
-        --foreground: 60 9.1% 97.8%;
-        --card: 219.66 88.06% 11.14%;
-        --card-hover: 219.66 88.06% 16.14%;
-        --card-hover-border: 47.9 95.8% 43.1%;
-        --card-foreground: 60 9.1% 97.8%;
-        --popover: 20 14.3% 4.1%;
-        --popover-foreground: 60 9.1% 97.8%;
-        --primary: 47.9 95.8% 53.1%;
-        --primary-foreground: 26 83.3% 14.1%;
-        --secondary: 12 6.5% 15.1%;
-        --secondary-foreground: 60 9.1% 97.8%;
-        --muted: 12 6.5% 15.1%;
-        --muted-foreground: 24 5.4% 63.9%;
-        --accent: 12 6.5% 15.1%;
-        --accent-foreground: 60 9.1% 97.8%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 60 9.1% 97.8%;
-        --border: 47.9 95.8% 23.1%;
-        --input: 12 6.5% 25.1%;
-        --ring: 35.5 91.7% 32.9%;
+        --foreground: hsl(60, 9.1%, 97.8%);
+        --card-foreground: hsl(60, 9.1%, 97.8%);
+        --popover: hsl(20, 14.3%, 4.1%);
+        --popover-foreground: hsl(60, 9.1%, 97.8%);
+        --primary: hsl(47.9, 95.8%, 53.1%);
+        --primary-foreground: hsl(26, 83.3%, 14.1%);
+        --secondary: hsl(12, 6.5%, 15.1%);
+        --secondary-foreground: hsl(60, 9.1%, 97.8%);
+        --muted: hsl(12, 6.5%, 15.1%);
+        --muted-foreground: hsl(24, 5.4%, 63.9%);
+        --accent: hsl(12, 6.5%, 15.1%);
+        --accent-foreground: hsl(60, 9.1%, 97.8%);
+        --destructive: hsl(0, 62.8%, 30.6%);
+        --destructive-foreground: hsl(60, 9.1%, 97.8%);
+        --border: hsl(12, 6.5%, 15.1%);
+        --input: hsl(12, 6.5%, 15.1%);
+        --ring: hsl(35.5, 91.7%, 32.9%);
+        --chart-1: hsl(220, 70%, 50%);
+        --chart-2: hsl(160, 60%, 45%);
+        --chart-3: hsl(30, 80%, 55%);
+        --chart-4: hsl(280, 65%, 60%);
+        --chart-5: hsl(340, 75%, 55%);
         --radius: 0.5rem;
-        --sea: 212 98% 61%;
+
+        --background: hsl(205.5, 95.24%, 8.24%);
+        --card: hsl(219.66, 88.06%, 11.14%);
+        --card-hover: hsl(219.66, 88.06%, 16.14%);
+        --card-hover-border: hsl(47.9, 95.8%, 43.1%);
+        --sea: hsl(212, 98%, 61%);
     }
-/* 
+
     .dark {
         --background: 205.5 95.24% 8.24%;
         --foreground: 60 9.1% 97.8%;
@@ -73,7 +79,7 @@
         --input: 12 6.5% 25.1%;
         --ring: 35.5 91.7% 32.9%;
         --sea: 212 98% 61%;
-    } */
+    }
 }
 
 
@@ -85,4 +91,8 @@
     body {
         @apply bg-background text-foreground;
     }
+}
+
+.magnify-on-hover {
+    @apply transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
 }

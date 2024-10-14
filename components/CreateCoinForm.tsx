@@ -6,8 +6,8 @@ import {ConnectButton, useAccounts} from "@mysten/dapp-kit";
 import {faker} from "@faker-js/faker";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
-import {TransactionBlock} from "@mysten/sui.js/transactions";
-import {useTransactionExecution} from "@/hooks/useTransactionexecution";
+import {Transaction} from "@mysten/sui/transactions";
+import {useTransactionExecution} from "@/hooks/useTransactionExecution";
 import {AppConfigContext} from "@/components/Contexts";
 import * as yup from 'yup';
 import {yupResolver} from '@hookform/resolvers/yup';
@@ -79,7 +79,7 @@ const CreateCoinForm = () => {
                 if (!account) {
                     return
                 }
-                const txb = new TransactionBlock();
+                const txb = new Transaction();
                 //TODO get from config
                 const [payment] = txb.splitCoins(txb.gas, [txb.pure(5_000_000_000)]);
                 txb.moveCall({

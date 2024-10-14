@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {FC, useEffect, useRef} from 'react';
 import {ColorType, createChart, IChartApi, ISeriesApi, PriceScaleMode} from 'lightweight-charts';
 import {TradeFromRestAPI} from '@/lib/types';
 import useSWR from "swr";
@@ -31,11 +31,10 @@ const transformTradesToLineData = (trades: TradeFromRestAPI[], currentSuiPrice: 
     }, {} as any);
 
 
-    const data = Object.values(aggregatedData).map((entry: any) => ({
+    return Object.values(aggregatedData).map((entry: any) => ({
         time: entry.time,
         value: entry.priceSum / entry.count  // Calculate average price
     }));
-    return data;
 };
 
 const chartStyle: any = {
@@ -46,7 +45,7 @@ const chartStyle: any = {
     areaBottomColor: 'rgba(41, 98, 255, 0.28)',
 }
 // Component for the trades.ts list
-const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
+const LegacyTradesChart: FC<TradesChartProps> = ({bondingCurveId}) => {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const chartRef = useRef<IChartApi>();
     const seriesRef = useRef<ISeriesApi<"Line">>();
@@ -76,7 +75,7 @@ const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
             return () => {
                 socket.off('postCreated');
             };
-        }, [refetchTrades, socket, trades]
+        }, [bondingCurveId, refetchTrades, socket, trades]
     );
 
     useEffect(() => {
@@ -156,4 +155,4 @@ const TradesChart: React.FC<TradesChartProps> = ({bondingCurveId}) => {
     );
 };
 
-export default TradesChart
+export default LegacyTradesChart

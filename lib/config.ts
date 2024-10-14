@@ -1,4 +1,5 @@
-import axios, {Axios} from "axios";
+import type {AxiosInstance} from "axios";
+import axios from "axios";
 import {CoinFromRestAPI, PostFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {io, Socket} from "socket.io-client";
 
@@ -12,7 +13,7 @@ export interface ServerToClientEvents {
 export type AppConfig = {
     restApiUrl: string,
     websocketUrl: string,
-    axios: Axios,
+    axios: AxiosInstance,
     fallbackDevInspectAddress: string,
     managerContractPackageId: string,
     managerContractModuleName: string,
@@ -23,6 +24,7 @@ export type AppConfig = {
     mediumInterval: number
     longInterval: number
 }
+
 
 export const defaultAppConfig: AppConfig = {
     restApiUrl: process.env.NEXT_PUBLIC_REST_API_URL || "https://higan.fun/api",

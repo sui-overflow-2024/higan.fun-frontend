@@ -6,13 +6,13 @@ import {useContextSelector} from "use-context-selector";
 import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI} from "@/lib/types";
 import JSONPretty from "react-json-pretty";
-import {useCurrentAccount, useSignTransactionBlock, useSuiClient, useSuiClientContext} from "@mysten/dapp-kit";
+import {useCurrentAccount, useSignTransaction, useSuiClient, useSuiClientContext} from "@mysten/dapp-kit";
 import {SubmitHandler, useForm} from "react-hook-form";
-import {TransactionArgument, TransactionBlock} from "@mysten/sui.js/transactions";
+import {Transaction, TransactionArgument} from "@mysten/sui/transactions";
 import {FC, useState} from "react";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {useTransactionExecution} from "@/hooks/useTransactionexecution";
+import {useTransactionExecution} from "@/hooks/useTransactionExecution";
 import {
     addLiquidity,
     addLiquiditySingleSided,
@@ -37,7 +37,7 @@ type AddLiqForm = {
     minAddAmountY: bigint,
     coinX: string | TransactionArgument,
     coinY: string | TransactionArgument,
-    txb: TransactionBlock,
+    txb: Transaction,
     transferToAddress?: string
 }
 
@@ -46,7 +46,7 @@ const AddLiqFormComponent: FC = () => {
     const account = useCurrentAccount();
     const suiClientCtx = useSuiClientContext();
     const sign = useTransactionExecution();
-    const {mutateAsync: signTransactionBlock} = useSignTransactionBlock();
+    const {mutateAsync: signTransactionBlock} = useSignTransaction();
     const kriyaPackageId = useContextSelector(AppConfigContext, (v) => v.kriyaPackageId);
     const [res, setRes] = useState<any>(null)
     const {register, handleSubmit, formState: {errors}} = useForm<AddLiqForm>({
@@ -75,7 +75,7 @@ const AddLiqFormComponent: FC = () => {
         // Handle the form data submission
         console.log(data);
 
-        const txb = new TransactionBlock();
+        const txb = new Transaction();
         const allCoinX = await getAllUserCoins({
             suiClient: suiClientCtx.client,
             type: data.pool.tokenXType,
@@ -178,7 +178,7 @@ const AddLiqFormSingleComponent: FC = () => {
     const account = useCurrentAccount();
     const suiClientCtx = useSuiClientContext();
     const sign = useTransactionExecution();
-    const {mutateAsync: signTransactionBlock} = useSignTransactionBlock();
+    const {mutateAsync: signTransactionBlock} = useSignTransaction();
     const kriyaPackageId = useContextSelector(AppConfigContext, (v) => v.kriyaPackageId);
     const [res, setRes] = useState<any>(null)
     const {register, handleSubmit, formState: {errors}} = useForm<AddLiquiditySingleSidedArgs>({
@@ -200,7 +200,7 @@ const AddLiqFormSingleComponent: FC = () => {
     // Transaction failed with the following error. Error checking transaction input objects: MovePackageAsObject { object_id: 0x0000000000000000000000000000000000000000000000000000000000000002 }
 
     const onSubmit: SubmitHandler<AddLiquiditySingleSidedArgs> = async (data) => {
-        const txb = new TransactionBlock();
+        const txb = new Transaction();
         console.log("data", data)
 
         const inputCoins = await getAllUserCoins({
@@ -311,7 +311,7 @@ const GetOptimalLpSwapAmountForm: FC = () => {
         console.log("data", data)
         // Handle the form data submission
         console.log(data);
-        const txb = new TransactionBlock();
+        const txb = new Transaction();
 
         const res = await getOptimalLpSwapAmount({
             suiClientCtx,
@@ -373,7 +373,7 @@ const SwapForm: FC = () => {
             },
             inputCoinAmount: BigInt(1_000),
             minReceived: BigInt(0),
-            txb: new TransactionBlock(),
+            txb: new Transaction(),
         }
     });
     // Transaction failed with the following error. Error checking transaction input objects: MovePackageAsObject { object_id: 0x0000000000000000000000000000000000000000000000000000000000000002 }
@@ -382,7 +382,7 @@ const SwapForm: FC = () => {
         console.log("data", data)
         // Handle the form data submission
         console.log(data);
-        const txb = new TransactionBlock();
+        const txb = new Transaction();
         // const pool = await getLiquidityPoolFields(suiClientCtx, data.pool.objectId,/* data.pool.tokenXType, data.pool.tokenYType*/)
         const allCoinX = await getAllUserCoins({
             suiClient: suiClientCtx.client,
@@ -463,7 +463,7 @@ const GetRemoveLiquidityForm: FC = () => {
     const account = useCurrentAccount();
     const sign = useTransactionExecution();
     const suiClientCtx = useSuiClientContext();
-    const {mutateAsync: signTransactionBlock} = useSignTransactionBlock();
+    const {mutateAsync: signTransactionBlock} = useSignTransaction();
     const kriyaPackageId = useContextSelector(AppConfigContext, (v) => v.kriyaPackageId);
     const [res, setRes] = useState<any>(null)
 
@@ -487,7 +487,7 @@ const GetRemoveLiquidityForm: FC = () => {
         console.log("data", data)
         // Handle the form data submission
         console.log(data);
-        const txb = new TransactionBlock();
+        const txb = new Transaction();
 
         removeLiquidity(
             kriyaPackageId,

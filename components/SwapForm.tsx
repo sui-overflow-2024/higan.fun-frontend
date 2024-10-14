@@ -1,18 +1,18 @@
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 
-import {useEffect, useState} from "react";
+import {FC, useEffect, useState} from "react";
 import {CoinFromRestAPI} from "@/lib/types";
-import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
+import type {CoinStruct, SuiClient} from '@mysten/sui/client';
 import {SubmitHandler, useForm} from "react-hook-form";
-import {useTransactionExecution} from "@/hooks/useTransactionexecution";
+import {useTransactionExecution} from "@/hooks/useTransactionExecution";
 import {AppConfigContext} from "@/components/Contexts";
 import {useCurrentAccount} from "@mysten/dapp-kit";
-import {TransactionBlock} from "@mysten/sui.js/transactions";
 import {getAllUserCoins, getExactCoinByAmount, swap} from "@/lib/kriya";
 import JSONPretty from "react-json-pretty";
 import {useContextSelector} from "use-context-selector";
 import {getCoinTypePath} from "@/lib/utils";
+import {Transaction} from "@mysten/sui/transactions";
 
 
 export type SwapFormArgs = {
@@ -20,7 +20,7 @@ export type SwapFormArgs = {
     minReceived: bigint,
 }
 
-export const SwapForm: React.FC<{
+export const SwapForm: FC<{
     token: CoinFromRestAPI,
     suiClient: SuiClient
 }> = ({token, suiClient}) => {
@@ -90,7 +90,7 @@ export const SwapForm: React.FC<{
         console.log("data", data)
         // Handle the form data submission
         console.log(data);
-        const txb = new TransactionBlock();
+        const txb = new Transaction();
         // const pool = await getLiquidityPoolFields(suiClientCtx, data.pool.objectId,/* data.pool.tokenXType, data.pool.tokenYType*/)
         const allCoinX = await getAllUserCoins({
             suiClient: suiClient,

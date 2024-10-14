@@ -48,8 +48,6 @@ const Post: FC<{ id: number, creator: string, authorId: string, text: string, cr
             <SafeMarkdown text={text}/>
         </div>
     );
-
-
 }
 const NewPostTextbox: FC<{
     creator: string,

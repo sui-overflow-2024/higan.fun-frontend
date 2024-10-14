@@ -1,8 +1,8 @@
 import {type ClassValue, clsx} from "clsx"
 import {twMerge} from "tailwind-merge"
 import {CoinFromRestAPI} from "@/lib/types";
-import type {DevInspectResults} from "@mysten/sui.js/client";
-import {bcs} from "@mysten/sui.js/bcs";
+import type {DevInspectResults} from "@mysten/sui/client";
+import {bcs} from "@mysten/sui/bcs";
 import {SuiClientProviderContext} from "@mysten/dapp-kit";
 import {Dex} from "kriya-dex-sdk";
 
@@ -15,9 +15,6 @@ export const toInitCap = (str: string[]): string => {
 }
 export const toSnakeCase = (str: string): string => {
     return str.replace(/\s+/g, '_').toLowerCase();
-}
-export const toSnakeCaseUpper = (str: string): string => {
-    return toSnakeCase(str).toUpperCase()
 }
 
 

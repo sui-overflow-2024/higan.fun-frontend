@@ -20,10 +20,23 @@ export type CoinGetAllKey = {
 }
 export type CoinGetPostsKey = { axios: Axios, bondingCurveId: string, path: "getPosts" }
 export type CoinGetTopKey = { axios: Axios, path: "getTop" }
-export type CoinGetTradesKey = { axios: Axios, bondingCurveId: string, offset?:number, limit?: number, path: "getTrades" }
+export type CoinGetTradesKey = {
+    axios: Axios,
+    bondingCurveId: string,
+    offset?: number,
+    limit?: number,
+    path: "getTrades"
+}
 export type CoinGetHoldersByKey = { axios: Axios, bondingCurveId: string, path: "getHolders" }
 export type CoinGetByIdKey = { axios: Axios, bondingCurveId: string, path: "getById" }
-export type CoinSearchKey = { axios: Axios, term: string, sort: string, order: string, offset: number, pageSize: number}
+export type CoinSearchKey = {
+    axios: Axios,
+    term: string,
+    sort: string,
+    order: string,
+    offset: number,
+    pageSize: number
+}
 export type CoinGetTvlKey = { axios: Axios, bondingCurveId: string, path: "getTvl24h" }
 export type TradesKey = { axios: Axios, limit?: number, order?: "asc" | "desc", path: "getTrades" }
 //TODO, prisma lets you do custom fields, let's clean this up and build it into get /:id later
@@ -123,6 +136,7 @@ export const coinRestApi: CoinRestApi = {
         return res.data
     },
     getSuiPrice: async () => {
+        console.log("Getting the current SUI price from the REST API")
         const res = await axios.get('https://hermes.pyth.network/v2/updates/price/latest?ids%5B%5D=0x23d7315113f5b1d3ba7a83604c44b94d79f4fd69af77f804fc7f920a6dc65744')
         const priceObj = res.data?.parsed?.[0]?.price;
         const {price, expo} = priceObj;

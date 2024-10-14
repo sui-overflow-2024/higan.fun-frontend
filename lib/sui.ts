@@ -1,10 +1,10 @@
 import {Fetcher} from "swr";
 import {getBuyCoinPriceTxb, getSellCoinPriceTxb} from "@/components/BuySellDialog";
-import type {SuiClient} from '@mysten/sui.js/client';
-import {bcs} from "@mysten/sui.js/bcs";
+import type {SuiClient} from '@mysten/sui/client';
+import {bcs} from "@mysten/sui/bcs";
 import {getCoinTypePath, getManagerFuncPath} from "@/lib/utils";
 import {CoinFromRestAPI} from "@/lib/types";
-import {TransactionBlock} from "@mysten/sui.js/transactions";
+import {Transaction} from "@mysten/sui/transactions";
 
 export type TokenMetric = {
     tokenPrice: number,
@@ -73,7 +73,7 @@ export const getTokenMetrics: Fetcher<TokenMetric, TokenMetricKey> = async ({
     }
 
 
-    const txb = new TransactionBlock()
+    const txb = new Transaction()
     txb.moveCall({
         target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "get_coin_buy_price") as `${string}::${string}::${string}`,
         arguments: [

@@ -1,8 +1,9 @@
 import {CoinFromRestAPI, TradeFromRestAPI} from "@/lib/types";
 import {faker} from "@faker-js/faker";
 import {toInitCap, toSnakeCase} from "@/lib/utils";
+import {TokenMetric} from "@/lib/sui";
 
-function generateRandomHex(bytes: number): string {
+export function generateRandomHex(bytes: number): string {
     const buffer = new Uint8Array(bytes);
     // Populate the buffer with random values
     crypto.getRandomValues(buffer);
@@ -19,6 +20,8 @@ export const generateFakeToken = (): CoinFromRestAPI => {
     const packageId = "0xa512bbe7d3f75b0b91310057bbbac67aa4f3e1eda49c345fd00c3cfa7fd47c5b";
     const name = faker.lorem.words({min: 2, max: 5}).split(' ')
     return {
+        id: 0,
+        poolId: "",
         status: getRandomNumber(0, 3),
         target: 5_000_000_000,
         creator: "0xb2720b42e26a7fc1eb555ecd154ef3dc2446f80c1f186af901cd38b842e52044",
@@ -65,3 +68,10 @@ export const generateTrades = (count: number): TradeFromRestAPI[] => {
         coinPrice: faker.number.float({min: 1, max: 80, fractionDigits: 2}),
     }));
 };
+
+
+export const generateFakeTokenMetric = (): TokenMetric => ({
+    tokenPrice: getRandomNumber(1999, 838383),
+    suiBalance: getRandomNumber(500, 1000),
+    totalSupply: getRandomNumber(1000, 10000)
+})

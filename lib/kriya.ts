@@ -2,9 +2,9 @@
 // We copied it out of the package so we could modify it immediately without creating a fork
 import {Dex} from "kriya-dex-sdk";
 import 'react-json-pretty/themes/monikai.css';
-import {TransactionArgument, TransactionBlock, TransactionResult} from "@mysten/sui.js/transactions";
-import {CoinStruct, SuiClient} from "@mysten/sui.js/client";
-import {DexConstants} from "kriya-dex-sdk/dist/constants";
+import {Transaction, TransactionArgument, TransactionResult} from "@mysten/sui/transactions";
+import {CoinStruct, SuiClient} from "@mysten/sui/client";
+import {DexConstants} from "kriya-dex-sdk/dist/utils/constants";
 import {SuiClientProviderContext} from "@mysten/dapp-kit";
 import type {WalletAccount} from '@mysten/wallet-standard';
 
@@ -25,7 +25,7 @@ type AddLiquidityArgs = {
     minAddAmountY: bigint | TransactionArgument,
     coinX: string | TransactionArgument,
     coinY: string | TransactionArgument,
-    txb: TransactionBlock,
+    txb: Transaction,
     transferToAddress?: string
 }
 
@@ -73,7 +73,7 @@ export type AddLiquiditySingleSidedArgs = {
     inputCoinAmount: bigint,
     inputCoin: string | TransactionArgument,
     swapSlippageTolerance: number,
-    txb: TransactionBlock,
+    txb: Transaction,
     transferToAddress?: string
 }
 export const addLiquiditySingleSided = async ({
@@ -147,7 +147,7 @@ export const removeLiquidity = (
     pool: Pool,
     amount: bigint | TransactionArgument,
     kriyaLpToken: string | TransactionArgument,
-    txb: TransactionBlock,
+    txb: Transaction,
     transferToAddress?: string
 ): Array<TransactionArgument> | undefined => {
     const txRes = txb.moveCall({
@@ -253,7 +253,7 @@ export type KriyaSwapArgs = {
     inputCoinAmount: bigint,
     inputCoin: string | TransactionArgument,
     minReceived: bigint,
-    txb: TransactionBlock,
+    txb: Transaction,
     transferToAddress?: string
 }
 
@@ -364,7 +364,7 @@ export const getExactCoinByAmount = (
     coinType: string,
     coins: CoinStruct[],
     amount: bigint,
-    txb: TransactionBlock
+    txb: Transaction
 ) => {
     if (coinType === "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI") {
         const [coinA] = txb.splitCoins(txb.gas, [txb.pure(amount)]);
@@ -388,7 +388,7 @@ export const getExactCoinByAmount = (
 };
 
 
-export const getCoinValue = (coinType: string, coinObject: string | TransactionArgument, txb: TransactionBlock): TransactionArgument => {
+export const getCoinValue = (coinType: string, coinObject: string | TransactionArgument, txb: Transaction): TransactionArgument => {
     const inputCoinObject = typeof (coinObject) == 'string' ? txb.object(coinObject) : coinObject;
     let [value] = txb.moveCall({
         target: `0x2::coin::value`,

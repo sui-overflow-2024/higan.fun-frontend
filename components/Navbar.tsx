@@ -38,12 +38,12 @@ function NetworkSelector() {
     );
 }
 
-const NewTradeNotification = ({trade, coin}: { trade?: TradeFromRestAPI, coin?: CoinFromRestAPI }) => {
+export const NewTradeNotification = ({trade, coin}: { trade?: TradeFromRestAPI, coin?: CoinFromRestAPI }) => {
     if (!coin || !trade) return <></>;
 
     return <Link href={`/coin/${coin.bondingCurveId}`}>
         <div
-            className={"text-xs p-2 border-2 rounded-lg flex gap-2 items-center hover:cursor-pointer hover:bg-secondary"}>
+            className={"text-xs p-2 border-2 rounded-lg flex justify-center gap-2 items-center hover:cursor-pointer hover:bg-secondary"}>
             <CreatorAddressChip address={coin.creator || "ffffff"}
                                 showAvatar={false}
                                 variant={"small"}/>
@@ -55,12 +55,12 @@ const NewTradeNotification = ({trade, coin}: { trade?: TradeFromRestAPI, coin?: 
     </Link>
 }
 
-const NewCoinNotification = ({coin}: { coin?: CoinFromRestAPI }) => {
+export const NewCoinNotification = ({coin}: { coin?: CoinFromRestAPI }) => {
     if (!coin) return <></>;
 
     return <Link href={`/coin/${coin.bondingCurveId}`}>
         <div
-            className={"text-xs p-2 border-2 rounded-lg flex gap-2 items-center hover:cursor-pointer hover:bg-secondary"}>
+            className={"text-xs p-2 border-2 rounded-lg flex justify-center gap-2 items-center hover:cursor-pointer hover:bg-secondary"}>
             <CreatorAddressChip address={coin.creator || "ffffff"}
                                 showAvatar={false}
                                 variant={"small"}/>
@@ -131,35 +131,39 @@ export default function Navbar() {
 
     return (
         <nav className="border-b-2 border-gray-800">
-            <div className="container mx-auto">
+            <div className="container">
                 <div className="flex items-center h-16">
                     <div className="flex items-center gap-2">
                         <Link href="/" className={"flex items-center"}>
                             <Image width={24} height={24} src={HiganFunLogoText} alt="logo"
-                                   className="min-w-36 h-8 hidden md:block"/>
+                                   className="min-w-36 h-8 hidden sm:block"/>
                             <Image width={24} height={24} src={HiganFunLogo} alt="logo"
-                                   className="min-w-16 h-8 block md:hidden"/>
+                                   className="min-w-16 h-8 block sm:hidden"/>
                         </Link>
-                        <Link href="/">
-                            <Button
-                                className={pathname === "/" ? "text-primary underline" : "text-white"}
-                                variant={"link"}>
-                                Home
-                            </Button>
-                        </Link>
-                        <Link href="/create">
+                        <div className="hidden md:flex items-center gap-2">
+                            <Link href="/">
+                                <Button
+                                    className={pathname === "/" ? "text-primary underline" : "text-white"}
+                                    variant="link">
+                                    Home
+                                </Button>
+                            </Link>
+                            <Link href="/create">
+                                <Button
+                                    className={pathname === "/create" ? "text-primary underline" : "text-white"}
+                                    variant="link"
+                                >
+                                    Launch Token
+                                </Button>
+                            </Link>
+                            <div className={"hidden md:visible"}>
+                                <NewTradeNotification trade={mostRecentTrade?.trade} coin={mostRecentTrade?.coin}/>
+                                <NewCoinNotification coin={mostRecentCoin}/>
+                            </div>
 
-                            <Button
-                                className={pathname === "/create" ? "text-primary underline" : "text-white"}
-                                variant={"link"}>
-                                Launch Token
-                            </Button>
-                        </Link>
-
-                        <NewTradeNotification trade={mostRecentTrade?.trade} coin={mostRecentTrade?.coin}/>
-                        <NewCoinNotification coin={mostRecentCoin}/>
+                        </div>
                     </div>
-                    <div className="ml-auto">
+                    <div className="sm:ml-auto flex items-center gap-2">
                         <div className="flex items-center gap-2">
                             <div>
                                 {account &&
@@ -173,6 +177,15 @@ export default function Navbar() {
                             {/*<NetworkSelector/>*/}
                         </div>
                     </div>
+
+                </div>
+                <div className={"flex flex-col items-center mb-2 sm:mb-0 sm:hidden"}>
+                    <div className={"w-3/4"}>
+                        <NewTradeNotification trade={mostRecentTrade?.trade} coin={mostRecentTrade?.coin}/>
+                    </div>
+                    {/*<div className={"w-3/4"}>*/}
+                    {/*    <NewCoinNotification coin={mostRecentCoin}/>*/}
+                    {/*</div>*/}
                 </div>
             </div>
         </nav>

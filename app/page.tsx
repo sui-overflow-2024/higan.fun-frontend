@@ -14,12 +14,11 @@ import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
 import {
     Pagination,
     PaginationContent,
-    PaginationEllipsis,
     PaginationItem,
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
-  } from "@/components/ui/pagination"
+} from "@/components/ui/pagination"
 
 const TopTokens: FC = () => {
     const {axios, shortInterval} = useContextSelector(AppConfigContext, (v) => ({
@@ -40,7 +39,7 @@ const TopTokens: FC = () => {
     }
 
     return (
-        <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center justify-between">
+        <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:    grid-cols-3 items-center justify-between">
             <div>
                 <p className={"text-2xl text-center"}>Newest</p>
                 <TokenCard token={topTokens.newest}/>
@@ -50,7 +49,7 @@ const TopTokens: FC = () => {
                 <TokenCard token={topTokens.hottest}/>
             </div>
             <div>
-                <p className={"text-2xl text-center"}>Imminent</p>
+                <p className={"text-2xl text-center"}>Coming Soon</p>
                 <TokenCard token={topTokens.imminent}/>
             </div>
         </div>
@@ -68,28 +67,28 @@ export default function Home() {
 
     const axios = useContextSelector(AppConfigContext, (v) => v.axios);
 
-    const fetchTokens = async () => {
-        let t = await coinRestApi.search({axios, term, sort, order, offset: offset, pageSize: pageSize + 1})
-
-        setHasNextPage(t.length > pageSize);
-        t = t.slice(0, pageSize);
-
-        setTokens(t);
-    }
 
     useEffect(() => {
+        const fetchTokens = async () => {
+            let t = await coinRestApi.search({axios, term, sort, order, offset: offset, pageSize: pageSize + 1})
+
+            setHasNextPage(t.length > pageSize);
+            t = t.slice(0, pageSize);
+
+            setTokens(t);
+        }
         fetchTokens()
     }, [term, sort, order, axios, offset])
 
-    const handlePagePreviousClick = (e:any) => {
+    const handlePagePreviousClick = (e: any) => {
         e.preventDefault();
 
         setOffset(Math.max(0, offset - pageSize));
     }
 
-    const handlePageNextClick = (e:any) => {
+    const handlePageNextClick = (e: any) => {
         e.preventDefault();
-        if(!isNextPage) return;
+        if (!isNextPage) return;
 
         setOffset(offset + pageSize);
     }
@@ -102,7 +101,7 @@ export default function Home() {
                 <div className={"text-center"}>
                     <Link href={"create"}>
                         <Button
-                            className={"p-8 text-3xl"}
+                            className={"p-8 text-lg md:text-3xl"}
                             variant={"default"}>
                             CLICK HERE TO LAUNCH YOUR OWN TOKEN
                         </Button>
@@ -150,24 +149,6 @@ export default function Home() {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        {/*<Button*/}
-                        {/*    onClick={() => setSort("created")}*/}
-                        {/*    variant={sort === "created" ? "default" : "outline"}*/}
-                        {/*>*/}
-                        {/*    Created at*/}
-                        {/*</Button>*/}
-                        {/*<Button*/}
-                        {/*    onClick={() => setSort("marketCap")}*/}
-                        {/*    variant={sort === "marketCap" ? "default" : "outline"}*/}
-                        {/*>*/}
-                        {/*    Market Cap*/}
-                        {/*</Button>*/}
-                        {/*<Button*/}
-                        {/*    onClick={() => setSort("tvl")}*/}
-                        {/*    variant={sort === "tvl" ? "default" : "outline"}*/}
-                        {/*>*/}
-                        {/*    TVL last 24h*/}
-                        {/*</Button>*/}
                     </div>
                     <div className={"space-x-4 flex items-center"}>
                         <p className="text-xl font-bold">Order:</p>
@@ -178,26 +159,12 @@ export default function Home() {
                             <DropdownMenuContent className="w-56">
                                 <DropdownMenuItem onSelect={() => setOrder("asc")}>
                                     <span>asc</span>
-                                    {/*<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>*/}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onSelect={() => setOrder("desc")}>
                                     <span>desc</span>
-                                    {/*<DropdownMenuShortcut>⌘B</DropdownMenuShortcut>*/}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        {/*<Button*/}
-                        {/*    onClick={() => setOrder("asc")}*/}
-                        {/*    variant={order === "asc" ? "default" : "outline"}*/}
-                        {/*>*/}
-                        {/*    Ascending*/}
-                        {/*</Button>*/}
-                        {/*<Button*/}
-                        {/*    onClick={() => setOrder("desc")}*/}
-                        {/*    variant={order === "desc" ? "default" : "outline"}*/}
-                        {/*>*/}
-                        {/*    Descending*/}
-                        {/*</Button>*/}
                     </div>
                 </div>
 
@@ -209,17 +176,16 @@ export default function Home() {
                 <Pagination>
                     <PaginationContent>
                         <PaginationItem>
-                        <PaginationPrevious href="#" onClick={handlePagePreviousClick} />
+                            <PaginationPrevious href="#" onClick={handlePagePreviousClick}/>
                         </PaginationItem>
                         <PaginationItem>
-                        <PaginationLink href="#">{currentPage}</PaginationLink>
+                            <PaginationLink href="#">{currentPage}</PaginationLink>
                         </PaginationItem>
                         <PaginationItem>
-                        <PaginationNext href="#" onClick={handlePageNextClick} />
+                            <PaginationNext href="#" onClick={handlePageNextClick}/>
                         </PaginationItem>
                     </PaginationContent>
                 </Pagination>
-                {/* <TokenCard token={generateFakeToken()} /> */}
             </div>
         </main>
     );

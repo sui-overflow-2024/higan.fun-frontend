@@ -2,21 +2,20 @@
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {FC, useEffect, useState} from "react";
 import {getCoinTypePath, getManagerFuncPath, getValueWithDecimals, truncateDecimals} from "@/lib/utils";
 import {AppConfigContext} from "@/components/Contexts";
 import {CoinFromRestAPI, CoinStatus} from "@/lib/types";
 import {ConnectButton, useCurrentAccount} from "@mysten/dapp-kit";
-import {TransactionBlock,} from "@mysten/sui.js/transactions";
-import type {CoinStruct, SuiClient} from '@mysten/sui.js/client';
+import {Transaction,} from "@mysten/sui/transactions";
+import type {CoinStruct, SuiClient} from '@mysten/sui/client';
 import {useForm} from "react-hook-form";
 import {customSuiHooks, TokenMetric} from "@/lib/sui";
-import {useTransactionExecution} from "@/hooks/useTransactionexecution";
+import {useTransactionExecution} from "@/hooks/useTransactionExecution";
 import useSWR, {mutate} from "swr";
 import {useToast} from "@/components/ui/use-toast";
 import {useContextSelector} from "use-context-selector";
 import {getAllUserCoins, getExactCoinByAmount} from "@/lib/kriya";
-import { SwapForm } from "./SwapForm";
 
 
 const generateBuyPtb = (managerContractPackageId: string, managerContractModuleName: string, coin: CoinFromRestAPI, amountToBuy: number) => {
@@ -26,7 +25,7 @@ const generateBuyPtb = (managerContractPackageId: string, managerContractModuleN
     }
 
 
-    const txb = new TransactionBlock();
+    const txb = new Transaction();
     //Amount here already has multiplication for decimals applied (see TokenAmountInput)
     //txb.gas() for the coin because you purchase the custom coin w/ Sui
     const splitCoin = txb.moveCall({
@@ -52,13 +51,13 @@ const generateBuyPtb = (managerContractPackageId: string, managerContractModuleN
     return txb
 }
 
-const generateSellPtb = (managerContractPackageId: string, managerContractModuleName: string, coin: CoinFromRestAPI, userCoins: CoinStruct[], amountToSell: number): TransactionBlock => {
+const generateSellPtb = (managerContractPackageId: string, managerContractModuleName: string, coin: CoinFromRestAPI, userCoins: CoinStruct[], amountToSell: number): Transaction => {
     console.log("Attempting to sell ", amountToSell, "of", coin.symbol, "packageId", coin.packageId, "bondingCurveId", coin.bondingCurveId, "module", coin.module, "decimals", coin.decimals)
     if (amountToSell <= 0) {
         throw new Error("Attempt to buy 0 or less tokens")
     }
 
-    const txb = new TransactionBlock();
+    const txb = new Transaction();
     const exactCoinByAmount = getExactCoinByAmount(getCoinTypePath(coin), userCoins, BigInt(amountToSell), txb)
 
     txb.moveCall({
@@ -72,9 +71,9 @@ const generateSellPtb = (managerContractPackageId: string, managerContractModule
     return txb;
 }
 
-export const getBuyCoinPriceTxb = (managerContractPackageId: string, managerContractModuleName: string, coinType: string, bondingCurveId: string, amount: number): TransactionBlock => {
+export const getBuyCoinPriceTxb = (managerContractPackageId: string, managerContractModuleName: string, coinType: string, bondingCurveId: string, amount: number): Transaction => {
     console.log("getBuyCoinPriceTxb", managerContractPackageId, managerContractModuleName, coinType, bondingCurveId, amount)
-    const txb = new TransactionBlock()
+    const txb = new Transaction()
     txb.moveCall({
         target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "get_coin_buy_price") as `${string}::${string}::${string}`,
         arguments: [
@@ -85,9 +84,9 @@ export const getBuyCoinPriceTxb = (managerContractPackageId: string, managerCont
     })
     return txb
 }
-export const getSellCoinPriceTxb = (managerContractPackageId: string, managerContractModuleName: string, coinType: string, bondingCurveId: string, amount: number): TransactionBlock => {
+export const getSellCoinPriceTxb = (managerContractPackageId: string, managerContractModuleName: string, coinType: string, bondingCurveId: string, amount: number): Transaction => {
     console.log("getSellCoinPriceTxb", managerContractPackageId, managerContractModuleName, coinType, bondingCurveId, amount)
-    const txb = new TransactionBlock()
+    const txb = new Transaction()
     txb.moveCall({
         target: getManagerFuncPath(managerContractPackageId, managerContractModuleName, "get_coin_sell_price") as `${string}::${string}::${string}`,
         arguments: [
@@ -100,7 +99,7 @@ export const getSellCoinPriceTxb = (managerContractPackageId: string, managerCon
 }
 
 
-export const BuySellDialog: React.FC<{
+export const BuySellDialog: FC<{
     token: CoinFromRestAPI,
     tokenMetrics: TokenMetric,
     suiClient: SuiClient
@@ -357,6 +356,20 @@ export const BuySellDialog: React.FC<{
                         </div>
                     </div>
                 </form>
+            <div className="mt-4">
+                <label htmlFor="shakeBox" className="block text-sm font-medium text-red-700">Shake Box</label>
+                <input
+                    type="text"
+                    id="shakeBox"
+                    className="mt-1 block w-full rounded-md border-red-300 shadow-sm focus:border-red-300 focus:ring focus:ring-red-200 focus:ring-opacity-50 text-red-700"
+                    placeholder="Type to shake..."
+                    onInput={(e) => {
+                        const input = e.target as HTMLInputElement;
+                        input.classList.add('animate-shake');
+                        setTimeout(() => input.classList.remove('animate-shake'), 500);
+                    }}
+                />
+            </div>
             </CardContent>
         </Card>
 

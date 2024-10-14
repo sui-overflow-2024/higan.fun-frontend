@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {FC, useEffect, useState} from 'react';
 import {formatDistanceToNow} from "date-fns";
 import {CreatorAddressChip} from "@/components/CreatorAddressChip";
 import {getValueWithDecimals} from "@/lib/utils";
@@ -24,7 +24,7 @@ type TradesListProps = {
 
 
 // Component for the trades.ts list
-const TradesList: React.FC<TradesListProps> = ({bondingCurveId, coinSymbol, network}) => {
+const TradesList: FC<TradesListProps> = ({bondingCurveId, coinSymbol, network}) => {
     const axios = useContextSelector(AppConfigContext, v => v.axios);
     const socket = useContextSelector(AppConfigContext, v => v.socket);
     const longInterval = useContextSelector(AppConfigContext, v => v.longInterval);

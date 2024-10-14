@@ -1,7 +1,7 @@
 'use client';
 import {useSignTransactionBlock, useSuiClientContext} from "@mysten/dapp-kit";
-import type {TransactionBlock} from "@mysten/sui.js/transactions";
-import type {SuiTransactionBlockResponse} from "@mysten/sui.js/client";
+import type {TransactionBlock} from "@mysten/sui/transactions";
+import type {SuiTransactionBlockResponse} from "@mysten/sui/client";
 import {useToast} from "@/components/ui/use-toast";
 import {ToastAction} from "@/components/ui/toast";
 import Link from "next/link";
